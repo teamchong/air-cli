@@ -6,7 +6,7 @@ import {
   afterAll,
   beforeEach,
   afterEach,
-} from 'vitest'
+} from 'bun:test'
 import { execSync } from 'child_process'
 import {
   extractAndRegisterTabId,

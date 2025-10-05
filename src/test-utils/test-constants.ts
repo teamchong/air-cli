@@ -13,7 +13,7 @@ export const TEST_PORT = 19222
 /**
  * The CLI command path for tests
  */
-export const CLI = 'node dist/src/index.js'
+export const CLI = 'bun run src/index.ts'
 
 /**
  * Default timeout for test commands

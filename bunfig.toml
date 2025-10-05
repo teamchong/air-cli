@@ -1,0 +1,16 @@
+[test]
+# Global test setup
+preload = [
+  "./src/test-utils/global-setup.ts",
+  "./src/test-utils/per-file-setup.ts"
+]
+
+# Test timeout (in milliseconds)
+timeout = 30000
+
+# Coverage configuration
+coverage = true
+coverageThreshold = 80
+
+# Run tests sequentially (no parallelism)
+# Bun runs tests in a single process by default

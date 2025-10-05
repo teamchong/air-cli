@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, spyOn, mock } from 'bun:test'
 import chalk from 'chalk'
 import {
   environmentConfigMiddleware,
@@ -21,8 +21,8 @@ import type { BaseCommandOptions } from '../../types'
 // Mock the BrowserConfig module
 vi.mock('../../../lib/browser-config', () => ({
   BrowserConfig: {
-    getLastUsedBrowser: vi.fn().mockResolvedValue('chrome'),
-    saveLastUsedBrowser: vi.fn().mockResolvedValue(undefined),
+    getLastUsedBrowser: mock().mockResolvedValue('chrome'),
+    saveLastUsedBrowser: mock().mockResolvedValue(undefined),
   },
 }))
 
@@ -113,8 +113,7 @@ describe('Global Options Middleware', () => {
     })
 
     it('should handle conflicting verbose and quiet flags', async () => {
-      const consoleError = vi
-        .spyOn(console, 'error')
+      const consoleError = spyOn(console, 'error')
         .mockImplementation(() => {})
 
       const argv = {
@@ -219,7 +218,7 @@ describe('Global Options Middleware', () => {
     })
 
     it('should log transformation in verbose mode', () => {
-      const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
 
       const argv = {
         selector: 'button:Login',
@@ -239,7 +238,7 @@ describe('Global Options Middleware', () => {
 
   describe('loggingMiddleware', () => {
     it('should log command start in verbose mode', async () => {
-      const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
 
       const argv = { port: 9222, verbose: true, _: ['click'], $0: 'cli' } as any
       await loggingMiddleware(argv)
@@ -255,7 +254,7 @@ describe('Global Options Middleware', () => {
     })
 
     it('should not log in quiet mode', async () => {
-      const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
 
       const argv = {
         port: 9222,
@@ -287,7 +286,7 @@ describe('Global Options Middleware', () => {
     })
 
     it('should log connection details in verbose mode', async () => {
-      const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
 
       const argv = { port: 9222, verbose: true, _: ['click'], $0: 'cli' } as any
       await browserConnectionMiddleware(argv)
@@ -332,7 +331,7 @@ describe('Global Options Middleware', () => {
     })
 
     it('should create conditional middleware', async () => {
-      const mockMiddleware = vi.fn().mockResolvedValue(undefined)
+      const mockMiddleware = mock().mockResolvedValue(undefined)
       const condition = (argv: any) => argv.test === true
 
       const conditionalMw = conditionalMiddleware(condition, mockMiddleware)

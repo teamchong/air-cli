@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, mock } from 'bun:test'
 
 import {
   LinearRetryStrategy,
@@ -92,7 +92,7 @@ describe('RetryStrategy', () => {
         retryableErrors: ['test error'],
       })
 
-      const operation = vi.fn().mockResolvedValue('success')
+      const operation = mock().mockResolvedValue('success')
       const result = await strategy.execute(operation)
 
       expect(result).toBe('success')
@@ -114,8 +114,7 @@ describe('RetryStrategy', () => {
         retryableErrors: ['network error'],
       })
 
-      const operation = vi
-        .fn()
+      const operation = mock()
         .mockRejectedValueOnce(new Error('network error'))
         .mockRejectedValueOnce(new Error('network error'))
         .mockResolvedValue('success')
@@ -140,7 +139,7 @@ describe('RetryStrategy', () => {
         retryableErrors: ['network error'],
       })
 
-      const operation = vi.fn().mockRejectedValue(new Error('syntax error'))
+      const operation = mock().mockRejectedValue(new Error('syntax error'))
 
       await expect(strategy.execute(operation)).rejects.toThrow('syntax error')
       expect(operation).toHaveBeenCalledTimes(1)
@@ -159,7 +158,7 @@ describe('RetryStrategy', () => {
         retryableErrors: ['network error'],
       })
 
-      const operation = vi.fn().mockRejectedValue(new Error('network error'))
+      const operation = mock().mockRejectedValue(new Error('network error'))
 
       await expect(strategy.execute(operation)).rejects.toThrow(
         'Operation failed after 2 attempts'
@@ -176,8 +175,7 @@ describe('RetryStrategy', () => {
         retryableErrors: ['timeout'],
       })
 
-      const operation = vi
-        .fn()
+      const operation = mock()
         .mockImplementation(
           () => new Promise(resolve => setTimeout(resolve, 50))
         )
@@ -199,7 +197,7 @@ describe('RetryStrategy', () => {
         retryableErrors: ['network error'],
       })
 
-      const operation = vi.fn().mockRejectedValue(new Error('network error'))
+      const operation = mock().mockRejectedValue(new Error('network error'))
 
       // Execute operation that will fail
       await expect(strategy.execute(operation)).rejects.toThrow()

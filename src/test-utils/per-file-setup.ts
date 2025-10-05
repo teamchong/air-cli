@@ -5,7 +5,7 @@
  * This prevents connection pool exhaustion across the full test suite
  */
 
-import { beforeAll, afterAll } from 'vitest'
+import { beforeAll, afterAll } from 'bun:test'
 import { CDPConnectionPool } from '../lib/cdp-connection-pool'
 
 // Track connection count before file starts

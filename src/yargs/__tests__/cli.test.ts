@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, spyOn } from 'bun:test'
 import yargs from 'yargs'
 import { createCli } from '../cli'
 
@@ -141,8 +141,7 @@ describe('Yargs CLI Structure', () => {
 
   describe('Middleware', () => {
     it('should handle conflicting quiet and verbose flags', async () => {
-      const consoleError = vi
-        .spyOn(console, 'error')
+      const consoleError = spyOn(console, 'error')
         .mockImplementation(() => {})
 
       await cli.parse(['--quiet', '--verbose'], {}, (err, argv) => {

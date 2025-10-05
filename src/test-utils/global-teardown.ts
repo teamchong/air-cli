@@ -31,7 +31,7 @@ export default function teardown() {
       console.log(`📌 Closing anchor tab: ${anchorTabId}`)
       try {
         TabManager.runCommand(
-          `node dist/src/index.js tabs close --tab-id ${anchorTabId} --port ${TEST_PORT}`,
+          `bun run src/index.ts tabs close --tab-id ${anchorTabId} --port ${TEST_PORT}`,
           3000
         )
       } catch (error) {
@@ -42,7 +42,7 @@ export default function teardown() {
     // Try to close browser explicitly (may already be closed from anchor tab)
     console.log('🌐 Closing browser session...')
     try {
-      TabManager.runCommand(`node dist/src/index.js close --port ${TEST_PORT}`, 3000)
+      TabManager.runCommand(`bun run src/index.ts close --port ${TEST_PORT}`, 3000)
     } catch (error) {
       // Browser might already be closed, which is fine
       console.log('ℹ️  Browser was already closed')

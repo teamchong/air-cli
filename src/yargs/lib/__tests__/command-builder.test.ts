@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, spyOn, mock } from 'bun:test'
 import {
   createCommand,
   createLogger,
@@ -56,8 +56,7 @@ describe('Command Builder', () => {
         },
       })
 
-      const mockConsoleError = vi
-        .spyOn(console, 'error')
+      const mockConsoleError = spyOn(console, 'error')
         .mockImplementation(() => {})
 
       const argv = { port: 9222, _: ['error'], $0: 'test' } as any
@@ -72,7 +71,7 @@ describe('Command Builder', () => {
     })
 
     it('should run validation if provided', async () => {
-      const validateArgs = vi.fn().mockReturnValue('Validation error')
+      const validateArgs = mock().mockReturnValue('Validation error')
 
       const command = createCommand({
         metadata: {
@@ -87,8 +86,7 @@ describe('Command Builder', () => {
         validateArgs,
       })
 
-      const mockConsoleError = vi
-        .spyOn(console, 'error')
+      const mockConsoleError = spyOn(console, 'error')
         .mockImplementation(() => {})
 
       const argv = { port: 9222, _: ['validate'], $0: 'test' } as any
@@ -119,8 +117,7 @@ describe('Command Builder', () => {
         supportsJson: true,
       })
 
-      const mockConsoleLog = vi
-        .spyOn(console, 'log')
+      const mockConsoleLog = spyOn(console, 'log')
         .mockImplementation(() => {})
 
       const argv = {
@@ -147,9 +144,9 @@ describe('Command Builder', () => {
 
     beforeEach(() => {
       mockConsole = {
-        log: vi.spyOn(console, 'log').mockImplementation(() => {}),
-        error: vi.spyOn(console, 'error').mockImplementation(() => {}),
-        warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
+        log: spyOn(console, 'log').mockImplementation(() => {}),
+        error: spyOn(console, 'error').mockImplementation(() => {}),
+        warn: spyOn(console, 'warn').mockImplementation(() => {}),
       }
     })
 
@@ -302,7 +299,7 @@ describe('Command Builder', () => {
 
   describe('withRetry', () => {
     it('should succeed on first try', async () => {
-      const operation = vi.fn().mockResolvedValue('success')
+      const operation = mock().mockResolvedValue('success')
       const result = await withRetry(operation)
 
       expect(result).toBe('success')
@@ -310,8 +307,7 @@ describe('Command Builder', () => {
     })
 
     it('should retry on failure and eventually succeed', async () => {
-      const operation = vi
-        .fn()
+      const operation = mock()
         .mockRejectedValueOnce(new Error('Fail 1'))
         .mockRejectedValueOnce(new Error('Fail 2'))
         .mockResolvedValue('success')
@@ -323,7 +319,7 @@ describe('Command Builder', () => {
     })
 
     it('should throw after max retries', async () => {
-      const operation = vi.fn().mockRejectedValue(new Error('Always fails'))
+      const operation = mock().mockRejectedValue(new Error('Always fails'))
 
       await expect(withRetry(operation, 2, 10)).rejects.toThrow('Always fails')
 

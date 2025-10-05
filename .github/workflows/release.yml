@@ -24,29 +24,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Run quality checks
         run: |
-          pnpm run typecheck
-          pnpm run lint || true
-          pnpm run format:check
-          pnpm run test:coverage:ci
+          bun run typecheck
+          bun run lint || true
+          bun run format:check
+          bun run test:coverage:ci
 
       - name: Build project
-        run: pnpm run build:ts
+        run: bun run build:ts
 
       - name: Release
         env:

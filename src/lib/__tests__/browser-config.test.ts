@@ -1,54 +1,54 @@
 import { homedir } from 'os'
 import { join } from 'path'
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi, mock } from 'bun:test'
 
 // Mock everything before importing the module under test
 vi.mock('../platform-helper', () => ({
   PlatformHelper: {
-    getClaudeDir: vi.fn(() => '/test/.claude'),
-    getOrCreateClaudeDir: vi.fn(() => '/test/.claude'),
+    getClaudeDir: mock(() => '/test/.claude'),
+    getOrCreateClaudeDir: mock(() => '/test/.claude'),
   },
 }))
 
 // Mock the logger to prevent output pollution
 vi.mock('../logger', () => ({
   logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
+    info: mock(),
+    error: mock(),
+    warn: mock(),
+    debug: mock(),
   },
 }))
 
 vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  readFileSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  unlinkSync: vi.fn(),
+  existsSync: mock(),
+  readFileSync: mock(),
+  writeFileSync: mock(),
+  mkdirSync: mock(),
+  unlinkSync: mock(),
 }))
 
 // Also mock fs/promises if it's being used
 vi.mock('fs/promises', () => ({
-  readFile: vi.fn(),
-  writeFile: vi.fn(),
-  access: vi.fn(),
-  mkdir: vi.fn(),
-  unlink: vi.fn(),
+  readFile: mock(),
+  writeFile: mock(),
+  access: mock(),
+  mkdir: mock(),
+  unlink: mock(),
 }))
 vi.mock('child_process', () => ({
-  spawnSync: vi.fn(),
+  spawnSync: mock(),
 }))
 vi.mock('playwright', () => ({
   chromium: {
-    executablePath: vi.fn(() => '/path/to/chromium'),
+    executablePath: mock(() => '/path/to/chromium'),
   },
   firefox: {
-    executablePath: vi.fn(() => '/path/to/firefox'),
+    executablePath: mock(() => '/path/to/firefox'),
   },
   webkit: {
-    executablePath: vi.fn(() => '/path/to/webkit'),
+    executablePath: mock(() => '/path/to/webkit'),
   },
 }))
 

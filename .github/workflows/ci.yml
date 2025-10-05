@@ -16,36 +16,30 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
       with:
-        version: 8
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'pnpm'
-    
+        bun-version: latest
+
     - name: Install dependencies
-      run: pnpm install
-    
+      run: bun install
+
     - name: TypeScript type checking
-      run: pnpm run typecheck
-    
-    - name: Run ESLint  
+      run: bun run typecheck
+
+    - name: Run ESLint
       run: |
-        npx eslint src --ext .ts --format json --output-file eslint-report.json || echo '[]' > eslint-report.json
-    
+        bun x eslint src --ext .ts --format json --output-file eslint-report.json || echo '[]' > eslint-report.json
+
     - name: Run Prettier check
-      run: pnpm run format:check
-    
+      run: bun run format:check
+
     - name: Build project
-      run: pnpm run build:ts
-    
+      run: bun run build:ts
+
     - name: Run tests with coverage
-      run: pnpm run test:coverage:ci
+      run: bun run test:coverage:ci
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4
@@ -142,23 +136,17 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
       with:
-        version: 8
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'pnpm'
-    
+        bun-version: latest
+
     - name: Install dependencies
-      run: pnpm install
-    
+      run: bun install
+
     - name: Build for production
-      run: pnpm run build:ts
+      run: bun run build:ts
     
     
     - name: Upload build artifacts

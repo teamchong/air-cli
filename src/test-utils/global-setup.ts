@@ -15,7 +15,7 @@ export default async function setup() {
     // Build TypeScript first (skip in CI where build is a separate step)
     if (!process.env.CI) {
       console.log('📦 Building TypeScript...')
-      execSync('pnpm run build:ts', { stdio: 'inherit' })
+      execSync('bun run build:ts', { stdio: 'inherit' })
     }
 
     // In CI, use Playwright's browser which is already available
@@ -34,7 +34,7 @@ export default async function setup() {
 
     // USE A DIFFERENT PORT FOR TESTS TO AVOID CONFLICTS WITH USER'S BROWSER
     const { output, exitCode } = TabManager.runCommand(
-      `PLAYWRIGHT_CLI_HEADLESS=true node dist/src/index.js open --port ${TEST_PORT}`,
+      `PLAYWRIGHT_CLI_HEADLESS=true bun run src/index.ts open --port ${TEST_PORT}`,
       10000
     )
 
@@ -55,7 +55,7 @@ export default async function setup() {
     // Without this, closing the last test tab will exit Chrome
     console.log('📌 Creating persistent anchor tab to keep browser alive...')
     const { output: anchorOutput } = TabManager.runCommand(
-      `node dist/src/index.js tabs new --port ${TEST_PORT} --url "about:blank"`,
+      `bun run src/index.ts tabs new --port ${TEST_PORT} --url "about:blank"`,
       10000
     )
     const anchorMatch = anchorOutput.match(/Tab ID: ([A-F0-9]+)/)

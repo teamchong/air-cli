@@ -2,7 +2,7 @@
  * Tests for validation helper utilities
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'bun:test'
 
 import { ValidationError } from '../validation'
 import { ValidationHelper, ValidationSchemaBuilder } from '../validation-helper'
