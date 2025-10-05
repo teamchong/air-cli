@@ -13,7 +13,7 @@ export default function setup() {
   try {
     // Build the CLI first
     console.log('📦 Building CLI...');
-    execSync('pnpm build', { stdio: 'inherit' });
+    execSync('bun run build', { stdio: 'inherit' });
     
     // Launch browser session
     console.log('🌐 Starting browser session...');

@@ -11,11 +11,11 @@ echo "🎭 Playwright CLI Installer"
 echo "==========================="
 echo ""
 
-# Check for Node.js (required for pkg compilation)
-if ! command -v node &> /dev/null; then
-    echo "❌ Error: Node.js is not installed"
+# Check for Bun (required for building)
+if ! command -v bun &> /dev/null; then
+    echo "❌ Error: Bun is not installed"
     echo ""
-    echo "Please install Node.js first"
+    echo "Please install Bun: https://bun.sh"
     exit 1
 fi
 
@@ -24,23 +24,13 @@ echo "🔨 Building playwright CLI..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Check if dependencies are installed
-if [ ! -d "node_modules" ]; then
-    echo "📦 Installing dependencies..."
-    if command -v pnpm &> /dev/null; then
-        pnpm install
-    else
-        npm install
-    fi
-    echo "✅ Dependencies installed"
-fi
+# Install dependencies and build
+echo "📦 Installing dependencies..."
+bun install
+echo "✅ Dependencies installed"
 
-# Build the binary
-if command -v pnpm &> /dev/null; then
-    pnpm run build
-else
-    npm run build
-fi
+echo "🔨 Building binary..."
+bun run build
 echo "✅ Build complete"
 
 # Check if binary was built successfully

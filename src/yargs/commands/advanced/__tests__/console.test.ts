@@ -20,7 +20,7 @@ describe('console command - REAL TESTS', () => {
     // Build the CLI only if needed
     if (!require('fs').existsSync('dist/src/index.js')) {
       const execSync = require('child_process').execSync
-      execSync('pnpm build', { stdio: 'ignore' })
+      execSync('bun run build', { stdio: 'ignore' })
     }
 
     // Browser already running from global setup

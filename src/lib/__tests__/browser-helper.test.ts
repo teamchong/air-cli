@@ -20,7 +20,7 @@ describe('BrowserHelper - Real Integration', () => {
   beforeAll(async () => {
     // Ensure CLI is built
     try {
-      execSync('pnpm run build:ts', { stdio: 'ignore' })
+      execSync('bun run build:ts', { stdio: 'ignore' })
     } catch (e) {
       console.error('Build failed:', e)
     }

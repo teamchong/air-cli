@@ -7,14 +7,14 @@ Write-Host "🎭 Playwright CLI Installer for Windows" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check for Node.js
+# Check for Bun
 try {
-    $nodeVersion = node --version 2>$null
-    Write-Host "✅ Node.js found: $nodeVersion" -ForegroundColor Green
+    $bunVersion = bun --version 2>$null
+    Write-Host "✅ Bun found: $bunVersion" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Error: Node.js is not installed" -ForegroundColor Red
+    Write-Host "❌ Error: Bun is not installed" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Please install Node.js from https://nodejs.org" -ForegroundColor Yellow
+    Write-Host "Please install Bun from https://bun.sh" -ForegroundColor Yellow
     exit 1
 }
 
@@ -39,32 +39,18 @@ New-Item -ItemType Directory -Force -Path $CLAUDE_DIR | Out-Null
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $SCRIPT_DIR
 
-# Check if dependencies are installed
-if (-not (Test-Path "node_modules")) {
-    Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
-    if (Get-Command pnpm -ErrorAction SilentlyContinue) {
-        & pnpm install
-    } else {
-        & npm install
-    }
-    Write-Host "✅ Dependencies installed" -ForegroundColor Green
-}
+# Install dependencies
+Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
+& bun install
+Write-Host "✅ Dependencies installed" -ForegroundColor Green
 
 # Build the binary
 Write-Host "🔨 Building playwright CLI..." -ForegroundColor Yellow
 if ($IsWindows -or $env:OS -eq "Windows_NT") {
-    if (Get-Command pnpm -ErrorAction SilentlyContinue) {
-        & pnpm run build:windows
-    } else {
-        & npm run build:windows
-    }
+    & bun run build:windows
     $binaryPath = Join-Path $SCRIPT_DIR $BINARY_NAME
 } else {
-    if (Get-Command pnpm -ErrorAction SilentlyContinue) {
-        & pnpm run build
-    } else {
-        & npm run build
-    }
+    & bun run build
     $binaryPath = Join-Path $SCRIPT_DIR $BINARY_NAME
 }
 if (-not (Test-Path $binaryPath)) {

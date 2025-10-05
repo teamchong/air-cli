@@ -100,8 +100,7 @@ export default [
       'dist/**/*',
       'node_modules/**/*',
       '*.js',
-      '*.mjs',
-      'vitest.config.mjs'
+      '*.mjs'
     ]
   }
 ];

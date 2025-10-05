@@ -44,18 +44,14 @@ PLAYWRIGHT_SYSTEM_INSTALL=true ./install.sh
 ### Manual Installation
 
 ```bash
-# Install dependencies (with pnpm, npm, or bun)
-pnpm install  # Recommended
-# or: npm install
-# or: bun install
+# Install dependencies
+bun install  # Recommended
 
 # Build the project
-pnpm run build
-# or: npm run build
+bun run build
 
 # Install Playwright browsers (optional, for managed browsers)
-pnpm exec playwright install chromium
-# or: npx playwright install chromium
+bunx playwright install chromium
 ```
 
 ### Windows Installation
@@ -330,20 +326,20 @@ playwright screenshot --tab-id XYZ789
 
 ```bash
 # Run in development mode
-npm run dev
+bun run dev
 
 # Build the project
-npm run build
+bun run build
 
 # Run tests
-npm test
+bun test
 
 # Run specific test suite
-npm run test:unit
-npm run test:integration
-npm run test:e2e
+bun run test:unit
+bun run test:integration
+bun run test:e2e
 
-# Build standalone executable (requires Bun)
+# Build standalone executable
 bun build src/index.ts --compile --outfile playwright-cli
 ```
 
@@ -357,9 +353,9 @@ The project includes comprehensive test coverage:
 
 Run tests with:
 ```bash
-npm test           # Run all tests
-npm run test:watch # Watch mode
-npm run test:ui    # Interactive UI
+bun test           # Run all tests
+bun run test:watch # Watch mode
+bun run test:ui    # Interactive UI
 ```
 
 **Note:** Tests run with a visible browser window (not headless) due to limitations with Playwright's CDP connection to headless Chrome. This is a known issue where `connectOverCDP` doesn't work reliably with externally-launched headless Chrome instances.

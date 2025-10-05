@@ -5,9 +5,9 @@ describe('open command - REAL INTEGRATION TEST', () => {
   const CLI_PATH = CLI
 
   beforeAll(async () => {
-    // Build the CLI first using pnpm
+    // Build the CLI first using Bun
     try {
-      execSync('pnpm build', { stdio: 'ignore' })
+      execSync('bun run build', { stdio: 'ignore' })
     } catch (e) {
       console.error('Build failed:', e)
     }

@@ -4,7 +4,7 @@
 set -e
 
 echo "=== Building CLI ==="
-pnpm build
+bun run build
 
 echo -e "\n=== Test 1: Open browser with URL ==="
 ./playwright open https://example.com

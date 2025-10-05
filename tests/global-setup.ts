@@ -13,7 +13,7 @@ export default async function globalSetup() {
   // Build the CLI if needed
   if (!existsSync('dist/index.js')) {
     console.log('📦 Building CLI...');
-    execSync('pnpm build', { stdio: 'inherit' });
+    execSync('bun run build', { stdio: 'inherit' });
   }
 
   // Don't kill browser - tests will connect to existing or launch new

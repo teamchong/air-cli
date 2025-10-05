@@ -38,7 +38,7 @@ describe('network command - REAL TESTS', () => {
   beforeAll(async () => {
     // Build the CLI only if needed
     if (!require('fs').existsSync('dist/src/index.js')) {
-      execSync('pnpm build', { stdio: 'ignore' })
+      execSync('bun run build', { stdio: 'ignore' })
     }
   }, 30000) // 30 second timeout for build
 
