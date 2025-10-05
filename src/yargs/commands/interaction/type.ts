@@ -145,7 +145,7 @@ export const typeCommand = createCommand<TypeOptions>({
       // Handle --ref flag
       if (ref) {
         // Try to get selector from RefManager first
-        const storedSelector = refManager.getSelector(ref, tabId)
+        const storedSelector = await refManager.getSelector(ref, tabId)
         if (storedSelector) {
           actualSelector = storedSelector
           if (spinner) {

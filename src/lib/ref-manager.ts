@@ -6,7 +6,6 @@
  */
 
 import { nodeToSelector } from './ref-utils'
-import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 
@@ -24,11 +23,13 @@ class RefManager {
   private refMap: Map<string, RefEntry> = new Map()
   private tabRefMap: Map<string, Map<string, RefEntry>> = new Map()
   private persistFile: string
+  private loaded = false
+  private loadPromise: Promise<void> | null = null
+  private saveTimeout: Timer | null = null
 
   private constructor() {
     // Store refs in temp directory
     this.persistFile = path.join(os.tmpdir(), 'playwright-cli-refs.json')
-    this.loadFromDisk()
   }
 
   static getInstance(): RefManager {
@@ -38,13 +39,23 @@ class RefManager {
     return RefManager.instance
   }
 
+  private async ensureLoaded(): Promise<void> {
+    if (this.loaded) return
+    if (this.loadPromise) return this.loadPromise
+
+    this.loadPromise = this.loadFromDisk()
+    await this.loadPromise
+    this.loaded = true
+  }
+
   /**
    * Load refs from disk if file exists
    */
-  private loadFromDisk(): void {
+  private async loadFromDisk(): Promise<void> {
     try {
-      if (fs.existsSync(this.persistFile)) {
-        const data = fs.readFileSync(this.persistFile, 'utf-8')
+      const file = Bun.file(this.persistFile)
+      if (await file.exists()) {
+        const data = await file.text()
         const parsed = JSON.parse(data)
 
         // Restore refMap
@@ -65,26 +76,33 @@ class RefManager {
    * Save refs to disk
    */
   private saveToDisk(): void {
-    try {
-      const data = {
-        refMap: Object.fromEntries(this.refMap),
-        tabRefMap: Object.fromEntries(
-          Array.from(this.tabRefMap.entries()).map(([tabId, map]) => [
-            tabId,
-            Object.fromEntries(map),
-          ])
-        ),
-      }
-      fs.writeFileSync(this.persistFile, JSON.stringify(data, null, 2))
-    } catch (error) {
-      // Ignore errors
+    // Debounce: delay save by 100ms, cancel previous pending saves
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout)
     }
+
+    this.saveTimeout = setTimeout(async () => {
+      try {
+        const data = {
+          refMap: Object.fromEntries(this.refMap),
+          tabRefMap: Object.fromEntries(
+            Array.from(this.tabRefMap.entries()).map(([tabId, map]) => [
+              tabId,
+              Object.fromEntries(map),
+            ])
+          ),
+        }
+        await Bun.write(this.persistFile, JSON.stringify(data, null, 2))
+      } catch (error) {
+        // Ignore errors
+      }
+    }, 100)
   }
 
   /**
-   * Store a ref with its associated selector and metadata
+   * Store a ref with its associated selector and metadata (internal, no save)
    */
-  storeRef(ref: string, node: any, tabId?: string): void {
+  private storeRefInternal(ref: string, node: any, tabId?: string): void {
     const selector = nodeToSelector(node)
     const entry: RefEntry = {
       ref,
@@ -105,34 +123,45 @@ class RefManager {
       }
       this.tabRefMap.get(tabId)!.set(ref, entry)
     }
+  }
 
-    // Persist to disk
+  /**
+   * Store a ref with its associated selector and metadata
+   */
+  async storeRef(ref: string, node: any, tabId?: string): Promise<void> {
+    await this.ensureLoaded()
+    this.storeRefInternal(ref, node, tabId)
     this.saveToDisk()
   }
 
   /**
    * Store multiple refs from a snapshot
    */
-  storeSnapshot(elements: any[], tabId?: string): void {
+  async storeSnapshot(elements: any[], tabId?: string): Promise<void> {
+    await this.ensureLoaded()
+
     // Clear old refs for this tab to avoid stale references
     if (tabId && this.tabRefMap.has(tabId)) {
       this.tabRefMap.get(tabId)!.clear()
     }
 
-    elements.forEach(element => {
+    // Store all refs without saving each time
+    for (const element of elements) {
       if (element.ref) {
-        this.storeRef(element.ref, element, tabId)
+        this.storeRefInternal(element.ref, element, tabId)
       }
-    })
+    }
 
-    // Persist to disk after storing all
+    // Persist to disk once after storing all (debounced)
     this.saveToDisk()
   }
 
   /**
    * Get selector for a ref
    */
-  getSelector(ref: string, tabId?: string): string | null {
+  async getSelector(ref: string, tabId?: string): Promise<string | null> {
+    await this.ensureLoaded()
+
     // Try tab-specific first
     if (tabId && this.tabRefMap.has(tabId)) {
       const tabEntry = this.tabRefMap.get(tabId)!.get(ref)
@@ -149,7 +178,9 @@ class RefManager {
   /**
    * Get full entry for a ref
    */
-  getEntry(ref: string, tabId?: string): RefEntry | null {
+  async getEntry(ref: string, tabId?: string): Promise<RefEntry | null> {
+    await this.ensureLoaded()
+
     // Try tab-specific first
     if (tabId && this.tabRefMap.has(tabId)) {
       const tabEntry = this.tabRefMap.get(tabId)!.get(ref)
@@ -165,7 +196,9 @@ class RefManager {
   /**
    * Check if a ref exists
    */
-  hasRef(ref: string, tabId?: string): boolean {
+  async hasRef(ref: string, tabId?: string): Promise<boolean> {
+    await this.ensureLoaded()
+
     if (tabId && this.tabRefMap.has(tabId)) {
       if (this.tabRefMap.get(tabId)!.has(ref)) {
         return true
@@ -177,7 +210,8 @@ class RefManager {
   /**
    * Clear all refs
    */
-  clear(): void {
+  async clear(): Promise<void> {
+    await this.ensureLoaded()
     this.refMap.clear()
     this.tabRefMap.clear()
     this.saveToDisk()
@@ -186,7 +220,9 @@ class RefManager {
   /**
    * Clear refs for a specific tab
    */
-  clearTab(tabId: string): void {
+  async clearTab(tabId: string): Promise<void> {
+    await this.ensureLoaded()
+
     if (this.tabRefMap.has(tabId)) {
       this.tabRefMap.get(tabId)!.clear()
       this.tabRefMap.delete(tabId)
@@ -205,7 +241,9 @@ class RefManager {
   /**
    * Clean up old refs (older than 30 minutes by default)
    */
-  cleanup(maxAge: number = 30 * 60 * 1000): void {
+  async cleanup(maxAge: number = 30 * 60 * 1000): Promise<void> {
+    await this.ensureLoaded()
+
     const now = Date.now()
 
     // Clean global map
@@ -235,7 +273,9 @@ class RefManager {
   /**
    * Get all refs for a tab
    */
-  getTabRefs(tabId: string): RefEntry[] {
+  async getTabRefs(tabId: string): Promise<RefEntry[]> {
+    await this.ensureLoaded()
+
     if (!this.tabRefMap.has(tabId)) {
       return []
     }
@@ -246,7 +286,13 @@ class RefManager {
   /**
    * Get statistics about stored refs
    */
-  getStats(): { totalRefs: number; tabs: number; oldestRef: number | null } {
+  async getStats(): Promise<{
+    totalRefs: number
+    tabs: number
+    oldestRef: number | null
+  }> {
+    await this.ensureLoaded()
+
     let oldestTimestamp: number | null = null
 
     for (const entry of this.refMap.values()) {

@@ -1,11 +1,4 @@
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-  mkdirSync,
-  readdirSync,
-  unlinkSync,
-} from 'fs'
+import { mkdirSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 
@@ -33,9 +26,10 @@ export interface SessionData {
 }
 
 export class SessionManager {
-  private static ensureSessionsDir() {
+  private static async ensureSessionsDir() {
     PlatformHelper.getOrCreateClaudeDir()
-    if (!existsSync(SESSIONS_DIR)) {
+    const dirExists = await Bun.file(SESSIONS_DIR).exists()
+    if (!dirExists) {
       mkdirSync(SESSIONS_DIR, { recursive: true })
     }
   }
@@ -49,7 +43,7 @@ export class SessionManager {
     port: number = 9222,
     description?: string
   ): Promise<void> {
-    this.ensureSessionsDir()
+    await this.ensureSessionsDir()
 
     try {
       await BrowserHelper.withBrowser(port, async browser => {
@@ -100,11 +94,14 @@ export class SessionManager {
           return storage
         })
 
+        const sessionPath = this.getSessionPath(name)
+        const sessionFile = Bun.file(sessionPath)
+        const fileExists = await sessionFile.exists()
+
         const sessionData: SessionData = {
           name,
-          createdAt: existsSync(this.getSessionPath(name))
-            ? JSON.parse(readFileSync(this.getSessionPath(name), 'utf-8'))
-                .createdAt
+          createdAt: fileExists
+            ? (await sessionFile.json()).createdAt
             : new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           url,
@@ -119,10 +116,7 @@ export class SessionManager {
           },
         }
 
-        writeFileSync(
-          this.getSessionPath(name),
-          JSON.stringify(sessionData, null, 2)
-        )
+        await Bun.write(sessionPath, JSON.stringify(sessionData, null, 2))
       })
     } catch (error: any) {
       throw new Error(`Failed to save session: ${error.message}`)
@@ -131,15 +125,14 @@ export class SessionManager {
 
   static async loadSession(name: string, port: number = 9222): Promise<void> {
     const sessionPath = this.getSessionPath(name)
+    const sessionFile = Bun.file(sessionPath)
 
-    if (!existsSync(sessionPath)) {
+    if (!(await sessionFile.exists())) {
       throw new Error(`Session '${name}' not found`)
     }
 
     try {
-      const sessionData: SessionData = JSON.parse(
-        readFileSync(sessionPath, 'utf-8')
-      )
+      const sessionData: SessionData = await sessionFile.json()
 
       await BrowserHelper.withBrowser(port, async browser => {
         const contexts = browser.contexts()
@@ -200,20 +193,18 @@ export class SessionManager {
     }
   }
 
-  static listSessions(): SessionData[] {
-    this.ensureSessionsDir()
+  static async listSessions(): Promise<SessionData[]> {
+    await this.ensureSessionsDir()
 
     try {
-      const files = readdirSync(SESSIONS_DIR).filter(file =>
-        file.endsWith('.json')
-      )
+      const glob = new Bun.Glob('*.json')
       const sessions: SessionData[] = []
 
-      for (const file of files) {
+      for await (const file of glob.scan(SESSIONS_DIR)) {
         try {
-          const sessionData: SessionData = JSON.parse(
-            readFileSync(join(SESSIONS_DIR, file), 'utf-8')
-          )
+          const sessionData: SessionData = await Bun.file(
+            join(SESSIONS_DIR, file)
+          ).json()
           sessions.push(sessionData)
         } catch {
           // Skip corrupted session files
@@ -232,19 +223,20 @@ export class SessionManager {
 
   static async deleteSession(name: string): Promise<void> {
     const sessionPath = this.getSessionPath(name)
+    const sessionFile = Bun.file(sessionPath)
 
-    if (!existsSync(sessionPath)) {
+    if (!(await sessionFile.exists())) {
       throw new Error(`Session '${name}' not found`)
     }
 
     try {
-      unlinkSync(sessionPath)
+      await Bun.$`rm ${sessionPath}`
     } catch (error: any) {
       throw new Error(`Failed to delete session: ${error.message}`)
     }
   }
 
-  static sessionExists(name: string): boolean {
-    return existsSync(this.getSessionPath(name))
+  static async sessionExists(name: string): Promise<boolean> {
+    return await Bun.file(this.getSessionPath(name)).exists()
   }
 }

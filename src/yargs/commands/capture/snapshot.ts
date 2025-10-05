@@ -134,7 +134,7 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
             const interactiveElements = extractInteractiveElements(snapshot)
 
             // Store refs in RefManager for later use
-            refManager.storeSnapshot(interactiveElements, tabId)
+            await refManager.storeSnapshot(interactiveElements, tabId)
 
             // Get detailed form information if --detailed flag is used
             let detailedFormInfo: any = null

@@ -83,7 +83,7 @@ export const hoverCommand = createCommand<HoverOptions>({
     // Resolve ref to selector if using --ref
     let actualSelector = selector
     if (ref) {
-      const storedSelector = refManager.getSelector(ref, tabId)
+      const storedSelector = await refManager.getSelector(ref, tabId)
       if (!storedSelector) {
         const errorMsg = `ref not found: Element with ref=${ref} not found`
         refLogger.error(chalk.red(`❌ ${errorMsg}`))

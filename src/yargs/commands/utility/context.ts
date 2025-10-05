@@ -196,8 +196,8 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
           }
 
           // Get recent actions
-          const recentActions = actionHistory.getRecentActions(5, tabId)
-          const lastAction = actionHistory.getLastAction(tabId)
+          const recentActions = await actionHistory.getRecentActions(5, tabId)
+          const lastAction = await actionHistory.getLastAction(tabId)
 
           return {
             page: {

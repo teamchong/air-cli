@@ -132,7 +132,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
 
     // Handle --ref mode (single field fill)
     if (ref) {
-      const storedSelector = refManager.getSelector(ref, tabId)
+      const storedSelector = await refManager.getSelector(ref, tabId)
       if (!storedSelector) {
         const errorMsg = `ref not found: Element with ref=${ref} not found`
         logger.error(chalk.red(`❌ ${errorMsg}`))
@@ -146,7 +146,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
           await page.fill(storedSelector, value, { timeout: timeout as number })
 
           // Track the fill action
-          actionHistory.addAction({
+          await actionHistory.addAction({
             type: 'fill',
             target: storedSelector,
             value: value,
@@ -228,7 +228,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
             await page.fill(selector, value, { timeout: timeout as number })
 
             // Track the fill action
-            actionHistory.addAction({
+            await actionHistory.addAction({
               type: 'fill',
               target: selector,
               value: value,
@@ -447,7 +447,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
             })
 
             // Track the fill action
-            actionHistory.addAction({
+            await actionHistory.addAction({
               type: 'fill',
               target: selectorPart,
               value: value,

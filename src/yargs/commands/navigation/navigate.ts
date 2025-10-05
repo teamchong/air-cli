@@ -118,7 +118,7 @@ export const navigateCommand = createCommand<NavigateOptions>({
         }
 
         // Track the navigation action
-        actionHistory.addAction({
+        await actionHistory.addAction({
           type: 'navigate',
           target: url,
           tabId: tabId,

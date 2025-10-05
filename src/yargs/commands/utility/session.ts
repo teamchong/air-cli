@@ -69,7 +69,7 @@ export const sessionCommand: CommandModule = {
             }
 
             // Check if session already exists
-            if (SessionManager.sessionExists(argv.name)) {
+            if (await SessionManager.sessionExists(argv.name)) {
               const msg = chalk.yellow(
                 `⚠️  Session '${argv.name}' already exists, updating...`
               )
@@ -158,7 +158,7 @@ export const sessionCommand: CommandModule = {
 
             if (error.message.includes('not found')) {
               logger.info('\n💡 Available sessions:')
-              const sessions = SessionManager.listSessions()
+              const sessions = await SessionManager.listSessions()
               if (sessions.length === 0) {
                 logger.info('   No saved sessions')
                 logger.info('   playwright session save <name>')
@@ -195,7 +195,7 @@ export const sessionCommand: CommandModule = {
         },
         handler: async argv => {
           try {
-            const sessions = SessionManager.listSessions()
+            const sessions = await SessionManager.listSessions()
 
             if (argv.json) {
               logger.info(JSON.stringify(sessions, null, 2))
@@ -266,7 +266,7 @@ export const sessionCommand: CommandModule = {
         },
         handler: async argv => {
           try {
-            if (!SessionManager.sessionExists(argv.name)) {
+            if (!(await SessionManager.sessionExists(argv.name))) {
               logger.info(chalk.red(`❌ Session '${argv.name}' not found`))
               throw new Error('Command failed')
             }

@@ -5,7 +5,6 @@
  * Persists history to a temp file to maintain state between command runs.
  */
 
-import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 
@@ -22,10 +21,12 @@ class ActionHistory {
   private actions: Action[] = []
   private maxActions = 10
   private historyFile: string
+  private loaded = false
+  private loadPromise: Promise<void> | null = null
+  private saveTimeout: Timer | null = null
 
   private constructor() {
     this.historyFile = path.join(os.tmpdir(), 'playwright-cli-actions.json')
-    this.loadActions()
   }
 
   static getInstance(): ActionHistory {
@@ -35,10 +36,20 @@ class ActionHistory {
     return ActionHistory.instance
   }
 
-  private loadActions(): void {
+  private async ensureLoaded(): Promise<void> {
+    if (this.loaded) return
+    if (this.loadPromise) return this.loadPromise
+
+    this.loadPromise = this.loadActions()
+    await this.loadPromise
+    this.loaded = true
+  }
+
+  private async loadActions(): Promise<void> {
     try {
-      if (fs.existsSync(this.historyFile)) {
-        const data = fs.readFileSync(this.historyFile, 'utf8')
+      const file = Bun.file(this.historyFile)
+      if (await file.exists()) {
+        const data = await file.text()
         const parsed = JSON.parse(data)
 
         // Convert timestamp strings back to Date objects and filter recent actions
@@ -58,14 +69,23 @@ class ActionHistory {
   }
 
   private saveActions(): void {
-    try {
-      fs.writeFileSync(this.historyFile, JSON.stringify(this.actions), 'utf8')
-    } catch (error) {
-      // Ignore save errors to prevent breaking commands
+    // Debounce: delay save by 100ms, cancel previous pending saves
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout)
     }
+
+    this.saveTimeout = setTimeout(async () => {
+      try {
+        await Bun.write(this.historyFile, JSON.stringify(this.actions))
+      } catch (error) {
+        // Ignore save errors to prevent breaking commands
+      }
+    }, 100)
   }
 
-  addAction(action: Omit<Action, 'timestamp'>): void {
+  async addAction(action: Omit<Action, 'timestamp'>): Promise<void> {
+    await this.ensureLoaded()
+
     this.actions.push({
       ...action,
       timestamp: new Date(),
@@ -76,11 +96,13 @@ class ActionHistory {
       this.actions = this.actions.slice(-this.maxActions)
     }
 
-    // Persist to file
+    // Persist to file (debounced)
     this.saveActions()
   }
 
-  getRecentActions(count = 5, tabId?: string): Action[] {
+  async getRecentActions(count = 5, tabId?: string): Promise<Action[]> {
+    await this.ensureLoaded()
+
     let filtered = this.actions
 
     if (tabId) {
@@ -90,7 +112,9 @@ class ActionHistory {
     return filtered.slice(-count)
   }
 
-  getLastAction(tabId?: string): Action | undefined {
+  async getLastAction(tabId?: string): Promise<Action | undefined> {
+    await this.ensureLoaded()
+
     const actions = tabId
       ? this.actions.filter(a => a.tabId === tabId)
       : this.actions
@@ -98,15 +122,16 @@ class ActionHistory {
     return actions[actions.length - 1]
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
+    await this.ensureLoaded()
     this.actions = []
     this.saveActions()
   }
 
   // Method for tests to clear history via CLI
-  static clearForTests(): void {
+  static async clearForTests(): Promise<void> {
     const instance = ActionHistory.getInstance()
-    instance.clear()
+    await instance.clear()
   }
 
   formatAction(action: Action): string {

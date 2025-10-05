@@ -142,7 +142,7 @@ export const clickCommand = createCommand<ClickOptions>({
       // Handle --ref flag
       if (ref) {
         // Try to get selector from RefManager first
-        const storedSelector = refManager.getSelector(ref, tabId)
+        const storedSelector = await refManager.getSelector(ref, tabId)
         if (storedSelector) {
           actualSelector = storedSelector
           if (spinner) {
@@ -220,7 +220,7 @@ export const clickCommand = createCommand<ClickOptions>({
         await page.click(actualSelector, clickOptions)
 
         // Track the click action
-        actionHistory.addAction({
+        await actionHistory.addAction({
           type: 'click',
           target: actualSelector,
           tabId: tabId,

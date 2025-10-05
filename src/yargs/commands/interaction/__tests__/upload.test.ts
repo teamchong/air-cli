@@ -27,14 +27,21 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     testFile2 = path.join(process.cwd(), 'test-upload-2.txt')
     fs.writeFileSync(testFile1, 'Test file 1 content')
     fs.writeFileSync(testFile2, 'Test file 2 content')
+  })
 
-    // Browser already running from global setup
-    // Create a dedicated test tab for this test suite and capture its ID
+  beforeEach(async () => {
+    // Create a fresh test tab for each test to ensure isolation
     const { output } = runCommand(
-      `${CLI} tabs new --url "data:text/html,<div id='test-container'>Upload Test Suite Ready</div>" --port ${TEST_PORT}`
+      `${CLI} tabs new --url "data:text/html,<div id='test-container'>Upload Test Ready</div>" --port ${TEST_PORT}`
     )
     testTabId = extractAndRegisterTabId(output)
-    console.log(`Upload test suite using tab ID: ${testTabId}`)
+  })
+
+  afterEach(async () => {
+    // Clean up test tab after each test
+    if (testTabId) {
+      closeTestTab(testTabId)
+    }
   })
 
   afterAll(async () => {
