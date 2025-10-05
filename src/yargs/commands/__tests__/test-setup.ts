@@ -5,21 +5,29 @@
  * Prevents hanging on stdin, process.exit, and other blocking operations.
  */
 
-import { vi, beforeEach, afterEach } from 'vitest'
+import { beforeEach, afterEach, mock, spyOn } from 'bun:test'
 import { Readable } from 'stream'
 
 // Store original values
 let originalStdin: NodeJS.ReadStream
 let originalExit: typeof process.exit
 let originalStdinResume: typeof process.stdin.resume
+const originalSetTimeout = global.setTimeout
+
+// Create mock functions to be reused
+const mockStdinResume = mock().mockReturnValue(process.stdin)
+const mockProcessExit = mock((code?: number) => {
+  throw new Error(`process.exit called with code ${code}`)
+})
 
 /**
  * Setup test environment before each test
  */
 export function setupTestEnvironment() {
   beforeEach(() => {
-    // Clear all mocks
-    vi.clearAllMocks()
+    // Clear mock call history
+    mockStdinResume.mockClear()
+    mockProcessExit.mockClear()
 
     // Save originals
     originalStdin = process.stdin
@@ -36,22 +44,20 @@ export function setupTestEnvironment() {
     })
 
     // Mock process.stdin.resume to prevent hanging
-    process.stdin.resume = vi.fn().mockReturnValue(process.stdin)
+    process.stdin.resume = mockStdinResume as any
 
     // Mock process.exit to prevent test process from exiting
-    process.exit = vi.fn((code?: number) => {
-      throw new Error(`process.exit called with code ${code}`)
-    }) as any
+    process.exit = mockProcessExit as any
 
     // Mock setTimeout for continuous monitoring commands
-    vi.spyOn(global, 'setTimeout').mockImplementation(
-      (fn: any, ms?: number) => {
+    spyOn(global, 'setTimeout').mockImplementation(
+      ((fn: any, ms?: number) => {
         if (ms && ms > 5000) {
           // Don't actually wait for long timeouts
           return {} as any
         }
         return originalSetTimeout(fn, ms)
-      }
+      }) as typeof setTimeout
     )
   })
 
@@ -66,58 +72,68 @@ export function setupTestEnvironment() {
     process.exit = originalExit
     process.stdin.resume = originalStdinResume
 
-    // Restore timers
-    vi.restoreAllMocks()
+    // Note: Bun doesn't have restoreAllMocks, spies are automatically cleaned up
   })
 }
-
-const originalSetTimeout = global.setTimeout
 
 /**
  * Mock fs module for file operations
  */
 export function mockFileSystem() {
-  vi.mock('fs', async () => {
-    const actual = await vi.importActual<typeof import('fs')>('fs')
-    return {
-      ...actual,
-      promises: {
-        ...actual.promises,
-        readFile: vi.fn().mockResolvedValue('// mock file content'),
-        writeFile: vi.fn().mockResolvedValue(undefined),
-        access: vi.fn().mockResolvedValue(undefined),
-        mkdir: vi.fn().mockResolvedValue(undefined),
-        readdir: vi.fn().mockResolvedValue([]),
-      },
-      existsSync: vi.fn().mockReturnValue(true),
-      readFileSync: vi.fn().mockReturnValue('// mock file content'),
-    }
-  })
+  const mockReadFile = mock().mockResolvedValue('// mock file content')
+  const mockWriteFile = mock().mockResolvedValue(undefined)
+  const mockAccess = mock().mockResolvedValue(undefined)
+  const mockMkdir = mock().mockResolvedValue(undefined)
+  const mockReaddir = mock().mockResolvedValue([])
+  const mockExistsSync = mock().mockReturnValue(true)
+  const mockReadFileSync = mock().mockReturnValue('// mock file content')
+
+  mock.module('fs', () => ({
+    promises: {
+      readFile: mockReadFile,
+      writeFile: mockWriteFile,
+      access: mockAccess,
+      mkdir: mockMkdir,
+      readdir: mockReaddir,
+    },
+    existsSync: mockExistsSync,
+    readFileSync: mockReadFileSync,
+  }))
 }
 
 /**
  * Mock child_process for spawn operations
  */
 export function mockChildProcess() {
-  vi.mock('child_process', () => ({
-    spawn: vi.fn(() => ({
-      unref: vi.fn(),
-      on: vi.fn((event, callback) => {
-        if (event === 'close') {
-          setTimeout(() => callback(0), 100)
-        }
-      }),
-      kill: vi.fn(),
-      pid: 12345,
-      stdout: {
-        on: vi.fn(),
-        pipe: vi.fn(),
-      },
-      stderr: {
-        on: vi.fn(),
-        pipe: vi.fn(),
-      },
-    })),
+  const mockUnref = mock()
+  const mockOn = mock((event, callback) => {
+    if (event === 'close') {
+      setTimeout(() => callback(0), 100)
+    }
+  })
+  const mockKill = mock()
+  const mockStdoutOn = mock()
+  const mockStdoutPipe = mock()
+  const mockStderrOn = mock()
+  const mockStderrPipe = mock()
+
+  const mockSpawn = mock(() => ({
+    unref: mockUnref,
+    on: mockOn,
+    kill: mockKill,
+    pid: 12345,
+    stdout: {
+      on: mockStdoutOn,
+      pipe: mockStdoutPipe,
+    },
+    stderr: {
+      on: mockStderrOn,
+      pipe: mockStderrPipe,
+    },
+  }))
+
+  mock.module('child_process', () => ({
+    spawn: mockSpawn,
   }))
 }
 
@@ -126,72 +142,85 @@ export function mockChildProcess() {
  */
 export function mockBrowserHelper() {
   const mockPage = {
-    goto: vi.fn().mockResolvedValue(undefined),
-    url: vi.fn().mockReturnValue('about:blank'),
-    click: vi.fn().mockResolvedValue(undefined),
-    type: vi.fn().mockResolvedValue(undefined),
-    fill: vi.fn().mockResolvedValue(undefined),
-    press: vi.fn().mockResolvedValue(undefined),
-    hover: vi.fn().mockResolvedValue(undefined),
-    selectOption: vi.fn().mockResolvedValue(undefined),
-    dragAndDrop: vi.fn().mockResolvedValue(undefined),
-    setInputFiles: vi.fn().mockResolvedValue(undefined),
-    waitForSelector: vi.fn().mockResolvedValue(undefined),
-    screenshot: vi.fn().mockResolvedValue(Buffer.from('fake')),
-    pdf: vi.fn().mockResolvedValue(Buffer.from('fake')),
-    evaluate: vi.fn().mockResolvedValue(undefined),
-    on: vi.fn(),
-    close: vi.fn().mockResolvedValue(undefined),
-    title: vi.fn().mockResolvedValue('Test Page'),
-    content: vi.fn().mockResolvedValue('<html></html>'),
-    locator: vi.fn().mockReturnValue({
-      click: vi.fn().mockResolvedValue(undefined),
-      fill: vi.fn().mockResolvedValue(undefined),
-      hover: vi.fn().mockResolvedValue(undefined),
-      press: vi.fn().mockResolvedValue(undefined),
+    goto: mock().mockResolvedValue(undefined),
+    url: mock().mockReturnValue('about:blank'),
+    click: mock().mockResolvedValue(undefined),
+    type: mock().mockResolvedValue(undefined),
+    fill: mock().mockResolvedValue(undefined),
+    press: mock().mockResolvedValue(undefined),
+    hover: mock().mockResolvedValue(undefined),
+    selectOption: mock().mockResolvedValue(undefined),
+    dragAndDrop: mock().mockResolvedValue(undefined),
+    setInputFiles: mock().mockResolvedValue(undefined),
+    waitForSelector: mock().mockResolvedValue(undefined),
+    screenshot: mock().mockResolvedValue(Buffer.from('fake')),
+    pdf: mock().mockResolvedValue(Buffer.from('fake')),
+    evaluate: mock().mockResolvedValue(undefined),
+    on: mock(),
+    close: mock().mockResolvedValue(undefined),
+    title: mock().mockResolvedValue('Test Page'),
+    content: mock().mockResolvedValue('<html></html>'),
+    locator: mock().mockReturnValue({
+      click: mock().mockResolvedValue(undefined),
+      fill: mock().mockResolvedValue(undefined),
+      hover: mock().mockResolvedValue(undefined),
+      press: mock().mockResolvedValue(undefined),
     }),
-    goBack: vi.fn().mockResolvedValue(undefined),
-    reload: vi.fn().mockResolvedValue(undefined),
-    setViewportSize: vi.fn().mockResolvedValue(undefined),
+    goBack: mock().mockResolvedValue(undefined),
+    reload: mock().mockResolvedValue(undefined),
+    setViewportSize: mock().mockResolvedValue(undefined),
     accessibility: {
-      snapshot: vi.fn().mockResolvedValue({ role: 'WebArea', children: [] }),
+      snapshot: mock().mockResolvedValue({ role: 'WebArea', children: [] }),
     },
-    context: vi.fn().mockReturnValue({
-      browser: vi.fn().mockReturnValue({}),
+    context: mock().mockReturnValue({
+      browser: mock().mockReturnValue({}),
     }),
   }
 
-  vi.mock('../../../../lib/browser-helper', () => ({
+  const mockContexts = mock().mockReturnValue([
+    {
+      pages: mock().mockReturnValue([mockPage]),
+      newPage: mock().mockResolvedValue(mockPage),
+      setDefaultTimeout: mock(),
+    },
+  ])
+
+  const mockGetBrowser = mock().mockResolvedValue({
+    contexts: mockContexts,
+    close: mock().mockResolvedValue(undefined),
+  })
+
+  const mockGetActivePage = mock().mockResolvedValue(mockPage)
+
+  const mockWithActivePage = mock().mockImplementation(async (_port, callback) => {
+    return callback(mockPage)
+  })
+
+  const mockWithBrowser = mock().mockImplementation(async (_port, callback) => {
+    const mockBrowser = {
+      contexts: mock().mockReturnValue([
+        {
+          pages: mock().mockReturnValue([mockPage]),
+          newPage: mock().mockResolvedValue(mockPage),
+          setDefaultTimeout: mock(),
+        },
+      ]),
+      close: mock().mockResolvedValue(undefined),
+    }
+    return callback(mockBrowser)
+  })
+
+  const mockLaunchChrome = mock().mockResolvedValue(undefined)
+  const mockIsPortOpen = mock().mockResolvedValue(false)
+
+  mock.module('../../../../lib/browser-helper', () => ({
     BrowserHelper: {
-      getBrowser: vi.fn().mockResolvedValue({
-        contexts: vi.fn().mockReturnValue([
-          {
-            pages: vi.fn().mockReturnValue([mockPage]),
-            newPage: vi.fn().mockResolvedValue(mockPage),
-            setDefaultTimeout: vi.fn(),
-          },
-        ]),
-        close: vi.fn().mockResolvedValue(undefined),
-      }),
-      getActivePage: vi.fn().mockResolvedValue(mockPage),
-      withActivePage: vi.fn().mockImplementation(async (_port, callback) => {
-        return callback(mockPage)
-      }),
-      withBrowser: vi.fn().mockImplementation(async (_port, callback) => {
-        const mockBrowser = {
-          contexts: vi.fn().mockReturnValue([
-            {
-              pages: vi.fn().mockReturnValue([mockPage]),
-              newPage: vi.fn().mockResolvedValue(mockPage),
-              setDefaultTimeout: vi.fn(),
-            },
-          ]),
-          close: vi.fn().mockResolvedValue(undefined),
-        }
-        return callback(mockBrowser)
-      }),
-      launchChrome: vi.fn().mockResolvedValue(undefined),
-      isPortOpen: vi.fn().mockResolvedValue(false),
+      getBrowser: mockGetBrowser,
+      getActivePage: mockGetActivePage,
+      withActivePage: mockWithActivePage,
+      withBrowser: mockWithBrowser,
+      launchChrome: mockLaunchChrome,
+      isPortOpen: mockIsPortOpen,
     },
   }))
 

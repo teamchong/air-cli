@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, spyOn, mock } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach, spyOn, mock } from 'bun:test'
 import chalk from 'chalk'
 import {
   environmentConfigMiddleware,
@@ -18,11 +18,15 @@ import {
 } from '../global-options'
 import type { BaseCommandOptions } from '../../types'
 
+// Create mock functions
+const mockGetLastUsedBrowser = mock().mockResolvedValue('chrome')
+const mockSaveLastUsedBrowser = mock().mockResolvedValue(undefined)
+
 // Mock the BrowserConfig module
-vi.mock('../../../lib/browser-config', () => ({
+mock.module('../../../lib/browser-config', () => ({
   BrowserConfig: {
-    getLastUsedBrowser: mock().mockResolvedValue('chrome'),
-    saveLastUsedBrowser: mock().mockResolvedValue(undefined),
+    getLastUsedBrowser: mockGetLastUsedBrowser,
+    saveLastUsedBrowser: mockSaveLastUsedBrowser,
   },
 }))
 
@@ -34,7 +38,8 @@ describe('Global Options Middleware', () => {
     originalEnv = { ...process.env }
     originalChalkLevel = chalk.level
     resetGlobalState()
-    vi.clearAllMocks()
+    mockGetLastUsedBrowser.mockClear()
+    mockSaveLastUsedBrowser.mockClear()
   })
 
   afterEach(() => {

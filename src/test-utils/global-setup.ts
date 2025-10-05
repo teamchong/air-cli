@@ -1,14 +1,16 @@
 /**
- * Global Test Setup
+ * Global Test Setup for Bun
  *
- * Sets up browser session for all tests with proper tab management
+ * Executes on import to set up browser session for all tests
+ * Use with: bun test --preload ./src/test-utils/global-setup.ts
  */
 
 import { execSync } from 'child_process'
 import { TabManager } from './tab-manager'
 import { TEST_PORT } from './test-constants'
 
-export default async function setup() {
+// Execute setup immediately when this module is imported
+;(async function globalSetup() {
   console.log('🚀 Setting up browser for all tests...')
 
   try {
@@ -65,8 +67,20 @@ export default async function setup() {
       // Mark as persistent so tests don't accidentally close it
       process.env.ANCHOR_TAB_ID = anchorTabId
     }
+
+    // Register cleanup on process exit
+    process.on('exit', () => {
+      console.log('🧹 Cleaning up browser session...')
+      try {
+        execSync(`bun run src/index.ts close --port ${TEST_PORT}`, { stdio: 'ignore' })
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+    })
   } catch (error) {
     console.error('❌ Global setup failed:', error)
     throw error
   }
-}
+})()
+
+export {}

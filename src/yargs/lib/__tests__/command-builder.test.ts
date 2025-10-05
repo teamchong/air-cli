@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, spyOn, mock } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach, spyOn, mock } from 'bun:test'
 import {
   createCommand,
   createLogger,
@@ -13,9 +13,8 @@ import {
 import type { BaseCommandOptions, CommandMetadata } from '../../types'
 
 describe('Command Builder', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+  // No mocks to clear in beforeEach
+  beforeEach(() => {})
 
   describe('createCommand', () => {
     it('should create a command with proper structure', () => {

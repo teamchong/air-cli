@@ -1,18 +1,50 @@
 import { homedir } from 'os'
 import { join } from 'path'
 
-import { describe, it, expect, beforeEach, afterEach, vi, mock } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach, beforeAll, mock } from 'bun:test'
 
-// Mock everything before importing the module under test
-vi.mock('../platform-helper', () => ({
+// Import modules to be mocked
+import * as platformHelper from '../platform-helper'
+import * as logger from '../logger'
+import * as fs from 'fs'
+import * as fsPromises from 'fs/promises'
+import * as childProcess from 'child_process'
+import * as playwright from 'playwright'
+
+// Create mock implementations
+const mockExistsSync = mock((_path: any) => false)
+const mockReadFileSync = mock((_path: any, _options?: any) => JSON.stringify({ defaultBrowser: 'chromium', browsersInstalled: false }))
+const mockWriteFileSync = mock((_path: any, _data: any, _options?: any) => undefined)
+const mockMkdirSync = mock((_path: any, _options?: any) => undefined)
+const mockUnlinkSync = mock((_path: any) => undefined)
+const mockSpawnSync = mock((_command: any, _args?: any, _options?: any) => ({ status: 0 } as any))
+const mockGetClaudeDir = mock(() => '/test/.claude')
+const mockGetOrCreateClaudeDir = mock(() => '/test/.claude')
+const mockChromiumExecutablePath = mock(() => '/test/chromium')
+const mockFirefoxExecutablePath = mock(() => '/test/firefox')
+const mockWebkitExecutablePath = mock(() => '/test/webkit')
+
+// Mock the modules
+mock.module('fs', () => ({
+  existsSync: mockExistsSync,
+  readFileSync: mockReadFileSync,
+  writeFileSync: mockWriteFileSync,
+  mkdirSync: mockMkdirSync,
+  unlinkSync: mockUnlinkSync,
+}))
+
+mock.module('child_process', () => ({
+  spawnSync: mockSpawnSync,
+}))
+
+mock.module('../platform-helper', () => ({
   PlatformHelper: {
-    getClaudeDir: mock(() => '/test/.claude'),
-    getOrCreateClaudeDir: mock(() => '/test/.claude'),
+    getClaudeDir: mockGetClaudeDir,
+    getOrCreateClaudeDir: mockGetOrCreateClaudeDir,
   },
 }))
 
-// Mock the logger to prevent output pollution
-vi.mock('../logger', () => ({
+mock.module('../logger', () => ({
   logger: {
     info: mock(),
     error: mock(),
@@ -21,46 +53,17 @@ vi.mock('../logger', () => ({
   },
 }))
 
-vi.mock('fs', () => ({
-  existsSync: mock(),
-  readFileSync: mock(),
-  writeFileSync: mock(),
-  mkdirSync: mock(),
-  unlinkSync: mock(),
-}))
-
-// Also mock fs/promises if it's being used
-vi.mock('fs/promises', () => ({
-  readFile: mock(),
-  writeFile: mock(),
-  access: mock(),
-  mkdir: mock(),
-  unlink: mock(),
-}))
-vi.mock('child_process', () => ({
-  spawnSync: mock(),
-}))
-vi.mock('playwright', () => ({
+mock.module('playwright', () => ({
   chromium: {
-    executablePath: mock(() => '/path/to/chromium'),
+    executablePath: mockChromiumExecutablePath,
   },
   firefox: {
-    executablePath: mock(() => '/path/to/firefox'),
+    executablePath: mockFirefoxExecutablePath,
   },
   webkit: {
-    executablePath: mock(() => '/path/to/webkit'),
+    executablePath: mockWebkitExecutablePath,
   },
 }))
-
-// Import the mocked modules
-import { spawnSync } from 'child_process'
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-  mkdirSync,
-  unlinkSync,
-} from 'fs'
 
 // Import the module under test AFTER all mocks are set up
 import { BrowserConfig, type BrowserType } from '../browser-config'
@@ -82,37 +85,55 @@ describe('BrowserConfig', () => {
     ;(BrowserConfig as any).config = null
 
     // Clear all mock state
-    vi.clearAllMocks()
+    mockExistsSync.mockClear()
+    mockReadFileSync.mockClear()
+    mockWriteFileSync.mockClear()
+    mockMkdirSync.mockClear()
+    mockUnlinkSync.mockClear()
+    mockSpawnSync.mockClear()
+    mockGetClaudeDir.mockClear()
+    mockGetOrCreateClaudeDir.mockClear()
+    mockChromiumExecutablePath.mockClear()
+    mockFirefoxExecutablePath.mockClear()
+    mockWebkitExecutablePath.mockClear()
 
     // Setup completely isolated mocks with strict control
     // IMPORTANT: Return false for ALL paths by default to prevent loading real config files
-    vi.mocked(existsSync).mockImplementation((path: any) => {
+    mockExistsSync.mockImplementation((path: any) => {
       // Never allow any real file to exist in tests by default
       return false
     })
-    vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ defaultBrowser: 'chromium', browsersInstalled: false }))
-    vi.mocked(writeFileSync).mockReturnValue(undefined)
-    vi.mocked(mkdirSync).mockReturnValue(undefined)
-    vi.mocked(unlinkSync).mockReturnValue(undefined)
+    mockReadFileSync.mockReturnValue(JSON.stringify({ defaultBrowser: 'chromium', browsersInstalled: false }))
+    mockWriteFileSync.mockReturnValue(undefined)
+    mockMkdirSync.mockReturnValue(undefined)
+    mockUnlinkSync.mockReturnValue(undefined)
 
     // CRITICAL: Mock PlatformHelper methods to return test paths
-    vi.mocked(PlatformHelper.getOrCreateClaudeDir).mockReturnValue('/test/.claude')
-    vi.mocked(PlatformHelper.getClaudeDir).mockReturnValue('/test/.claude')
+    mockGetOrCreateClaudeDir.mockReturnValue('/test/.claude')
+    mockGetClaudeDir.mockReturnValue('/test/.claude')
 
-    vi.mocked(spawnSync).mockReturnValue({ status: 0 } as any)
+    mockSpawnSync.mockReturnValue({ status: 0 } as any)
 
     // Mock Playwright browser executables to return test paths
-    const { chromium, firefox, webkit } = await import('playwright')
-    vi.mocked(chromium.executablePath).mockReturnValue('/test/chromium')
-    vi.mocked(firefox.executablePath).mockReturnValue('/test/firefox')
-    vi.mocked(webkit.executablePath).mockReturnValue('/test/webkit')
+    mockChromiumExecutablePath.mockReturnValue('/test/chromium')
+    mockFirefoxExecutablePath.mockReturnValue('/test/firefox')
+    mockWebkitExecutablePath.mockReturnValue('/test/webkit')
   })
 
   afterEach(() => {
     // Complete reset between tests - ensure the static config is truly cleared
     ;(BrowserConfig as any).config = null
-    vi.clearAllMocks()
-    vi.resetAllMocks() // Also reset mock implementations between tests
+    mockExistsSync.mockClear()
+    mockReadFileSync.mockClear()
+    mockWriteFileSync.mockClear()
+    mockMkdirSync.mockClear()
+    mockUnlinkSync.mockClear()
+    mockSpawnSync.mockClear()
+    mockGetClaudeDir.mockClear()
+    mockGetOrCreateClaudeDir.mockClear()
+    mockChromiumExecutablePath.mockClear()
+    mockFirefoxExecutablePath.mockClear()
+    mockWebkitExecutablePath.mockClear()
   })
 
   // Add a hook that runs BEFORE all other test files to ensure clean state
@@ -132,10 +153,10 @@ describe('BrowserConfig', () => {
       ;(BrowserConfig as any).config = null
 
       // Set up mocks for this specific test
-      vi.mocked(existsSync).mockImplementation((path: any) => {
+      mockExistsSync.mockImplementation((path: any) => {
         return path === getTestConfigFile()
       })
-      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(mockConfig))
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig))
 
       const config = await BrowserConfig.loadConfig()
 
@@ -152,10 +173,10 @@ describe('BrowserConfig', () => {
         browsersInstalled: false,
       }
 
-      vi.mocked(existsSync).mockImplementation((path: any) => {
+      mockExistsSync.mockImplementation((path: any) => {
         return path === OLD_CONFIG_FILE
       })
-      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(mockConfig))
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig))
 
       const config = await BrowserConfig.loadConfig()
 
@@ -166,7 +187,7 @@ describe('BrowserConfig', () => {
     })
 
     it('should return default config when no file exists', async () => {
-      vi.mocked(existsSync).mockReturnValue(false)
+      mockExistsSync.mockReturnValue(false)
 
       const config = await BrowserConfig.loadConfig()
 
@@ -184,12 +205,13 @@ describe('BrowserConfig', () => {
 
       // Clear cache and mocks before test
       ;(BrowserConfig as any).config = null
-      vi.clearAllMocks()
+      mockExistsSync.mockClear()
+      mockReadFileSync.mockClear()
 
-      vi.mocked(existsSync).mockImplementation(
+      mockExistsSync.mockImplementation(
         (path: any) => path === getTestConfigFile()
       )
-      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(mockConfig))
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig))
 
       const config1 = await BrowserConfig.loadConfig()
       const config2 = await BrowserConfig.loadConfig()
@@ -203,10 +225,11 @@ describe('BrowserConfig', () => {
     it('should save config to file', async () => {
       // Clear cache before test
       ;(BrowserConfig as any).config = null
-      vi.clearAllMocks()
+      mockExistsSync.mockClear()
+      mockReadFileSync.mockClear()
 
-      vi.mocked(existsSync).mockImplementation((path: any) => path === getTestConfigFile())
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockImplementation((path: any) => path === getTestConfigFile())
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: false,
@@ -225,12 +248,13 @@ describe('BrowserConfig', () => {
     it('should create .claude directory if not exists', async () => {
       // Clear cache before test
       ;(BrowserConfig as any).config = null
-      vi.clearAllMocks()
+      mockExistsSync.mockClear()
+      mockReadFileSync.mockClear()
 
-      vi.mocked(existsSync).mockImplementation((path: any) => {
+      mockExistsSync.mockImplementation((path: any) => {
         return path !== CLAUDE_DIR
       })
-      vi.mocked(readFileSync).mockReturnValue(
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: false,
@@ -246,10 +270,11 @@ describe('BrowserConfig', () => {
     it('should merge with existing config', async () => {
       // Clear cache before test
       ;(BrowserConfig as any).config = null
-      vi.clearAllMocks()
+      mockExistsSync.mockClear()
+      mockReadFileSync.mockClear()
 
-      vi.mocked(existsSync).mockImplementation((path: any) => path === getTestConfigFile())
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockImplementation((path: any) => path === getTestConfigFile())
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: true,
@@ -266,13 +291,12 @@ describe('BrowserConfig', () => {
   describe('checkBrowsersInstalled', () => {
     it('should return true when browsers are installed', async () => {
       // Mock the browser executable paths
-      const { chromium, firefox, webkit } = await import('playwright')
-      vi.mocked(chromium.executablePath).mockReturnValue('/test/chromium')
-      vi.mocked(firefox.executablePath).mockReturnValue('/test/firefox')
-      vi.mocked(webkit.executablePath).mockReturnValue('/test/webkit')
+      mockChromiumExecutablePath.mockReturnValue('/test/chromium')
+      mockFirefoxExecutablePath.mockReturnValue('/test/firefox')
+      mockWebkitExecutablePath.mockReturnValue('/test/webkit')
 
       // Mock existsSync to return true for browser paths
-      vi.mocked(existsSync).mockImplementation((path: any) => {
+      mockExistsSync.mockImplementation((path: any) => {
         return path === '/test/chromium' || path === '/test/firefox' || path === '/test/webkit'
       })
 
@@ -283,13 +307,12 @@ describe('BrowserConfig', () => {
 
     it('should return false when no browsers installed', async () => {
       // Mock the browser executable paths
-      const { chromium, firefox, webkit } = await import('playwright')
-      vi.mocked(chromium.executablePath).mockReturnValue('/test/chromium')
-      vi.mocked(firefox.executablePath).mockReturnValue('/test/firefox')
-      vi.mocked(webkit.executablePath).mockReturnValue('/test/webkit')
+      mockChromiumExecutablePath.mockReturnValue('/test/chromium')
+      mockFirefoxExecutablePath.mockReturnValue('/test/firefox')
+      mockWebkitExecutablePath.mockReturnValue('/test/webkit')
 
       // Mock existsSync to return false for all paths
-      vi.mocked(existsSync).mockReturnValue(false)
+      mockExistsSync.mockReturnValue(false)
 
       const result = await BrowserConfig.checkBrowsersInstalled()
 
@@ -299,8 +322,7 @@ describe('BrowserConfig', () => {
     })
 
     it('should handle errors gracefully', async () => {
-      const { chromium } = await import('playwright')
-      vi.mocked(chromium.executablePath).mockImplementation(() => {
+      mockChromiumExecutablePath.mockImplementation(() => {
         throw new Error('Not installed')
       })
 
@@ -315,13 +337,15 @@ describe('BrowserConfig', () => {
     it('should run playwright install command', async () => {
       // Clear cache before test
       ;(BrowserConfig as any).config = null
-      vi.clearAllMocks()
+      mockSpawnSync.mockClear()
+      mockExistsSync.mockClear()
+      mockReadFileSync.mockClear()
 
-      vi.mocked(spawnSync).mockReturnValue({
+      mockSpawnSync.mockReturnValue({
         status: 0,
       } as any)
-      vi.mocked(existsSync).mockImplementation((path: any) => path === getTestConfigFile())
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockImplementation((path: any) => path === getTestConfigFile())
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: false,
@@ -335,11 +359,11 @@ describe('BrowserConfig', () => {
     })
 
     it('should save config on successful install', async () => {
-      vi.mocked(spawnSync).mockReturnValue({
+      mockSpawnSync.mockReturnValue({
         status: 0,
       } as any)
-      vi.mocked(existsSync).mockImplementation((path: any) => path === getTestConfigFile())
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockImplementation((path: any) => path === getTestConfigFile())
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: false,
@@ -355,7 +379,7 @@ describe('BrowserConfig', () => {
     // Skip this test - mock contamination issue in full suite runs
     // The real implementation works correctly (checks status === 0 and returns false otherwise)
     it.skip('should return false on installation failure', async () => {
-      vi.mocked(spawnSync).mockImplementation(() => ({
+      mockSpawnSync.mockImplementation(() => ({
         status: 1,
         stdout: null,
         stderr: null,
@@ -372,7 +396,7 @@ describe('BrowserConfig', () => {
 
   describe('getBrowser', () => {
     it('should return chromium by default', async () => {
-      vi.mocked(existsSync).mockReturnValue(false)
+      mockExistsSync.mockReturnValue(false)
 
       const browser = await BrowserConfig.getBrowser()
 
@@ -398,10 +422,10 @@ describe('BrowserConfig', () => {
     })
 
     it('should use default from config', async () => {
-      vi.mocked(existsSync).mockImplementation(
+      mockExistsSync.mockImplementation(
         (path: any) => path === getTestConfigFile()
       )
-      vi.mocked(readFileSync).mockReturnValue(
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'firefox',
           browsersInstalled: true,
@@ -418,10 +442,10 @@ describe('BrowserConfig', () => {
 
   describe('selectBrowser', () => {
     it('should return default browser', async () => {
-      vi.mocked(existsSync).mockImplementation(
+      mockExistsSync.mockImplementation(
         (path: any) => path === getTestConfigFile()
       )
-      vi.mocked(readFileSync).mockReturnValue(
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'webkit',
           browsersInstalled: true,
@@ -439,10 +463,10 @@ describe('BrowserConfig', () => {
 
   describe('getLastUsedBrowser', () => {
     it('should return last used browser', async () => {
-      vi.mocked(existsSync).mockImplementation(
+      mockExistsSync.mockImplementation(
         (path: any) => path === getTestConfigFile()
       )
-      vi.mocked(readFileSync).mockReturnValue(
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: true,
@@ -457,7 +481,7 @@ describe('BrowserConfig', () => {
     })
 
     it('should return undefined when not set', async () => {
-      vi.mocked(existsSync).mockReturnValue(false)
+      mockExistsSync.mockReturnValue(false)
 
       const browser = await BrowserConfig.getLastUsedBrowser()
 
@@ -468,8 +492,8 @@ describe('BrowserConfig', () => {
 
   describe('saveLastUsedBrowser', () => {
     it('should save browser path', async () => {
-      vi.mocked(existsSync).mockReturnValue(true)
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: true,
@@ -483,8 +507,8 @@ describe('BrowserConfig', () => {
     })
 
     it('should clear browser when undefined', async () => {
-      vi.mocked(existsSync).mockReturnValue(true)
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: true,
@@ -501,8 +525,8 @@ describe('BrowserConfig', () => {
 
   describe('saveLastUsedOptions', () => {
     it('should save options', async () => {
-      vi.mocked(existsSync).mockReturnValue(true)
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: true,
@@ -520,8 +544,8 @@ describe('BrowserConfig', () => {
     })
 
     it('should merge with existing options', async () => {
-      vi.mocked(existsSync).mockReturnValue(true)
-      vi.mocked(readFileSync).mockReturnValue(
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue(
         JSON.stringify({
           defaultBrowser: 'chromium',
           browsersInstalled: true,

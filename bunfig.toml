@@ -1,10 +1,4 @@
 [test]
-# Global test setup
-preload = [
-  "./src/test-utils/global-setup.ts",
-  "./src/test-utils/per-file-setup.ts"
-]
-
 # Test timeout (in milliseconds)
 timeout = 30000
 
