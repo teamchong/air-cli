@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
-import * as fs from 'fs'
+import * as path from 'path'
 import {
   runCommand,
   extractAndRegisterTabId,
@@ -18,6 +18,7 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
  */
 describe('exec command - TAB ID FROM OUTPUT', () => {
   let testTabId: string
+  const testScriptPath = path.join(__dirname, '../../../../test-utils/fixtures/simple-script.js')
 
   beforeAll(async () => {
     // Browser already running from global setup
@@ -27,21 +28,9 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
     )
     testTabId = extractAndRegisterTabId(output)
     console.log(`Exec test suite using tab ID: ${testTabId}`)
-
-    // Create a test JavaScript file
-    fs.writeFileSync(
-      '/tmp/test-script.js',
-      'console.log("Hello from test script"); console.log(2 + 3);'
-    )
   })
 
   afterAll(async () => {
-    // Clean up test file
-    try {
-      if (fs.existsSync('/tmp/test-script.js'))
-        fs.unlinkSync('/tmp/test-script.js')
-    } catch {}
-
     // Clean up test tab
     if (testTabId) {
       closeTestTab(testTabId)
@@ -61,7 +50,7 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
   describe('direct tab targeting with captured ID', () => {
     it('should execute JavaScript file using captured tab ID', () => {
       const { exitCode, output } = runCommand(
-        `${CLI} exec /tmp/test-script.js --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} exec "${testScriptPath}" --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
       expect(output).toContain('Hello from test script')
@@ -78,7 +67,7 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
 
     it('should handle invalid tab ID', () => {
       const { output, exitCode } = runCommand(
-        `${CLI} exec /tmp/test-script.js --tab-id "INVALID_ID" --port ${TEST_PORT}`,
+        `${CLI} exec "${testScriptPath}" --tab-id "INVALID_ID" --port ${TEST_PORT}`,
         5000
       )
       expect(exitCode).toBe(1)
@@ -87,7 +76,7 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
 
     it('should prevent conflicting tab arguments', () => {
       const { output, exitCode } = runCommand(
-        `${CLI} exec /tmp/test-script.js --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
+        `${CLI} exec "${testScriptPath}" --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         10000
       )
       expect(exitCode).toBe(1)
