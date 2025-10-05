@@ -34,14 +34,14 @@ export function closeTestTab(tabId: string): void {
   if (!tabId) return
 
   try {
-    execSync(`${CLI} tabs close --tab-id ${tabId} --port ${TEST_PORT}`, {
-      encoding: 'utf8',
-      timeout: 3000,
-    })
-    // Remove from tracking since we closed it
-    TabManager.unregisterTab(tabId)
+    // Use TabManager to get clean env (no verbose/quiet conflicts)
+    TabManager.runCommand(
+      `${CLI} tabs close --tab-id ${tabId} --port ${TEST_PORT}`,
+      5000
+    )
+    console.log(`Closed test tab ${tabId}`)
   } catch (error) {
-    // Tab might already be closed
+    // Silently ignore cleanup errors
   }
 }
 
