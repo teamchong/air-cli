@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 import { execSync } from 'child_process'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 
 /**
  * Multi-Field Fill Tests
@@ -8,7 +9,6 @@ import { execSync } from 'child_process'
  * form fields in a single command
  */
 describe('multi-field fill command enhancement', () => {
-  const CLI = 'node dist/src/index.js'
   const TEST_PORT = 19222
   let testTabId: string
 

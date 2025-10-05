@@ -8,7 +8,7 @@ import {
   afterEach,
 } from 'bun:test'
 import { execSync } from 'child_process'
-import { TEST_PORT } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 /**
  * Simplified Press Command Tests - TAB ID FROM COMMAND OUTPUT
  *
@@ -19,7 +19,6 @@ import { TEST_PORT } from '../../../../test-utils/test-constants'
  * - NO TAB MANAGEMENT - let global setup handle browser lifecycle
  */
 describe('press command - TAB ID FROM OUTPUT', () => {
-  const CLI = 'node dist/src/index.js'
   let testTabId: string
 
   function runCommand(

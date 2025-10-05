@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync } from 'child_process'
+import { CLI } from '../../../../test-utils/test-constants'
 
 /**
  * Real Session Command Tests
@@ -8,7 +9,6 @@ import { execSync } from 'child_process'
  * NO MOCKS - everything is tested against a real implementation.
  */
 describe('session command - REAL TESTS', () => {
-  const CLI = 'node dist/src/index.js'
 
   // Helper to run command and check it doesn't hang
   function runCommand(

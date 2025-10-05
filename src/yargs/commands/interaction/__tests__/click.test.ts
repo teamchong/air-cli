@@ -13,7 +13,7 @@ import {
   runCommand,
   closeTestTab,
 } from '../../../../test-utils/test-helpers'
-import { TEST_PORT } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 
 /**
  * Simplified Click Command Tests - TAB ID FROM COMMAND OUTPUT
@@ -25,7 +25,6 @@ import { TEST_PORT } from '../../../../test-utils/test-constants'
  * - NO TAB MANAGEMENT - let global setup handle browser lifecycle
  */
 describe('click command - TAB ID FROM OUTPUT', () => {
-  const CLI = 'node dist/src/index.js'
   let testTabId: string
 
   beforeAll(async () => {

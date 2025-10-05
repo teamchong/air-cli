@@ -5,6 +5,7 @@ import {
   closeTestTab,
   runCommand,
 } from '../../test-utils/test-helpers'
+import { TEST_PORT, CLI } from '../../test-utils/test-constants'
 
 /**
  * Browser Helper Real Integration Tests
@@ -13,7 +14,6 @@ import {
  * via CLI commands instead of mocks.
  */
 describe('BrowserHelper - Real Integration', () => {
-  const CLI = 'node dist/src/index.js'
   const TEST_PORT = 19222  // Use same test port as global setup
   let testTabId: string
 

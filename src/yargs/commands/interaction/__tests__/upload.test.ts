@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { TEST_PORT } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 /**
  * Simplified Upload Command Tests - TAB ID FROM COMMAND OUTPUT
  *
@@ -13,7 +13,6 @@ import { TEST_PORT } from '../../../../test-utils/test-constants'
  * - NO TAB MANAGEMENT - let global setup handle browser lifecycle
  */
 describe('upload command - TAB ID FROM OUTPUT', () => {
-  const CLI = 'node dist/src/index.js'
   let testTabId: string
   let testFile1: string
   let testFile2: string

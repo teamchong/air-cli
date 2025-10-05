@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync } from 'child_process'
-import { TEST_PORT } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 /**
  * Real Perf Command Tests
  *
@@ -8,7 +8,6 @@ import { TEST_PORT } from '../../../../test-utils/test-constants'
  * NO MOCKS - everything is tested against a real implementation.
  */
 describe('perf command - REAL TESTS', () => {
-  const CLI = 'node dist/src/index.js'
 
   // Helper to run command and check it doesn't hang
   function runCommand(

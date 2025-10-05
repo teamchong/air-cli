@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync, spawn } from 'child_process'
+import { CLI } from '../../../../test-utils/test-constants'
 
 /**
  * Real Codegen Command Tests
@@ -10,7 +11,6 @@ import { execSync, spawn } from 'child_process'
  * as that would require GUI interaction.
  */
 describe('codegen command - REAL TESTS', () => {
-  const CLI = 'node dist/src/index.js'
 
   // Helper to run command and check it doesn't hang
   function runCommand(
