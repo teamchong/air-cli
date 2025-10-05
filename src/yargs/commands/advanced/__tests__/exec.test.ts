@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
-import { execSync } from 'child_process'
 import * as fs from 'fs'
+import {
+  runCommand,
+  extractAndRegisterTabId,
+  closeTestTab,
+} from '../../../../test-utils/test-helpers'
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 
 /**
@@ -15,42 +19,13 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 describe('exec command - TAB ID FROM OUTPUT', () => {
   let testTabId: string
 
-  function runCommand(
-    cmd: string,
-    timeout = 5000
-  ): { output: string; exitCode: number } {
-    try {
-      const output = execSync(cmd, {
-        encoding: 'utf8',
-        timeout,
-        env: { ...process.env, NODE_ENV: undefined },
-        stdio: 'pipe',
-      })
-      return { output, exitCode: 0 }
-    } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out (hanging): ${cmd}`)
-      }
-      const output = (error.stdout || '') + (error.stderr || '')
-      return { output, exitCode: error.status || 1 }
-    }
-  }
-
-  function extractTabId(output: string): string {
-    const match = output.match(/Tab ID: ([A-F0-9-]+)/)
-    if (!match) {
-      throw new Error(`No tab ID found in output: ${output}`)
-    }
-    return match[1]
-  }
-
   beforeAll(async () => {
     // Browser already running from global setup
     // Create a dedicated test tab for this test suite and capture its ID
     const { output } = runCommand(
       `${CLI} tabs new --port ${TEST_PORT} --url "data:text/html,<div id='test-container'><h1>Exec Test Suite Ready</h1><p>JavaScript file execution testing</p></div>"`
     )
-    testTabId = extractTabId(output)
+    testTabId = extractAndRegisterTabId(output)
     console.log(`Exec test suite using tab ID: ${testTabId}`)
 
     // Create a test JavaScript file
@@ -67,25 +42,9 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
         fs.unlinkSync('/tmp/test-script.js')
     } catch {}
 
-    // Clean up our test tab using the specific tab ID
+    // Clean up test tab
     if (testTabId) {
-      try {
-        // First check if tab still exists
-        const { output } = runCommand(`${CLI} tabs list --port ${TEST_PORT} --json`)
-        const data = JSON.parse(output)
-        const tabExists = data.tabs.some((tab: any) => tab.id === testTabId)
-
-        if (tabExists) {
-          // Find the tab index and close it
-          const tabIndex = data.tabs.findIndex(
-            (tab: any) => tab.id === testTabId
-          )
-          runCommand(`${CLI} tabs close --port ${TEST_PORT} --index ${tabIndex}`)
-          console.log(`Closed test tab ${testTabId}`)
-        }
-      } catch (error) {
-        // Silently ignore - tab might already be closed
-      }
+      closeTestTab(testTabId)
     }
   })
 

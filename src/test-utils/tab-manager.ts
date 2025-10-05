@@ -37,13 +37,12 @@ export class TabManager {
       // The CLI's .fail() handler behaves differently in test mode (throws instead of exit)
       delete cleanEnv.NODE_ENV
 
-      // Only remove verbose flags if --quiet or --json is NOT in the command
-      const hasQuietOrJson = cmd.includes('--quiet') || cmd.includes('--json')
-      if (!hasQuietOrJson) {
-        delete cleanEnv.PLAYWRIGHT_VERBOSE
-        delete cleanEnv.PLAYWRIGHT_DEBUG
-        delete cleanEnv.DEBUG
-      }
+      // Always remove verbose flags to avoid conflicts
+      // This prevents inherited PLAYWRIGHT_VERBOSE from conflicting with --quiet
+      delete cleanEnv.PLAYWRIGHT_VERBOSE
+      delete cleanEnv.PLAYWRIGHT_DEBUG
+      delete cleanEnv.PLAYWRIGHT_QUIET
+      delete cleanEnv.DEBUG
 
       const output = execSync(cmd, {
         encoding: 'utf8',

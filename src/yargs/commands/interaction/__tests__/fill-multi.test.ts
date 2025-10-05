@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
-import { execSync } from 'child_process'
+import {
+  runCommand,
+  extractAndRegisterTabId,
+  closeTestTab,
+} from '../../../../test-utils/test-helpers'
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 
 /**
@@ -9,7 +13,6 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
  * form fields in a single command
  */
 describe('multi-field fill command enhancement', () => {
-  const TEST_PORT = 19222
   let testTabId: string
 
   // Helper to run commands with the correct port
@@ -22,35 +25,6 @@ describe('multi-field fill command enhancement', () => {
       ? baseCmd
       : `${baseCmd} --port ${TEST_PORT}`
     return runCommand(cmd, timeout)
-  }
-
-  function runCommand(
-    cmd: string,
-    timeout = 10000
-  ): { output: string; exitCode: number } {
-    try {
-      const output = execSync(cmd, {
-        encoding: 'utf8',
-        timeout,
-        env: { ...process.env, NODE_ENV: undefined },
-        stdio: 'pipe',
-      })
-      return { output, exitCode: 0 }
-    } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out: ${cmd}`)
-      }
-      const output = (error.stdout || '') + (error.stderr || '')
-      return { output, exitCode: error.status || 1 }
-    }
-  }
-
-  function extractTabId(output: string): string {
-    const match = output.match(/Tab ID: ([A-F0-9-]+)/)
-    if (!match) {
-      throw new Error(`No tab ID found in output: ${output}`)
-    }
-    return match[1]
   }
 
   beforeAll(async () => {
@@ -108,12 +82,12 @@ describe('multi-field fill command enhancement', () => {
       `${CLI} tabs new --url "data:text/html,${encodeURIComponent(html)}"`,
       15000
     )
-    testTabId = extractTabId(output)
+    testTabId = extractAndRegisterTabId(output)
   })
 
   afterAll(async () => {
     if (testTabId) {
-      runCommandWithPort(`${CLI} tabs close --tab-id ${testTabId}`, 10000)
+      closeTestTab(testTabId)
     }
   })
 
@@ -173,7 +147,7 @@ describe('multi-field fill command enhancement', () => {
         `${CLI} tabs new --url "data:text/html,${encodeURIComponent(html)}"`,
         15000
       )
-      testTabId = extractTabId(output)
+      testTabId = extractAndRegisterTabId(output)
     }
   })
 
