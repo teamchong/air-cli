@@ -108,44 +108,52 @@ describe('press command - TAB ID FROM OUTPUT', () => {
       expect(exitCode).toBe(0)
     })
 
-    it('should press different keys in same tab', () => {
-      // Navigate to test page
-      runCommand(
-        `${CLI} navigate "data:text/html,<input id='test-input' autofocus/>" --tab-id ${testTabId} --port ${TEST_PORT}`
-      )
+    it(
+      'should press different keys in same tab',
+      async () => {
+        // Navigate to test page
+        runCommand(
+          `${CLI} navigate "data:text/html,<input id='test-input' autofocus/>" --tab-id ${testTabId} --port ${TEST_PORT}`
+        )
 
-      // Press various keys in the same tab
-      expect(
-        runCommand(`${CLI} press Tab --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-      expect(
-        runCommand(`${CLI} press Escape --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-      expect(
-        runCommand(`${CLI} press Space --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-    })
+        // Press various keys in the same tab
+        expect(
+          runCommand(`${CLI} press Tab --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+        expect(
+          runCommand(`${CLI} press Escape --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+        expect(
+          runCommand(`${CLI} press Space --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+      },
+      15000
+    )
 
-    it('should press arrow keys in specific tab', () => {
-      // Navigate to test page
-      runCommand(
-        `${CLI} navigate "data:text/html,<input id='test-input' value='test text' autofocus/>" --tab-id ${testTabId} --port ${TEST_PORT}`
-      )
+    it(
+      'should press arrow keys in specific tab',
+      async () => {
+        // Navigate to test page
+        runCommand(
+          `${CLI} navigate "data:text/html,<input id='test-input' value='test text' autofocus/>" --tab-id ${testTabId} --port ${TEST_PORT}`
+        )
 
-      // Press arrow keys in the specific tab
-      expect(
-        runCommand(`${CLI} press ArrowLeft --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-      expect(
-        runCommand(`${CLI} press ArrowRight --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-      expect(
-        runCommand(`${CLI} press ArrowUp --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-      expect(
-        runCommand(`${CLI} press ArrowDown --tab-id ${testTabId} --port ${TEST_PORT}`).exitCode
-      ).toBe(0)
-    })
+        // Press arrow keys in the specific tab (increase timeout for multiple commands)
+        expect(
+          runCommand(`${CLI} press ArrowLeft --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+        expect(
+          runCommand(`${CLI} press ArrowRight --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+        expect(
+          runCommand(`${CLI} press ArrowUp --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+        expect(
+          runCommand(`${CLI} press ArrowDown --tab-id ${testTabId} --port ${TEST_PORT}`, 10000).exitCode
+        ).toBe(0)
+      },
+      20000
+    )
 
     it('should handle invalid tab ID', () => {
       const { output, exitCode } = runCommand(

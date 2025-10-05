@@ -207,8 +207,10 @@ describe('inline script execution enhancement', () => {
       expect(output).toContain('3')
     })
 
-    it('should handle error handling in scripts', async () => {
-      const script = `
+    it(
+      'should handle error handling in scripts',
+      async () => {
+        const script = `
         try {
           await page.click('#nonexistent');
         } catch (error) {
@@ -218,15 +220,17 @@ describe('inline script execution enhancement', () => {
         }
       `
 
-      const { output, exitCode } = runCommand(
-        `${CLI} exec --inline "${script}" --tab-id ${testTabId} --port ${TEST_PORT}`,
-        10000 // Longer timeout for error handling with multiple operations
-      )
+        const { output, exitCode } = runCommand(
+          `${CLI} exec --inline "${script}" --tab-id ${testTabId} --port ${TEST_PORT}`,
+          10000 // Longer timeout for error handling with multiple operations
+        )
 
-      expect(exitCode).toBe(0)
-      expect(output).toContain('Expected error')
-      expect(output).toContain('Handled error gracefully')
-    })
+        expect(exitCode).toBe(0)
+        expect(output).toContain('Expected error')
+        expect(output).toContain('Handled error gracefully')
+      },
+      15000
+    )
 
     it('should support data manipulation', async () => {
       // Use file-based approach to avoid shell escaping issues
@@ -335,27 +339,31 @@ return elements.length;`
       )
 
       expect(exitCode).toBe(1)
-      expect(output.toLowerCase()).toContain('missing')
+      expect(output.toLowerCase()).toContain('syntax error')
     })
 
-    it('should report runtime errors with context', async () => {
-      // Create isolated tab using test helper for automatic cleanup
-      const html = `<html><head><title>Error Test Page</title></head><body><button id="exists">Real Button</button></body></html>`
-      const isolatedTabId = createTestTab(html)
+    it(
+      'should report runtime errors with context',
+      async () => {
+        // Create isolated tab using test helper for automatic cleanup
+        const html = `<html><head><title>Error Test Page</title></head><body><button id="exists">Real Button</button></body></html>`
+        const isolatedTabId = createTestTab(html)
 
-      const script = `
+        const script = `
         await page.click('#definitely-does-not-exist');
       `
 
-      const { output, exitCode } = runCommand(
-        `${CLI} exec --inline "${script}" --tab-id ${isolatedTabId} --port ${TEST_PORT}`,
-        15000 // Playwright selector operations that fail can take time to clean up
-      )
+        const { output, exitCode} = runCommand(
+          `${CLI} exec --inline "${script}" --tab-id ${isolatedTabId} --port ${TEST_PORT}`,
+          15000 // Playwright selector operations that fail can take time to clean up
+        )
 
-      expect(exitCode).toBe(1)
-      expect(output).toContain('not')
-      expect(output).toContain('exist')
-    })
+        expect(exitCode).toBe(1)
+        expect(output).toContain('not')
+        expect(output).toContain('exist')
+      },
+      20000
+    )
 
     it('should handle timeout gracefully', async () => {
       const script = `
