@@ -30,7 +30,7 @@ describe('console command - REAL TESTS', () => {
     )
     testTabId = extractAndRegisterTabId(output) // This will register the tab for cleanup
     console.log(`Console test suite using tab ID: ${testTabId}`)
-  }, 30000) // 30 second timeout for build
+  })
 
   afterAll(async () => {
     // Clean up our test tab using the helper function

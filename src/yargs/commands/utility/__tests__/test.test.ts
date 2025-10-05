@@ -72,7 +72,7 @@ describe('test command - REAL TESTS', () => {
     if (!require('fs').existsSync('dist/src/index.js')) {
       execSync('bun run build', { stdio: 'ignore' })
     }
-  }, 30000) // 30 second timeout for build
+  })
 
   afterAll(async () => {
     // Global teardown handles browser cleanup

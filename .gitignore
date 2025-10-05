@@ -52,6 +52,15 @@ test-*.js
 /test-*.ts
 test-fetch.js
 test-port.js
+test-*.sh
+
+# Test artifacts
+*.pdf
+*.png
+screenshot*.png
+test-*.png
+test-*.pdf
+page.pdf
 
 # Debug and profiling files
 debug-*.js
@@ -59,6 +68,9 @@ test-profile.csv
 *.bak
 *.bak2
 *.bak3
+
+# Example scripts (temporary)
+examples/multi-page-script.js
 
 # Session files
 .playwright-cli-session.json
