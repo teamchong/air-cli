@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync } from 'child_process'
 import { CLI } from '../../../../test-utils/test-constants'
+import { runCommand } from '../../../../test-utils/test-helpers'
 
 /**
  * Real Session Command Tests
@@ -9,31 +10,6 @@ import { CLI } from '../../../../test-utils/test-constants'
  * NO MOCKS - everything is tested against a real implementation.
  */
 describe('session command - REAL TESTS', () => {
-
-  // Helper to run command and check it doesn't hang
-  function runCommand(
-    cmd: string,
-    timeout = 5000
-  ): { output: string; exitCode: number } {
-    try {
-      const output = execSync(cmd, {
-        encoding: 'utf8',
-        timeout,
-        env: { ...process.env, NODE_ENV: undefined },
-      })
-      return { output, exitCode: 0 }
-    } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out (hanging): ${cmd}`)
-      }
-      // Combine stdout and stderr for full error output
-      const output = (error.stdout || '') + (error.stderr || '')
-      return {
-        output,
-        exitCode: error.status || 1,
-      }
-    }
-  }
 
   beforeAll(async () => {
     // Build the CLI only if needed

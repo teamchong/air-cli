@@ -5,6 +5,7 @@ import {
   createTestTab,
   closeTestTab,
   cleanupAllTestTabs,
+  runCommand,
 } from '../../../../test-utils/test-helpers'
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 
@@ -19,35 +20,6 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
  */
 describe('pdf command - TAB ID FROM OUTPUT', () => {
   let testTabId: string
-
-  function runCommand(
-    cmd: string,
-    timeout = 5000
-  ): { output: string; exitCode: number } {
-    try {
-      const output = execSync(cmd, {
-        encoding: 'utf8',
-        timeout,
-        env: { ...process.env, NODE_ENV: undefined },
-        stdio: 'pipe',
-      })
-      return { output, exitCode: 0 }
-    } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out (hanging): ${cmd}`)
-      }
-      const output = (error.stdout || '') + (error.stderr || '')
-      return { output, exitCode: error.status || 1 }
-    }
-  }
-
-  function extractTabId(output: string): string {
-    const match = output.match(/Tab ID: ([A-F0-9-]+)/)
-    if (!match) {
-      throw new Error(`No tab ID found in output: ${output}`)
-    }
-    return match[1]
-  }
 
   beforeAll(async () => {
     // Browser already running from global setup
@@ -65,25 +37,7 @@ describe('pdf command - TAB ID FROM OUTPUT', () => {
     } catch {}
 
     // Clean up our test tab using the specific tab ID
-    if (testTabId) {
-      try {
-        // First check if tab still exists
-        const { output } = runCommand(`${CLI} tabs list --port ${TEST_PORT} --json`)
-        const data = JSON.parse(output)
-        const tabExists = data.tabs.some((tab: any) => tab.id === testTabId)
-
-        if (tabExists) {
-          // Find the tab index and close it
-          const tabIndex = data.tabs.findIndex(
-            (tab: any) => tab.id === testTabId
-          )
-          runCommand(`${CLI} tabs close --index ${tabIndex} --port ${TEST_PORT}`)
-          console.log(`Closed test tab ${testTabId}`)
-        }
-      } catch (error) {
-        // Silently ignore - tab might already be closed
-      }
-    }
+    closeTestTab(testTabId)
   })
 
   describe('command structure', () => {

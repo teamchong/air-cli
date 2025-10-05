@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync, spawn } from 'child_process'
 import { CLI } from '../../../../test-utils/test-constants'
+import { runCommand } from '../../../../test-utils/test-helpers'
 
 /**
  * Real Codegen Command Tests
@@ -11,31 +12,6 @@ import { CLI } from '../../../../test-utils/test-constants'
  * as that would require GUI interaction.
  */
 describe('codegen command - REAL TESTS', () => {
-
-  // Helper to run command and check it doesn't hang
-  function runCommand(
-    cmd: string,
-    timeout = 5000
-  ): { output: string; exitCode: number } {
-    try {
-      const output = execSync(cmd, {
-        encoding: 'utf8',
-        timeout,
-        env: { ...process.env, NODE_ENV: undefined },
-      })
-      return { output, exitCode: 0 }
-    } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out (hanging): ${cmd}`)
-      }
-      // Combine stdout and stderr for full error output
-      const output = (error.stdout || '') + (error.stderr || '')
-      return {
-        output,
-        exitCode: error.status || 1,
-      }
-    }
-  }
 
   // Helper to test if command would spawn correctly without actually launching GUI
   function testSpawnCommand(cmd: string): Promise<boolean> {

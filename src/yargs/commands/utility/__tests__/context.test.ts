@@ -3,6 +3,11 @@ import { execSync } from 'child_process'
 import { TabManager } from '../../../../test-utils/tab-manager'
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import { cleanupCDPConnections } from '../../../../test-utils/test-cleanup'
+import {
+  runCommand,
+  extractAndRegisterTabId,
+  closeTestTab,
+} from '../../../../test-utils/test-helpers'
 
 /**
  * Context Command Tests
@@ -13,34 +18,6 @@ import { cleanupCDPConnections } from '../../../../test-utils/test-cleanup'
 describe('context command for state visibility', () => {
   // PORT is set via environment variable in package.json test scripts
   let testTabId: string
-  function runCommand(
-    cmd: string,
-    timeout = 15000
-  ): { output: string; exitCode: number } {
-    try {
-      const output = execSync(cmd, {
-        encoding: 'utf8',
-        timeout,
-        env: { ...process.env, NODE_ENV: undefined },
-        stdio: 'pipe',
-      })
-      return { output, exitCode: 0 }
-    } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out: ${cmd}`)
-      }
-      const output = (error.stdout || '') + (error.stderr || '')
-      return { output, exitCode: error.status || 1 }
-    }
-  }
-
-  function extractTabId(output: string): string {
-    const match = output.match(/Tab ID: ([A-F0-9-]+)/)
-    if (!match) {
-      throw new Error(`No tab ID found in output: ${output}`)
-    }
-    return match[1]
-  }
 
   beforeAll(async () => {
     // Clean up any existing test tabs before starting
@@ -75,16 +52,15 @@ describe('context command for state visibility', () => {
       const { output } = runCommand(
         `${CLI} tabs new --port ${TEST_PORT} --url "data:text/html,${encodeURIComponent(html)}"`
       )
-      testTabId = extractTabId(output)
-      TabManager.registerTab(testTabId)
+      testTabId = extractAndRegisterTabId(output)
     }
   })
 
   afterAll(async () => {
-    // Use TabManager for proper cleanup
+    // Use helper for proper cleanup
     try {
       if (testTabId) {
-        TabManager.closeTabById(testTabId)
+        closeTestTab(testTabId)
       }
       // Clean up any other test tabs that may have been created
       TabManager.cleanupAllCreatedTabs()
