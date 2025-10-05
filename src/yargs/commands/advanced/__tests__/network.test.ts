@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 
 /**
@@ -57,14 +57,42 @@ describe('network command - REAL TESTS', () => {
   })
 
   describe('handler execution', () => {
-    // Skip this test - network command runs continuously and never exits on its own
-    // Testing it would require process management (spawn/kill) which is complex
-    it.skip('should work with global browser session', () => {
-      // Network command runs continuously without timeout parameter
-      // Would need to use spawn() instead of execSync() to test properly
-      const { output, exitCode } = runCommand(`${CLI} network`)
-      expect([0, 1]).toContain(exitCode)
-    })
+    it('should work with global browser session', (done) => {
+      // Network command runs continuously - use spawn to test it
+      const child = spawn('sh', ['-c', `${CLI} network --port ${TEST_PORT}`], {
+        env: { ...process.env, NODE_ENV: undefined },
+      })
+
+      let output = ''
+      let hasStarted = false
+
+      child.stdout?.on('data', (data) => {
+        output += data.toString()
+        // If we see output, the command has started
+        if (output.length > 0) {
+          hasStarted = true
+        }
+      })
+
+      child.stderr?.on('data', (data) => {
+        output += data.toString()
+        if (output.length > 0) {
+          hasStarted = true
+        }
+      })
+
+      // Give it 2 seconds to start, then kill it
+      setTimeout(() => {
+        child.kill('SIGTERM')
+
+        // Wait a bit for process to terminate
+        setTimeout(() => {
+          // Network command should have started (hasStarted or exitCode should indicate connection attempt)
+          expect(hasStarted || output.length > 0).toBe(true)
+          done()
+        }, 500)
+      }, 2000)
+    }, 5000)
 
     it('should handle different port gracefully', () => {
       // Command should fail gracefully when trying to connect to non-existent port

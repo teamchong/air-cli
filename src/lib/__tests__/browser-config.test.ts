@@ -376,9 +376,23 @@ describe('BrowserConfig', () => {
       expect(typeof result).toBe('boolean')
     })
 
-    // Skip this test - mock contamination issue in full suite runs
-    // The real implementation works correctly (checks status === 0 and returns false otherwise)
-    it.skip('should return false on installation failure', async () => {
+    it('should return false on installation failure', async () => {
+      // Clear all state before this test
+      ;(BrowserConfig as any).config = null
+      mockSpawnSync.mockClear()
+      mockExistsSync.mockClear()
+      mockReadFileSync.mockClear()
+
+      // Setup mocks for this specific test
+      mockExistsSync.mockImplementation((path: any) => path === getTestConfigFile())
+      mockReadFileSync.mockReturnValue(
+        JSON.stringify({
+          defaultBrowser: 'chromium',
+          browsersInstalled: false,
+        })
+      )
+
+      // Mock failed installation
       mockSpawnSync.mockImplementation(() => ({
         status: 1,
         stdout: null,
