@@ -237,8 +237,8 @@ export async function loggingMiddleware<T extends BaseCommandOptions>(
 
   if (shouldLog) {
     const command = argv._?.[0] || 'unknown'
-    console.log(`Starting command: ${command}`)
-    console.log(`Port: ${argv.port}`)
+    console.error(`Starting command: ${command}`)
+    console.error(`Port: ${argv.port}`)
   }
 }
 
@@ -285,7 +285,7 @@ export function selectorShorthandMiddleware<
     // Log transformation in verbose mode (but not in JSON/quiet mode)
     const shouldLog = argv.verbose && !argv.quiet && !(argv as any).json
     if (shouldLog && argv.selector !== selector) {
-      console.log(
+      console.error(
         `Transformed selector "${selector}" to "${argv.selector}"`
       )
     }
@@ -307,7 +307,7 @@ export async function browserConnectionMiddleware<T extends BaseCommandOptions>(
   // In verbose mode, log connection details (but not in JSON/quiet mode)
   const shouldLog = argv.verbose && !argv.quiet && !(argv as any).json
   if (shouldLog) {
-    console.log(`Will connect to browser on port ${argv.port}`)
+    console.error(`Will connect to browser on port ${argv.port}`)
   }
 }
 

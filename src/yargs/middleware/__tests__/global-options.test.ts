@@ -223,7 +223,7 @@ describe('Global Options Middleware', () => {
     })
 
     it('should log transformation in verbose mode', () => {
-      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
 
       const argv = {
         selector: 'button:Login',
@@ -233,29 +233,29 @@ describe('Global Options Middleware', () => {
       } as any
       selectorShorthandMiddleware(argv)
 
-      expect(consoleLog).toHaveBeenCalledWith(
+      expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Transformed selector')
       )
 
-      consoleLog.mockRestore()
+      consoleError.mockRestore()
     })
   })
 
   describe('loggingMiddleware', () => {
     it('should log command start in verbose mode', async () => {
-      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
 
       const argv = { port: 9222, verbose: true, _: ['click'], $0: 'cli' } as any
       await loggingMiddleware(argv)
 
-      expect(consoleLog).toHaveBeenCalledWith(
+      expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Starting command: click')
       )
-      expect(consoleLog).toHaveBeenCalledWith(
+      expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Port: 9222')
       )
 
-      consoleLog.mockRestore()
+      consoleError.mockRestore()
     })
 
     it('should not log in quiet mode', async () => {
@@ -291,16 +291,16 @@ describe('Global Options Middleware', () => {
     })
 
     it('should log connection details in verbose mode', async () => {
-      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
 
       const argv = { port: 9222, verbose: true, _: ['click'], $0: 'cli' } as any
       await browserConnectionMiddleware(argv)
 
-      expect(consoleLog).toHaveBeenCalledWith(
+      expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Will connect to browser on port 9222')
       )
 
-      consoleLog.mockRestore()
+      consoleError.mockRestore()
     })
   })
 
