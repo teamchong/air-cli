@@ -6,15 +6,9 @@ bun.lockb
 dist/
 build/
 out/
+bin/
 *.tsbuildinfo
-playwright
-playwright-cli
 *.bun-build
-
-# Build artifacts (executables)
-pw
-pw-bun
-pw-pkg
 
 # Logs
 *.log
@@ -73,6 +67,8 @@ test-profile.csv
 examples/multi-page-script.js
 
 # Session files
+.air-cli-session.json
+.air-cli-config.json
 .playwright-cli-session.json
 .playwright-cli-config.json
 
