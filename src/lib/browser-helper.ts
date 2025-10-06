@@ -661,6 +661,13 @@ export class BrowserHelper {
       '--no-first-run',
       '--no-default-browser-check',
       `--user-data-dir=${os.tmpdir()}/playwright-chrome-${port}`,
+      // Memory management flags to prevent accumulation during heavy usage
+      '--disable-back-forward-cache', // Don't cache navigation history
+      '--disable-features=BackForwardCache', // Disable bfcache feature
+      '--disk-cache-size=1', // Minimal disk cache (1 byte effectively disables it)
+      '--media-cache-size=1', // Minimal media cache
+      '--aggressive-cache-discard', // More aggressive memory cleanup
+      '--disable-gpu-shader-disk-cache', // Don't cache GPU shaders
     ]
 
     // Add headless mode for tests
@@ -700,6 +707,45 @@ export class BrowserHelper {
     throw new Error(
       `Browser launched but CDP server not ready on port ${port} after ${maxRetries * retryDelay}ms`
     )
+  }
+
+  /**
+   * Clear Chrome's browsing data to release memory
+   * Useful after heavy navigation sessions or during long-running processes
+   *
+   * @param port - The Chrome debugging port
+   * @param options - What to clear (defaults to cache and history)
+   */
+  static async clearBrowsingData(
+    port: number = 9222,
+    options: {
+      cache?: boolean
+      cookies?: boolean
+      history?: boolean
+    } = { cache: true, history: true }
+  ): Promise<void> {
+    await this.withBrowser(port, async (browser) => {
+      for (const context of browser.contexts()) {
+        for (const page of context.pages()) {
+          try {
+            const cdpSession = await context.newCDPSession(page)
+
+            // Build data types to clear
+            const dataTypes: string[] = []
+            if (options.cache) dataTypes.push('cacheStorage', 'cache')
+            if (options.cookies) dataTypes.push('cookies')
+            if (options.history) dataTypes.push('cache') // Page cache includes history
+
+            await cdpSession.send('Network.clearBrowserCache' as any)
+
+            await cdpSession.detach()
+          } catch (error) {
+            // Some pages might not support clearing data, that's ok
+            console.debug(`Could not clear browsing data for page ${page.url()}:`, error)
+          }
+        }
+      }
+    })
   }
 
   /**

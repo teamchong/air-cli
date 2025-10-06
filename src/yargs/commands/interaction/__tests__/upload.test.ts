@@ -31,8 +31,9 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
 
   beforeEach(async () => {
     // Create a fresh test tab for each test to ensure isolation
+    // Start with about:blank - each test will create its own tab with specific HTML
     const { output } = runCommand(
-      `${CLI} tabs new --url "data:text/html,<div id='test-container'>Upload Test Ready</div>" --port ${TEST_PORT}`
+      `${CLI} tabs new --url "about:blank" --port ${TEST_PORT}`
     )
     testTabId = extractAndRegisterTabId(output)
   })
@@ -69,10 +70,14 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
 
   describe('direct tab targeting with captured ID', () => {
     it('should upload single file using captured tab ID', () => {
-      // Navigate our test tab to a page with file input
-      runCommand(
-        `${CLI} navigate "data:text/html,<input type='file' id='file-input'/>" --tab-id ${testTabId} --port ${TEST_PORT}`
+      // Close the blank tab from beforeEach
+      closeTestTab(testTabId)
+
+      // Create tab with exact HTML needed - no navigate required (prevents memory leak)
+      const { output } = runCommand(
+        `${CLI} tabs new --url "data:text/html,<input type='file' id='file-input'/>" --port ${TEST_PORT}`
       )
+      testTabId = extractAndRegisterTabId(output)
 
       // Upload file using our captured tab ID
       const { exitCode } = runCommand(
@@ -82,10 +87,12 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should upload multiple files', () => {
-      // Navigate to page with multiple file input
-      runCommand(
-        `${CLI} navigate "data:text/html,<input type='file' id='multi-file' multiple/>" --tab-id ${testTabId} --port ${TEST_PORT}`
+      // Close and recreate with exact HTML needed
+      closeTestTab(testTabId)
+      const { output } = runCommand(
+        `${CLI} tabs new --url "data:text/html,<input type='file' id='multi-file' multiple/>" --port ${TEST_PORT}`
       )
+      testTabId = extractAndRegisterTabId(output)
 
       // Upload multiple files in the same tab
       const { exitCode } = runCommand(
@@ -95,10 +102,12 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should work with different file inputs', () => {
-      // Navigate to page with multiple file inputs
-      runCommand(
-        `${CLI} navigate "data:text/html,<input type='file' id='doc-upload'/><input type='file' id='image-upload'/>" --tab-id ${testTabId} --port ${TEST_PORT}`
+      // Close and recreate with exact HTML needed
+      closeTestTab(testTabId)
+      const { output } = runCommand(
+        `${CLI} tabs new --url "data:text/html,<input type='file' id='doc-upload'/><input type='file' id='image-upload'/>" --port ${TEST_PORT}`
       )
+      testTabId = extractAndRegisterTabId(output)
 
       // Upload to different inputs in the same tab
       expect(
@@ -114,18 +123,20 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should handle non-existent element gracefully', () => {
-      // Navigate to page without file input
-      runCommand(
-        `${CLI} navigate "data:text/html,<div>No file input here</div>" --tab-id ${testTabId} --port ${TEST_PORT}`
+      // Close and recreate with exact HTML needed
+      closeTestTab(testTabId)
+      const { output: tabOutput } = runCommand(
+        `${CLI} tabs new --url "data:text/html,<div>No file input here</div>" --port ${TEST_PORT}`
       )
+      testTabId = extractAndRegisterTabId(tabOutput)
 
-      // Try to upload to non-existent element - command hangs on non-existent selectors
-      expect(() => {
-        runCommand(
-          `${CLI} upload "#nonexistent" "${testFile1}" --tab-id ${testTabId} --port ${TEST_PORT}`,
-          2000
-        )
-      }).toThrow('Command timed out (hanging)')
+      // Try to upload to non-existent element - should fail with error
+      const { exitCode, output } = runCommand(
+        `${CLI} upload "#nonexistent" "${testFile1}" --tab-id ${testTabId} --port ${TEST_PORT}`,
+        10000
+      )
+      expect(exitCode).toBe(1)
+      expect(output).toContain('Error') // Should contain error message
     })
 
     it('should handle invalid tab ID', () => {

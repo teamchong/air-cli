@@ -6,6 +6,7 @@
  */
 
 import { CDPConnectionPool } from '../lib/cdp-connection-pool'
+import { TEST_PORT } from './test-constants'
 
 /**
  * Clean up CDP connections after a test file completes
@@ -53,5 +54,26 @@ export async function resetConnectionPool(): Promise<void> {
     }
   } catch (error) {
     console.warn('Connection pool reset warning:', error)
+  }
+}
+
+/**
+ * Clear Chrome's cache and history to release memory
+ * Call this periodically in tests that do many navigations
+ *
+ * This helps prevent memory accumulation from navigate command
+ * creating intermediate page states in Chrome
+ */
+export async function releaseChromeMemory(): Promise<void> {
+  try {
+    const { BrowserHelper } = await import('../lib/browser-helper')
+    await BrowserHelper.clearBrowsingData(TEST_PORT, {
+      cache: true,
+      history: true,
+      cookies: false, // Keep cookies for session continuity
+    })
+  } catch (error) {
+    // Don't fail tests if cleanup fails
+    console.warn('Chrome memory release warning:', error)
   }
 }
