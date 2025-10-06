@@ -143,7 +143,7 @@ export function createCommand<T extends BaseCommandOptions>(
         // Always skip timeout wrapper in tests - it causes more problems than it solves
         const isTest = process.env.NODE_ENV?.includes('test') ||
                        process.env.VITEST ||
-                       process.env.PLAYWRIGHT_CLI_HEADLESS
+                       process.env.AIR_CLI_HEADLESS
 
         if (isTest) {
           await handler(context)

@@ -32,11 +32,11 @@ import { TEST_PORT } from './test-constants'
     console.log('🌐 Starting browser session in headless mode...')
 
     // Set environment variable for headless mode
-    process.env.PLAYWRIGHT_CLI_HEADLESS = 'true'
+    process.env.AIR_CLI_HEADLESS = 'true'
 
     // USE A DIFFERENT PORT FOR TESTS TO AVOID CONFLICTS WITH USER'S BROWSER
     const { output, exitCode } = TabManager.runCommand(
-      `PLAYWRIGHT_CLI_HEADLESS=true bun run src/index.ts open --port ${TEST_PORT}`,
+      `AIR_CLI_HEADLESS=true bun run src/index.ts open --port ${TEST_PORT}`,
       10000
     )
 

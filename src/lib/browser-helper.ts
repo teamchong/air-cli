@@ -609,7 +609,7 @@ export class BrowserHelper {
     ]
 
     // Add headless mode for tests
-    if (process.env.PLAYWRIGHT_CLI_HEADLESS === 'true') {
+    if (process.env.AIR_CLI_HEADLESS === 'true') {
       args.push('--headless=new')
     }
 
