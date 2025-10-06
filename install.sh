@@ -62,13 +62,7 @@ if [ -f "$CLAUDE_MD" ]; then
     # Existing file - update it
     cp "$CLAUDE_MD" "$CLAUDE_MD.backup"
 
-    # Remove old PLAYWRIGHT-CLI section if it exists (backward compatibility)
-    if grep -q "<!-- BEGIN PLAYWRIGHT-CLI -->" "$CLAUDE_MD.backup"; then
-        perl -0pe 's/\n*<!-- BEGIN PLAYWRIGHT-CLI -->.*?<!-- END PLAYWRIGHT-CLI -->\n*//gs' "$CLAUDE_MD.backup" > "$CLAUDE_MD.tmp"
-        mv "$CLAUDE_MD.tmp" "$CLAUDE_MD.backup"
-    fi
-
-    # Check if new section exists and remove it if found
+    # Remove old AIR-CLI section if it exists
     if grep -q "<!-- BEGIN AIR-CLI -->" "$CLAUDE_MD.backup"; then
         # Remove existing AIR-CLI section including surrounding newlines
         perl -0pe 's/\n*<!-- BEGIN AIR-CLI -->.*?<!-- END AIR-CLI -->\n*//gs' "$CLAUDE_MD.backup" > "$CLAUDE_MD.tmp"

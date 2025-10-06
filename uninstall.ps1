@@ -45,26 +45,26 @@ $CLAUDE_MD = Join-Path $CLAUDE_DIR "CLAUDE.md"
 if (Test-Path $CLAUDE_MD) {
     # Check if section exists before trying to remove
     $content = Get-Content $CLAUDE_MD -Raw
-    if ($content -match '<!-- BEGIN PLAYWRIGHT-CLI -->') {
+    if ($content -match '<!-- BEGIN AIR-CLI -->') {
         # Backup first
         Copy-Item $CLAUDE_MD "$CLAUDE_MD.backup" -Force
-        
+
         # Remove the section between markers (including the markers themselves)
-        $pattern = '(?s)<!-- BEGIN PLAYWRIGHT-CLI -->.*?<!-- END PLAYWRIGHT-CLI -->'
+        $pattern = '(?s)<!-- BEGIN AIR-CLI -->.*?<!-- END AIR-CLI -->'
         $content = $content -replace $pattern, ''
-        
+
         # Clean up excessive newlines (max 2 consecutive) - same as bash script
         $content = $content -replace '(\r?\n){3,}', "`n`n"
-        
+
         # Trim trailing whitespace
         $content = $content.TrimEnd()
-        
+
         # Write back with a trailing newline
         Set-Content -Path $CLAUDE_MD -Value $content
-        Write-Success "Removed Playwright CLI section from CLAUDE.md"
+        Write-Success "Removed air-cli section from CLAUDE.md"
         $removedItems += "CLAUDE.md entry"
     } else {
-        Write-Warning "PLAYWRIGHT-CLI section not found in CLAUDE.md (skipping)"
+        Write-Warning "AIR-CLI section not found in CLAUDE.md (skipping)"
     }
 } else {
     Write-Warning "CLAUDE.md not found"

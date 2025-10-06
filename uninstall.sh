@@ -55,19 +55,19 @@ fi
 
 # Remove Playwright CLI section from CLAUDE.md
 if [ -f "$CLAUDE_MD" ]; then
-    echo "📝 Removing Playwright CLI instructions from CLAUDE.md..."
-    
-    # Remove the Playwright section between markers
-    if grep -q "<!-- BEGIN PLAYWRIGHT-CLI -->" "$CLAUDE_MD"; then
-        # Create temp file without the Playwright section
+    echo "📝 Removing air-cli instructions from CLAUDE.md..."
+
+    # Remove the air-cli section between markers
+    if grep -q "<!-- BEGIN AIR-CLI -->" "$CLAUDE_MD"; then
+        # Create temp file without the air-cli section
         awk '
-            /<!-- BEGIN PLAYWRIGHT-CLI -->/ { skip = 1 }
-            /<!-- END PLAYWRIGHT-CLI -->/ { skip = 0; next }
+            /<!-- BEGIN AIR-CLI -->/ { skip = 1 }
+            /<!-- END AIR-CLI -->/ { skip = 0; next }
             !skip { print }
         ' "$CLAUDE_MD" > "$CLAUDE_MD.tmp"
-        
+
         mv "$CLAUDE_MD.tmp" "$CLAUDE_MD"
-        echo "✅ Removed Playwright CLI section from CLAUDE.md"
+        echo "✅ Removed air-cli section from CLAUDE.md"
     fi
 fi
 

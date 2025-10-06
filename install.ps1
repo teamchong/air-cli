@@ -107,8 +107,8 @@ if (Test-Path $CLAUDE_MD) {
     $content = Get-Content $CLAUDE_MD -Raw
     
     # Check if section exists and remove it if found
-    if ($content -match '<!-- BEGIN PLAYWRIGHT-CLI -->') {
-        $content = $content -replace '(?s)\n*<!-- BEGIN PLAYWRIGHT-CLI -->.*?<!-- END PLAYWRIGHT-CLI -->\n*', ''
+    if ($content -match '<!-- BEGIN AIR-CLI -->') {
+        $content = $content -replace '(?s)\n*<!-- BEGIN AIR-CLI -->.*?<!-- END AIR-CLI -->\n*', ''
     }
     
     # Trim trailing newlines
@@ -117,29 +117,29 @@ if (Test-Path $CLAUDE_MD) {
     # Check if content is empty and add appropriate spacing
     if ([string]::IsNullOrWhiteSpace($content)) {
         # File is empty or only whitespace, no need for leading newlines
-        $content = "<!-- BEGIN PLAYWRIGHT-CLI -->`n"
+        $content = "<!-- BEGIN AIR-CLI -->`n"
     } else {
         # File has content, add 2 newlines for spacing
-        $content += "`n`n<!-- BEGIN PLAYWRIGHT-CLI -->`n"
+        $content += "`n`n<!-- BEGIN AIR-CLI -->`n"
     }
-    
+
     $instructionsPath = Join-Path $SCRIPT_DIR "CLAUDE_INSTRUCTIONS.md"
     if (Test-Path $instructionsPath) {
         $instructions = Get-Content $instructionsPath -Raw
         $content += $instructions
     } else {
         # Fallback minimal content if file not found
-        $content += "## Playwright CLI`nBrowser automation tool. Run 'air --help' for documentation."
+        $content += "## air-cli - Agentic Information Retrieval`nBrowser automation tool. Run 'air --help' for documentation."
     }
 
-    $content += "`n<!-- END PLAYWRIGHT-CLI -->"
+    $content += "`n<!-- END AIR-CLI -->"
 
     # Write back with a trailing newline
     Set-Content -Path $CLAUDE_MD -Value $content
     Write-Host "✅ Updated CLAUDE.md" -ForegroundColor Green
 } else {
     # Create new file from CLAUDE_INSTRUCTIONS.md
-    $content = "<!-- BEGIN PLAYWRIGHT-CLI -->`n"
+    $content = "<!-- BEGIN AIR-CLI -->`n"
 
     $instructionsPath = Join-Path $SCRIPT_DIR "CLAUDE_INSTRUCTIONS.md"
     if (Test-Path $instructionsPath) {
@@ -147,10 +147,10 @@ if (Test-Path $CLAUDE_MD) {
         $content += $instructions
     } else {
         # Fallback minimal content if file not found
-        $content += "## Playwright CLI`nBrowser automation tool. Run 'air --help' for documentation."
+        $content += "## air-cli - Agentic Information Retrieval`nBrowser automation tool. Run 'air --help' for documentation."
     }
 
-    $content += "`n<!-- END PLAYWRIGHT-CLI -->"
+    $content += "`n<!-- END AIR-CLI -->"
 
     # Write back with a trailing newline
     Set-Content -Path $CLAUDE_MD -Value $content
