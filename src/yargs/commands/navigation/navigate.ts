@@ -117,6 +117,25 @@ export const navigateCommand = createCommand<NavigateOptions>({
           throw error
         }
 
+        // ENHANCEMENT: Ensure page is fully ready for interaction
+        // Wait for network to be idle (best effort - don't fail if it times out)
+        if (waitUntil !== 'networkidle') {
+          try {
+            await page.waitForLoadState('networkidle', { timeout: 2000 })
+          } catch {
+            // Network may not go idle, that's ok - continue
+          }
+        }
+
+        // ENHANCEMENT: Verify page is responsive after navigation
+        try {
+          await page.evaluate('document.readyState', { timeout: 1000 })
+        } catch (error) {
+          throw new Error(
+            `Page became unresponsive after navigating to ${url}: ${error instanceof Error ? error.message : String(error)}`
+          )
+        }
+
         // Track the navigation action
         await actionHistory.addAction({
           type: 'navigate',

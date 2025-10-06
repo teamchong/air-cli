@@ -413,6 +413,42 @@ export class BrowserHelper {
    * });
    * ```
    */
+  /**
+   * Ensures a page/tab is in a healthy, responsive state.
+   * Validates the page is not closed and can execute JavaScript.
+   *
+   * @param page - The page to validate
+   * @param tabId - Optional tab ID for better error messages
+   * @throws Error if page is closed or unresponsive
+   */
+  private static async ensureTabHealthy(page: Page, tabId?: string): Promise<void> {
+    const tabIdentifier = tabId || 'target'
+
+    // Check if page is closed
+    if (page.isClosed()) {
+      throw new Error(`Tab ${tabIdentifier} is closed`)
+    }
+
+    // Verify page is responsive by executing a simple JS expression
+    // Use 3-second timeout to be more forgiving under heavy load
+    try {
+      await page.evaluate('1', { timeout: 3000 })
+    } catch (error) {
+      // Gather diagnostic info
+      let url = 'unknown'
+      let contextPages = 0
+      try {
+        url = page.url()
+        contextPages = page.context().pages().length
+      } catch {}
+
+      throw new Error(
+        `Tab ${tabIdentifier} is unresponsive (url: ${url}, context has ${contextPages} pages). ` +
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }
+  }
+
   static async withTargetPage<T>(
     port: number,
     tabIndex: number | undefined,
@@ -475,15 +511,34 @@ export class BrowserHelper {
           throw new Error('Unable to find target page')
         }
 
+        // ENHANCEMENT: Validate tab health before executing action
+        await this.ensureTabHealthy(targetPage, tabId)
+
         // Execute the action with timeout protection
         // Add a small delay to allow Chrome event loop to process
         await new Promise(resolve => setImmediate(resolve))
-        const result = await withTimeout(
-          action(targetPage),
-          30000, // 30 second timeout for the actual action
-          'Executing page action'
-        )
-        return result
+
+        try {
+          const result = await withTimeout(
+            action(targetPage),
+            30000, // 30 second timeout for the actual action
+            'Executing page action'
+          )
+          return result
+        } catch (error) {
+          // ENHANCEMENT: Provide better diagnostics on failure
+          let url = 'unknown'
+          let isClosed = false
+          try {
+            url = targetPage.url()
+            isClosed = targetPage.isClosed()
+          } catch {}
+
+          throw new Error(
+            `Action failed on tab ${tabId || tabIndex} (url: ${url}, closed: ${isClosed}): ` +
+            `${error instanceof Error ? error.message : String(error)}`
+          )
+        }
       })
     }
 
