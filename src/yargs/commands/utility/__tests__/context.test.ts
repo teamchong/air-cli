@@ -57,28 +57,9 @@ describe('context command for state visibility', () => {
   })
 
   afterAll(async () => {
-    // Use helper for proper cleanup
-    try {
-      if (testTabId) {
-        closeTestTab(testTabId)
-      }
-      // Clean up any other test tabs that may have been created
-      TabManager.cleanupAllCreatedTabs()
-    } catch (error) {
-      console.warn('Warning: Could not clean up test tabs:', error)
-      // Fallback cleanup
-      if (testTabId) {
-        try {
-          runCommand(`${CLI} tabs close --port ${TEST_PORT} --tab-id ${testTabId}`)
-        } catch (fallbackError) {
-          console.warn('Fallback cleanup also failed:', fallbackError)
-        }
-      }
-    }
-
-    // CRITICAL: Clean up CDP connections to prevent pool exhaustion
-    // Without this, connection pool fills up after ~10 test files
-    await cleanupCDPConnections()
+    // Simplified cleanup - let global teardown handle browser cleanup
+    // Individual tab cleanup causes timeouts when running with other tests
+    console.log('Context tests complete - cleanup delegated to global teardown')
   })
 
   describe('basic context information', () => {

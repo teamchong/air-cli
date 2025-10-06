@@ -6,12 +6,22 @@
  */
 
 import { execSync } from 'child_process'
+import { mkdirSync, rmSync } from 'fs'
 import { TabManager } from './tab-manager'
-import { TEST_PORT } from './test-constants'
+import { TEST_PORT, TEST_TMP_DIR } from './test-constants'
 
 // Execute setup immediately when this module is imported
 ;(async function globalSetup() {
   console.log('🚀 Setting up browser for all tests...')
+
+  // Clean and recreate test temp directory
+  try {
+    rmSync(TEST_TMP_DIR, { recursive: true, force: true })
+    mkdirSync(TEST_TMP_DIR, { recursive: true })
+    console.log(`📁 Created test temp directory: ${TEST_TMP_DIR}`)
+  } catch (error) {
+    console.warn('Warning: Could not setup test temp directory:', error)
+  }
 
   try {
     // Build TypeScript first (skip in CI where build is a separate step)

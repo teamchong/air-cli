@@ -511,13 +511,7 @@ export class BrowserHelper {
           throw new Error('Unable to find target page')
         }
 
-        // ENHANCEMENT: Validate tab health before executing action
-        await this.ensureTabHealthy(targetPage, tabId)
-
         // Execute the action with timeout protection
-        // Add a small delay to allow Chrome event loop to process
-        await new Promise(resolve => setImmediate(resolve))
-
         try {
           const result = await withTimeout(
             action(targetPage),

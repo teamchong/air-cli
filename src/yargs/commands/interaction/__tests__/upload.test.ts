@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'bun:test'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'bun:test'
 import * as fs from 'fs'
 import * as path from 'path'
 import {
@@ -6,7 +6,7 @@ import {
   extractAndRegisterTabId,
   closeTestTab,
 } from '../../../../test-utils/test-helpers'
-import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI, TEST_TMP_DIR } from '../../../../test-utils/test-constants'
 /**
  * Simplified Upload Command Tests - TAB ID FROM COMMAND OUTPUT
  *
@@ -22,26 +22,18 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
   let testFile2: string
 
   beforeAll(async () => {
-    // Create test files in /tmp
-    testFile1 = path.join('/tmp', 'air-cli-test-upload-1.txt')
-    testFile2 = path.join('/tmp', 'air-cli-test-upload-2.txt')
+    // Create test files in .tmp/ directory
+    testFile1 = path.join(TEST_TMP_DIR, 'air-cli-test-upload-1.txt')
+    testFile2 = path.join(TEST_TMP_DIR, 'air-cli-test-upload-2.txt')
     fs.writeFileSync(testFile1, 'Test file 1 content')
     fs.writeFileSync(testFile2, 'Test file 2 content')
-  })
-
-  beforeEach(async () => {
-    // Create a fresh test tab for each test to ensure isolation
-    // Start with about:blank - each test will create its own tab with specific HTML
-    const { output } = runCommand(
-      `${CLI} tabs new --url "about:blank" --port ${TEST_PORT}`
-    )
-    testTabId = extractAndRegisterTabId(output)
   })
 
   afterEach(async () => {
     // Clean up test tab after each test
     if (testTabId) {
       closeTestTab(testTabId)
+      testTabId = '' // Clear to prevent double-cleanup
     }
   })
 
@@ -70,9 +62,6 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
 
   describe('direct tab targeting with captured ID', () => {
     it('should upload single file using captured tab ID', () => {
-      // Close the blank tab from beforeEach
-      closeTestTab(testTabId)
-
       // Create tab with exact HTML needed - no navigate required (prevents memory leak)
       const { output } = runCommand(
         `${CLI} tabs new --url "data:text/html,<input type='file' id='file-input'/>" --port ${TEST_PORT}`
@@ -87,8 +76,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should upload multiple files', () => {
-      // Close and recreate with exact HTML needed
-      closeTestTab(testTabId)
+      // Create tab with exact HTML needed
       const { output } = runCommand(
         `${CLI} tabs new --url "data:text/html,<input type='file' id='multi-file' multiple/>" --port ${TEST_PORT}`
       )
@@ -102,8 +90,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should work with different file inputs', () => {
-      // Close and recreate with exact HTML needed
-      closeTestTab(testTabId)
+      // Create tab with exact HTML needed
       const { output } = runCommand(
         `${CLI} tabs new --url "data:text/html,<input type='file' id='doc-upload'/><input type='file' id='image-upload'/>" --port ${TEST_PORT}`
       )
@@ -123,8 +110,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should handle non-existent element gracefully', () => {
-      // Close and recreate with exact HTML needed
-      closeTestTab(testTabId)
+      // Create tab with exact HTML needed
       const { output: tabOutput } = runCommand(
         `${CLI} tabs new --url "data:text/html,<div>No file input here</div>" --port ${TEST_PORT}`
       )
@@ -149,7 +135,13 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      // Create tab to have a valid tab ID
+      const { output } = runCommand(
+        `${CLI} tabs new --url "data:text/html,<div>test</div>" --port ${TEST_PORT}`
+      )
+      testTabId = extractAndRegisterTabId(output)
+
+      const { output: cmdOutput, exitCode } = runCommand(
         `${CLI} upload "#test" "${testFile1}" --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         2000
       )

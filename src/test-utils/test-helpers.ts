@@ -34,14 +34,14 @@ export function closeTestTab(tabId: string): void {
   if (!tabId) return
 
   try {
-    // Use TabManager to get clean env (no verbose/quiet conflicts)
     TabManager.runCommand(
       `${CLI} tabs close --tab-id ${tabId} --port ${TEST_PORT}`,
-      5000
+      3000
     )
     console.log(`Closed test tab ${tabId}`)
   } catch (error) {
-    // Silently ignore cleanup errors
+    // Log but continue - don't crash tests on cleanup failure
+    console.warn(`Failed to close tab ${tabId}`)
   }
 }
 
