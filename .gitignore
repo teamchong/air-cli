@@ -87,3 +87,4 @@ playwright/.cache/
 *.seed
 *.pid.lock
 .eslintcache
+.env.test
