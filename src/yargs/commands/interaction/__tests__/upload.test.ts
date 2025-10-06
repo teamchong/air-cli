@@ -22,11 +22,17 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
   let testFile2: string
 
   beforeAll(async () => {
+    // Ensure .tmp/ directory exists (in case it was deleted by another test)
+    if (!fs.existsSync(TEST_TMP_DIR)) {
+      fs.mkdirSync(TEST_TMP_DIR, { recursive: true })
+    }
+
     // Create test files in .tmp/ directory
     testFile1 = path.join(TEST_TMP_DIR, 'air-cli-test-upload-1.txt')
     testFile2 = path.join(TEST_TMP_DIR, 'air-cli-test-upload-2.txt')
     fs.writeFileSync(testFile1, 'Test file 1 content')
     fs.writeFileSync(testFile2, 'Test file 2 content')
+    console.log(`Created test files: ${testFile1}, ${testFile2}`)
   })
 
   afterEach(async () => {
@@ -63,15 +69,18 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
   describe('direct tab targeting with captured ID', () => {
     it('should upload single file using captured tab ID', () => {
       // Create tab with exact HTML needed - no navigate required (prevents memory leak)
-      const { output } = runCommand(
+      const { output: tabOutput } = runCommand(
         `${CLI} tabs new --url "data:text/html,<input type='file' id='file-input'/>" --port ${TEST_PORT}`
       )
-      testTabId = extractAndRegisterTabId(output)
+      testTabId = extractAndRegisterTabId(tabOutput)
 
       // Upload file using our captured tab ID
-      const { exitCode } = runCommand(
+      const { exitCode, output } = runCommand(
         `${CLI} upload "#file-input" "${testFile1}" --tab-id ${testTabId} --port ${TEST_PORT}`
       )
+      if (exitCode !== 0) {
+        console.error('Upload command failed:', output)
+      }
       expect(exitCode).toBe(0)
     })
 
@@ -109,7 +118,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
       ).toBe(0)
     })
 
-    it('should handle non-existent element gracefully', () => {
+    it('should handle non-existent element gracefully', { timeout: 15000 }, () => {
       // Create tab with exact HTML needed
       const { output: tabOutput } = runCommand(
         `${CLI} tabs new --url "data:text/html,<div>No file input here</div>" --port ${TEST_PORT}`

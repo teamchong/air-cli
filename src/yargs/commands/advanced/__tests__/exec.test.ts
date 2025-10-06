@@ -5,7 +5,7 @@ import {
   extractAndRegisterTabId,
   closeTestTab,
 } from '../../../../test-utils/test-helpers'
-import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI, TEST_TMP_DIR } from '../../../../test-utils/test-constants'
 
 /**
  * Exec Command Tests - TAB ID FROM COMMAND OUTPUT
@@ -59,7 +59,7 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
 
     it('should handle non-existent file gracefully', () => {
       const { exitCode, output } = runCommand(
-        `${CLI} exec /tmp/nonexistent.js --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} exec ${path.join(TEST_TMP_DIR, 'nonexistent.js')} --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(1)
       expect(output).toMatch(/ENOENT|not found/i)

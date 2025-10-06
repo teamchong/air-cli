@@ -1,7 +1,8 @@
-import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI, TEST_TMP_DIR } from '../../../../test-utils/test-constants'
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
+import * as path from 'path'
 import {
   runCommand,
   extractAndRegisterTabId,
@@ -31,12 +32,12 @@ describe('screenshot command - TAB ID FROM OUTPUT', () => {
   })
 
   afterAll(async () => {
-    // Clean up test screenshots from /tmp
+    // Clean up test screenshots from .tmp
     try {
-      if (fs.existsSync('/tmp/screenshot.png')) fs.unlinkSync('/tmp/screenshot.png')
-      if (fs.existsSync('/tmp/test-screenshot.png'))
-        fs.unlinkSync('/tmp/test-screenshot.png')
-      if (fs.existsSync('/tmp/test-custom.png')) fs.unlinkSync('/tmp/test-custom.png')
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'screenshot.png'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'screenshot.png'))
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'test-screenshot.png')))
+        fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-screenshot.png'))
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'test-custom.png'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-custom.png'))
     } catch {}
 
     // Clean up our test tab using the specific tab ID
@@ -55,32 +56,32 @@ describe('screenshot command - TAB ID FROM OUTPUT', () => {
 
   describe('direct tab targeting with captured ID', () => {
     it('should take screenshot with default filename using captured tab ID', () => {
-      const { exitCode } = runCommand(`${CLI} screenshot /tmp/screenshot.png --tab-id ${testTabId} --port ${TEST_PORT}`)
+      const { exitCode } = runCommand(`${CLI} screenshot ${path.join(TEST_TMP_DIR, 'screenshot.png')} --tab-id ${testTabId} --port ${TEST_PORT}`)
       expect(exitCode).toBe(0)
 
       // Check that screenshot file was created
-      expect(fs.existsSync('/tmp/screenshot.png')).toBe(true)
+      expect(fs.existsSync(path.join(TEST_TMP_DIR, 'screenshot.png'))).toBe(true)
 
       // Clean up
-      if (fs.existsSync('/tmp/screenshot.png')) fs.unlinkSync('/tmp/screenshot.png')
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'screenshot.png'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'screenshot.png'))
     })
 
     it('should take screenshot with custom filename using captured tab ID', () => {
       const { exitCode } = runCommand(
-        `${CLI} screenshot /tmp/test-screenshot.png --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} screenshot ${path.join(TEST_TMP_DIR, 'test-screenshot.png')} --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
 
       // Check that the file was created
-      expect(fs.existsSync('/tmp/test-screenshot.png')).toBe(true)
+      expect(fs.existsSync(path.join(TEST_TMP_DIR, 'test-screenshot.png'))).toBe(true)
     })
 
     it('should handle full page screenshot using captured tab ID', () => {
-      const { exitCode } = runCommand(
-        `${CLI} screenshot /tmp/test-custom.png --full-page --tab-id ${testTabId} --port ${TEST_PORT}`
+      const { exitCode} = runCommand(
+        `${CLI} screenshot ${path.join(TEST_TMP_DIR, 'test-custom.png')} --full-page --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
-      expect(fs.existsSync('/tmp/test-custom.png')).toBe(true)
+      expect(fs.existsSync(path.join(TEST_TMP_DIR, 'test-custom.png'))).toBe(true)
     })
 
     it('should handle invalid tab ID', () => {

@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
+import * as path from 'path'
 import {
   createTestTab,
   closeTestTab,
   cleanupAllTestTabs,
   runCommand,
 } from '../../../../test-utils/test-helpers'
-import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI, TEST_TMP_DIR } from '../../../../test-utils/test-constants'
 
 /**
  * PDF Command Tests - TAB ID FROM COMMAND OUTPUT
@@ -30,11 +31,11 @@ describe('pdf command - TAB ID FROM OUTPUT', () => {
   })
 
   afterAll(async () => {
-    // Clean up test PDFs from /tmp
+    // Clean up test PDFs from .tmp/
     try {
-      if (fs.existsSync('/tmp/page.pdf')) fs.unlinkSync('/tmp/page.pdf')
-      if (fs.existsSync('/tmp/test-page.pdf')) fs.unlinkSync('/tmp/test-page.pdf')
-      if (fs.existsSync('/tmp/test-custom.pdf')) fs.unlinkSync('/tmp/test-custom.pdf')
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'page.pdf'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'page.pdf'))
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'test-page.pdf'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-page.pdf'))
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'test-custom.pdf'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-custom.pdf'))
     } catch {}
 
     // Clean up our test tab using the specific tab ID
@@ -54,7 +55,7 @@ describe('pdf command - TAB ID FROM OUTPUT', () => {
   describe('direct tab targeting with captured ID', () => {
     it('should generate PDF with default filename using captured tab ID', () => {
       const { exitCode, output } = runCommand(
-        `${CLI} pdf /tmp/page.pdf --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} pdf ${path.join(TEST_TMP_DIR, 'page.pdf')} --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       if (exitCode !== 0) {
         console.error('PDF command failed with output:', output)
@@ -63,31 +64,31 @@ describe('pdf command - TAB ID FROM OUTPUT', () => {
       expect(output).toMatch(/PDF saved|saved PDF/i)
 
       // Check that a PDF file was created
-      expect(fs.existsSync('/tmp/page.pdf')).toBe(true)
+      expect(fs.existsSync(path.join(TEST_TMP_DIR, 'page.pdf'))).toBe(true)
 
       // Clean up
-      if (fs.existsSync('/tmp/page.pdf')) fs.unlinkSync('/tmp/page.pdf')
+      if (fs.existsSync(path.join(TEST_TMP_DIR, 'page.pdf'))) fs.unlinkSync(path.join(TEST_TMP_DIR, 'page.pdf'))
     })
 
     it('should generate PDF with custom filename using captured tab ID', () => {
       const { exitCode, output } = runCommand(
-        `${CLI} pdf /tmp/test-page.pdf --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} pdf ${path.join(TEST_TMP_DIR, 'test-page.pdf')} --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
       expect(output).toMatch(/PDF saved|saved PDF/i)
       expect(output).toContain('test-page.pdf')
 
       // Check that the file was created
-      expect(fs.existsSync('/tmp/test-page.pdf')).toBe(true)
+      expect(fs.existsSync(path.join(TEST_TMP_DIR, 'test-page.pdf'))).toBe(true)
     })
 
     it('should handle PDF format options using captured tab ID', () => {
       const { exitCode, output } = runCommand(
-        `${CLI} pdf /tmp/test-custom.pdf --format A4 --landscape --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} pdf ${path.join(TEST_TMP_DIR, 'test-custom.pdf')} --format A4 --landscape --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
       expect(output).toMatch(/PDF saved|saved PDF/i)
-      expect(fs.existsSync('/tmp/test-custom.pdf')).toBe(true)
+      expect(fs.existsSync(path.join(TEST_TMP_DIR, 'test-custom.pdf'))).toBe(true)
     })
 
     it('should handle invalid tab ID', () => {

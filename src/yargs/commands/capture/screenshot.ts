@@ -3,6 +3,8 @@ import chalk from 'chalk'
 import ora from 'ora'
 
 import { BrowserHelper } from '../../../lib/browser-helper'
+import { join } from 'path'
+import { TEST_TMP_DIR } from '../../../test-utils/test-constants'
 
 interface ScreenshotArgs extends Arguments {
   'path': string
@@ -24,7 +26,7 @@ export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
       .positional('path', {
         describe: 'Output file path',
         type: 'string',
-        default: '/tmp/screenshot.png',
+        default: join(TEST_TMP_DIR, 'screenshot.png'),
       })
       .option('port', {
         alias: 'p',

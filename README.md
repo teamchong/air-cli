@@ -1,4 +1,4 @@
-# air-cli
+# air-cli (WIP)
 
 **Agentic Information Retrieval** - Take back control of your information diet.
 
@@ -22,7 +22,7 @@ Their systems optimize for **engagement metrics**, not your actual goals.
 `air-cli` gives you back control by combining:
 - **Playwright** - Access the browsers/platforms you use daily (Facebook, Twitter, news sites)
 - **AI Agents** - Understand YOUR stated preferences, not what Meta's algorithm guesses
-- **Agentic IR** - Proactive curation like Perplexity/NotebookLM, but for everything
+- **Agentic IR** - Proactive curation (triggers before you ask questions)
 
 Your AI agent. Your rules. Not Meta's.
 

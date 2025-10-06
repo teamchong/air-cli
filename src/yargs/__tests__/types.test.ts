@@ -54,6 +54,7 @@ import type {
   CLIConfig,
   CLIPlugin,
 } from '../types'
+import { TEST_TMP_DIR } from '../../test-utils/test-constants'
 
 describe('Type Definitions', () => {
   describe('Base Types', () => {
@@ -185,13 +186,13 @@ describe('Type Definitions', () => {
     it('should define ScreenshotOptions correctly', () => {
       const options: ScreenshotOptions = {
         port: 9222,
-        path: '/tmp/screenshot.png',
+        path: `${TEST_TMP_DIR}/screenshot.png`,
         fullPage: true,
         quality: 90,
         type: 'jpeg',
       }
 
-      expect(options.path).toBe('/tmp/screenshot.png')
+      expect(options.path).toBe(`${TEST_TMP_DIR}/screenshot.png`)
       expect(options.fullPage).toBe(true)
     })
 

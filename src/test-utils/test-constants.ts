@@ -27,6 +27,5 @@ export const EXTENDED_TIMEOUT = 10000
 
 /**
  * Test temporary directory for test files
- * Uses .tmp/ in repo root (gitignored) instead of /tmp
  */
 export const TEST_TMP_DIR = '.tmp'
