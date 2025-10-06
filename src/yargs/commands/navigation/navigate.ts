@@ -151,6 +151,9 @@ export const navigateCommand = createCommand<NavigateOptions>({
             timeout,
           })
         }
+
+        // Flush action history to ensure it's persisted before command exits
+        await actionHistory.flush()
       }
     )
   },

@@ -341,8 +341,12 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
       argv.timeout,
       'Snapshot command operation'
     )
-      // Exit cleanly
-      return
+
+    // Flush ref manager to ensure it's persisted before command exits
+    await refManager.flush()
+
+    // Exit cleanly
+    return
     } catch (error: any) {
       logger.error(chalk.red(`❌ Failed to capture snapshot: ${error.message}`))
       throw new Error('Command failed')

@@ -79,8 +79,26 @@ class ActionHistory {
         await Bun.write(this.historyFile, JSON.stringify(this.actions))
       } catch (error) {
         // Ignore save errors to prevent breaking commands
+      } finally {
+        this.saveTimeout = null
       }
     }, 100)
+  }
+
+  /**
+   * Force any pending saves to complete immediately
+   * Useful before process exit to ensure data is persisted
+   */
+  async flush(): Promise<void> {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout)
+      this.saveTimeout = null
+      try {
+        await Bun.write(this.historyFile, JSON.stringify(this.actions))
+      } catch (error) {
+        // Ignore save errors
+      }
+    }
   }
 
   async addAction(action: Omit<Action, 'timestamp'>): Promise<void> {

@@ -230,5 +230,8 @@ export const clickCommand = createCommand<ClickOptions>({
 
     const successMessage = double ? 'Double-clicked' : 'Clicked'
     logger.success(`${successMessage}${modifierText} on ${targetDesc}`)
+
+    // Flush action history to ensure it's persisted before command exits
+    await actionHistory.flush()
   },
 })

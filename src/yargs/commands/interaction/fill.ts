@@ -541,5 +541,8 @@ export const fillCommand = createCommand<FillWithRefOptions>({
         console.log(`⚠️ ${summaryMsg}`)
       }
     }
+
+    // Flush action history to ensure it's persisted before command exits
+    await actionHistory.flush()
   },
 })

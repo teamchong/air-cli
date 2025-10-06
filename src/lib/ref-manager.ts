@@ -95,8 +95,35 @@ class RefManager {
         await Bun.write(this.persistFile, JSON.stringify(data, null, 2))
       } catch (error) {
         // Ignore errors
+      } finally {
+        this.saveTimeout = null
       }
     }, 100)
+  }
+
+  /**
+   * Force any pending saves to complete immediately
+   * Useful before process exit to ensure data is persisted
+   */
+  async flush(): Promise<void> {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout)
+      this.saveTimeout = null
+      try {
+        const data = {
+          refMap: Object.fromEntries(this.refMap),
+          tabRefMap: Object.fromEntries(
+            Array.from(this.tabRefMap.entries()).map(([tabId, map]) => [
+              tabId,
+              Object.fromEntries(map),
+            ])
+          ),
+        }
+        await Bun.write(this.persistFile, JSON.stringify(data, null, 2))
+      } catch (error) {
+        // Ignore errors
+      }
+    }
   }
 
   /**
