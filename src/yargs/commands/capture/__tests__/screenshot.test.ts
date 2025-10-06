@@ -31,12 +31,12 @@ describe('screenshot command - TAB ID FROM OUTPUT', () => {
   })
 
   afterAll(async () => {
-    // Clean up test screenshots
+    // Clean up test screenshots from /tmp
     try {
-      if (fs.existsSync('screenshot.png')) fs.unlinkSync('screenshot.png')
-      if (fs.existsSync('test-screenshot.png'))
-        fs.unlinkSync('test-screenshot.png')
-      if (fs.existsSync('test-custom.png')) fs.unlinkSync('test-custom.png')
+      if (fs.existsSync('/tmp/screenshot.png')) fs.unlinkSync('/tmp/screenshot.png')
+      if (fs.existsSync('/tmp/test-screenshot.png'))
+        fs.unlinkSync('/tmp/test-screenshot.png')
+      if (fs.existsSync('/tmp/test-custom.png')) fs.unlinkSync('/tmp/test-custom.png')
     } catch {}
 
     // Clean up our test tab using the specific tab ID
@@ -55,32 +55,32 @@ describe('screenshot command - TAB ID FROM OUTPUT', () => {
 
   describe('direct tab targeting with captured ID', () => {
     it('should take screenshot with default filename using captured tab ID', () => {
-      const { exitCode } = runCommand(`${CLI} screenshot --tab-id ${testTabId} --port ${TEST_PORT}`)
+      const { exitCode } = runCommand(`${CLI} screenshot /tmp/screenshot.png --tab-id ${testTabId} --port ${TEST_PORT}`)
       expect(exitCode).toBe(0)
 
-      // Check that default screenshot file was created
-      expect(fs.existsSync('screenshot.png')).toBe(true)
+      // Check that screenshot file was created
+      expect(fs.existsSync('/tmp/screenshot.png')).toBe(true)
 
       // Clean up
-      if (fs.existsSync('screenshot.png')) fs.unlinkSync('screenshot.png')
+      if (fs.existsSync('/tmp/screenshot.png')) fs.unlinkSync('/tmp/screenshot.png')
     })
 
     it('should take screenshot with custom filename using captured tab ID', () => {
       const { exitCode } = runCommand(
-        `${CLI} screenshot test-screenshot.png --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} screenshot /tmp/test-screenshot.png --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
 
       // Check that the file was created
-      expect(fs.existsSync('test-screenshot.png')).toBe(true)
+      expect(fs.existsSync('/tmp/test-screenshot.png')).toBe(true)
     })
 
     it('should handle full page screenshot using captured tab ID', () => {
       const { exitCode } = runCommand(
-        `${CLI} screenshot test-custom.png --full-page --tab-id ${testTabId} --port ${TEST_PORT}`
+        `${CLI} screenshot /tmp/test-custom.png --full-page --tab-id ${testTabId} --port ${TEST_PORT}`
       )
       expect(exitCode).toBe(0)
-      expect(fs.existsSync('test-custom.png')).toBe(true)
+      expect(fs.existsSync('/tmp/test-custom.png')).toBe(true)
     })
 
     it('should handle invalid tab ID', () => {

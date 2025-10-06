@@ -22,9 +22,9 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
   let testFile2: string
 
   beforeAll(async () => {
-    // Create test files
-    testFile1 = path.join(process.cwd(), 'test-upload-1.txt')
-    testFile2 = path.join(process.cwd(), 'test-upload-2.txt')
+    // Create test files in /tmp
+    testFile1 = path.join('/tmp', 'playwright-cli-test-upload-1.txt')
+    testFile2 = path.join('/tmp', 'playwright-cli-test-upload-2.txt')
     fs.writeFileSync(testFile1, 'Test file 1 content')
     fs.writeFileSync(testFile2, 'Test file 2 content')
   })

@@ -58,7 +58,7 @@ export const uploadCommand = createCommand<UploadOptions>({
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { selector, files, port } = argv
+    const { selector, files, port, timeout } = argv
     const tabIndex = argv['tab-index'] as number | undefined
     const tabId = argv['tab-id'] as string | undefined
 
@@ -72,7 +72,9 @@ export const uploadCommand = createCommand<UploadOptions>({
         path.isAbsolute(file) ? file : path.resolve(process.cwd(), file)
       )
 
-      await page.setInputFiles(selector, absolutePaths)
+      await page.setInputFiles(selector, absolutePaths, {
+        timeout: timeout || 5000,
+      })
     })
 
     logger.success(`Uploaded ${files.length} file(s) to ${selector}`)
