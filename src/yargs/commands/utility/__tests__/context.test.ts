@@ -124,7 +124,7 @@ describe('context command for state visibility', () => {
       const fs = require('fs')
       const path = require('path')
       const os = require('os')
-      const historyFile = path.join(os.tmpdir(), 'playwright-cli-actions.json')
+      const historyFile = path.join(os.tmpdir(), 'air-cli-actions.json')
       try {
         if (fs.existsSync(historyFile)) {
           fs.unlinkSync(historyFile)

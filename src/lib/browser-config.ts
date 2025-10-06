@@ -8,7 +8,7 @@ import { chromium, firefox, webkit } from 'playwright'
 import { logger } from './logger'
 import { PlatformHelper } from './platform-helper'
 
-const OLD_CONFIG_FILE = join(homedir(), '.playwright-cli-config.json')
+const OLD_CONFIG_FILE = join(homedir(), '.air-cli-config.json')
 
 // Helper functions to get paths dynamically (so they can be mocked in tests)
 function getClaudeDir() {

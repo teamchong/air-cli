@@ -20,14 +20,14 @@ try {
 
 # Set installation paths based on OS
 if ($IsWindows -or $env:OS -eq "Windows_NT") {
-    $INSTALL_DIR = "$env:LOCALAPPDATA\Programs\playwright-cli"
+    $INSTALL_DIR = "$env:LOCALAPPDATA\Programs\air-cli"
     $CLAUDE_DIR = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { "$env:USERPROFILE\.claude" }
-    $BINARY_NAME = "pw.exe"
+    $BINARY_NAME = "air.exe"
 } else {
     # Unix/macOS paths
     $INSTALL_DIR = "$HOME/.local/bin"
     $CLAUDE_DIR = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { "$HOME/.claude" }
-    $BINARY_NAME = "pw"
+    $BINARY_NAME = "air"
 }
 
 # Create directories
@@ -60,10 +60,10 @@ if (-not (Test-Path $binaryPath)) {
 Write-Host "✅ Build complete" -ForegroundColor Green
 
 # Stop any running instances before installation
-$runningProcesses = Get-Process -Name "pw" -ErrorAction SilentlyContinue
+$runningProcesses = Get-Process -Name "air" -ErrorAction SilentlyContinue
 if ($runningProcesses) {
-    Write-Host "  Stopping running pw instances..." -ForegroundColor Yellow
-    Stop-Process -Name "pw" -Force -ErrorAction SilentlyContinue
+    Write-Host "  Stopping running air instances..." -ForegroundColor Yellow
+    Stop-Process -Name "air" -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
 }
 
@@ -79,18 +79,18 @@ $binaryInstalled = Join-Path $INSTALL_DIR $BINARY_NAME
 try {
     $versionOutput = & $binaryInstalled --version 2>$null
     if ($versionOutput) {
-        Write-Host "✅ pw binary works (version: $versionOutput)" -ForegroundColor Green
+        Write-Host "✅ air binary works (version: $versionOutput)" -ForegroundColor Green
     } else {
         # Try help command as fallback
         $helpOutput = & $binaryInstalled help 2>$null
         if ($helpOutput) {
-            Write-Host "✅ pw binary works" -ForegroundColor Green
+            Write-Host "✅ air binary works" -ForegroundColor Green
         } else {
-            Write-Host "⚠️  pw binary may have issues - please test manually" -ForegroundColor Yellow
+            Write-Host "⚠️  air binary may have issues - please test manually" -ForegroundColor Yellow
         }
     }
 } catch {
-    Write-Host "⚠️  pw binary may have issues - please test manually" -ForegroundColor Yellow
+    Write-Host "⚠️  air binary may have issues - please test manually" -ForegroundColor Yellow
 }
 
 # Update CLAUDE.md
@@ -129,7 +129,7 @@ if (Test-Path $CLAUDE_MD) {
         $content += $instructions
     } else {
         # Fallback minimal content if file not found
-        $content += "## Playwright CLI`nBrowser automation tool. Run 'pw --help' for documentation."
+        $content += "## Playwright CLI`nBrowser automation tool. Run 'air --help' for documentation."
     }
 
     $content += "`n<!-- END PLAYWRIGHT-CLI -->"
@@ -147,11 +147,11 @@ if (Test-Path $CLAUDE_MD) {
         $content += $instructions
     } else {
         # Fallback minimal content if file not found
-        $content += "## Playwright CLI`nBrowser automation tool. Run 'pw --help' for documentation."
+        $content += "## Playwright CLI`nBrowser automation tool. Run 'air --help' for documentation."
     }
-    
+
     $content += "`n<!-- END PLAYWRIGHT-CLI -->"
-    
+
     # Write back with a trailing newline
     Set-Content -Path $CLAUDE_MD -Value $content
     Write-Host "✅ Created CLAUDE.md" -ForegroundColor Green
@@ -173,5 +173,5 @@ if ($userPath -notlike "*$INSTALL_DIR*") {
 Write-Host ""
 Write-Host "✅ Installation complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "Run 'pw' to see all available commands" -ForegroundColor Cyan
+Write-Host "Run 'air' to see all available commands" -ForegroundColor Cyan
 Write-Host "Note: You may need to restart your terminal for PATH changes to take effect" -ForegroundColor Yellow

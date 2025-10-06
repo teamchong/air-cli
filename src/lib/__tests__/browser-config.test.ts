@@ -71,7 +71,7 @@ import { PlatformHelper } from '../platform-helper'
 
 const CLAUDE_DIR = '/test/.claude'
 const CONFIG_FILE = join(CLAUDE_DIR, 'playwright-config.json')
-const OLD_CONFIG_FILE = join(homedir(), '.playwright-cli-config.json')
+const OLD_CONFIG_FILE = join(homedir(), '.air-cli-config.json')
 
 // Helper function to get the config file path - matches the implementation
 function getTestConfigFile() {

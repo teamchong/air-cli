@@ -29,7 +29,7 @@ class RefManager {
 
   private constructor() {
     // Store refs in temp directory
-    this.persistFile = path.join(os.tmpdir(), 'playwright-cli-refs.json')
+    this.persistFile = path.join(os.tmpdir(), 'air-cli-refs.json')
   }
 
   static getInstance(): RefManager {

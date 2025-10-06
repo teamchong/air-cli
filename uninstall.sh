@@ -20,21 +20,21 @@ remove_binary() {
     local dir="$1"
     local use_sudo="$2"
 
-    if [ -f "$dir/pw" ]; then
-        echo "📋 Removing pw from $dir..."
+    if [ -f "$dir/air" ]; then
+        echo "📋 Removing air from $dir..."
         if [ "$use_sudo" = "true" ]; then
-            sudo rm -f "$dir/pw"
+            sudo rm -f "$dir/air"
         else
-            rm -f "$dir/pw"
+            rm -f "$dir/air"
         fi
         echo "✅ Removed from $dir"
     fi
 }
 
 # Stop any running instances
-if pgrep -f "pw" > /dev/null 2>&1; then
-    echo "🛑 Stopping running pw instances..."
-    pkill -f "pw" 2>/dev/null || true
+if pgrep -f "air" > /dev/null 2>&1; then
+    echo "🛑 Stopping running air instances..."
+    pkill -f "air" 2>/dev/null || true
     sleep 1
     echo "✅ Stopped running instances"
 fi
@@ -43,13 +43,13 @@ fi
 remove_binary "$USER_BIN" false
 
 # Remove from system directory (requires sudo)
-if [ -f "$SYSTEM_BIN/pw" ]; then
-    echo "📋 Removing pw from $SYSTEM_BIN (requires sudo)..."
-    if sudo rm -f "$SYSTEM_BIN/pw" 2>/dev/null; then
+if [ -f "$SYSTEM_BIN/air" ]; then
+    echo "📋 Removing air from $SYSTEM_BIN (requires sudo)..."
+    if sudo rm -f "$SYSTEM_BIN/air" 2>/dev/null; then
         echo "✅ Removed from $SYSTEM_BIN"
     else
         echo "⚠️  Could not remove from $SYSTEM_BIN (permission denied)"
-        echo "   You may need to run: sudo rm -f $SYSTEM_BIN/pw"
+        echo "   You may need to run: sudo rm -f $SYSTEM_BIN/air"
     fi
 fi
 
@@ -74,5 +74,5 @@ fi
 echo ""
 echo "✅ Uninstallation complete!"
 echo ""
-echo "Note: If you had pw in your PATH, you may need to restart"
+echo "Note: If you had air in your PATH, you may need to restart"
 echo "your terminal or run 'hash -r' to clear the command cache."

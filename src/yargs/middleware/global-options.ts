@@ -320,10 +320,10 @@ export async function configFileMiddleware<T extends BaseCommandOptions>(
 ): Promise<void> {
   // Look for configuration files in standard locations
   const configPaths = [
-    '.playwright-cli.json',
-    '.playwright-cli.js',
-    'playwright-cli.config.json',
-    'playwright-cli.config.js',
+    '.air-cli.json',
+    '.air-cli.js',
+    'air-cli.config.json',
+    'air-cli.config.js',
   ]
 
   for (const configPath of configPaths) {

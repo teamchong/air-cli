@@ -26,7 +26,7 @@ class ActionHistory {
   private saveTimeout: Timer | null = null
 
   private constructor() {
-    this.historyFile = path.join(os.tmpdir(), 'playwright-cli-actions.json')
+    this.historyFile = path.join(os.tmpdir(), 'air-cli-actions.json')
   }
 
   static getInstance(): ActionHistory {

@@ -69,8 +69,6 @@ examples/multi-page-script.js
 # Session files
 .air-cli-session.json
 .air-cli-config.json
-.playwright-cli-session.json
-.playwright-cli-config.json
 
 # Cache
 .cache/
