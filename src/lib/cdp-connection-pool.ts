@@ -129,7 +129,7 @@ export class CDPConnectionPool {
       return browser
     } catch (error: any) {
       throw new Error(
-        `No browser running on port ${port}. Use "pw open" first`
+        `No browser running on port ${port}. Use "air open" first`
       )
     }
   }

@@ -156,7 +156,7 @@ export const tabsCommand = createCommand<TabOptions>({
           const contexts = browser.contexts()
           if (contexts.length === 0) {
             throw new Error(
-              'No browser context available. Use "pw open" first'
+              'No browser context available. Use "air open" first'
             )
           }
 

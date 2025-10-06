@@ -22,7 +22,7 @@ import { cli } from './yargs/cli'
 import { CDPConnectionPool } from './lib/cdp-connection-pool'
 
 // Fix for Bun compiled binaries: remove the extra argv entry
-if (process.argv[0] === 'bun' && process.argv[2]?.includes('pw')) {
+if (process.argv[0] === 'bun' && process.argv[2]?.includes('air')) {
   process.argv.splice(2, 1)
 }
 

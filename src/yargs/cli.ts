@@ -80,7 +80,7 @@ export interface GlobalOptions {
  */
 export function createCli(argv?: string[]) {
   const cli = yargs(argv || hideBin(process.argv))
-    .scriptName('pw')
+    .scriptName('air')
     .usage('$0 <command> [options]')
 
     // Global options available to all commands

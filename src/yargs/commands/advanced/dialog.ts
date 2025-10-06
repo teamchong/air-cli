@@ -51,7 +51,7 @@ export const dialogCommand = createCommand<DialogOptions>({
 
       const page = await BrowserHelper.getActivePage(argv.port)
       if (!page) {
-        logger.error('No active page. Use "pw open" first')
+        logger.error('No active page. Use "air open" first')
         throw new Error('No active page')
       }
 
