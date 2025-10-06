@@ -185,13 +185,13 @@ describe('Type Definitions', () => {
     it('should define ScreenshotOptions correctly', () => {
       const options: ScreenshotOptions = {
         port: 9222,
-        path: 'screenshot.png',
+        path: '/tmp/screenshot.png',
         fullPage: true,
         quality: 90,
         type: 'jpeg',
       }
 
-      expect(options.path).toBe('screenshot.png')
+      expect(options.path).toBe('/tmp/screenshot.png')
       expect(options.fullPage).toBe(true)
     })
 

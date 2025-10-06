@@ -154,7 +154,7 @@ export const commandFixtures = {
   },
   screenshot: {
     paths: [
-      'screenshot.png',
+      '/tmp/screenshot.png',
       join(tmpdir(), 'test-screenshot.jpg'),
       'outputs/page-capture.png',
     ],

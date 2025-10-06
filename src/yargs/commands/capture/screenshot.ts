@@ -24,7 +24,7 @@ export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
       .positional('path', {
         describe: 'Output file path',
         type: 'string',
-        default: 'screenshot.png',
+        default: '/tmp/screenshot.png',
       })
       .option('port', {
         alias: 'p',

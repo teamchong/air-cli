@@ -119,7 +119,7 @@ describe('context command for state visibility', () => {
   })
 
   describe('action history tracking', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       // Reset action history for clean test by clearing the temp file
       const fs = require('fs')
       const path = require('path')
