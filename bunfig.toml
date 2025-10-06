@@ -8,3 +8,8 @@ coverageThreshold = 80
 
 # Run tests sequentially (no parallelism)
 # Bun runs tests in a single process by default
+
+# Environment variables for tests
+[test.env]
+AIR_CLI_HEADLESS = "true"
+PORT = "19222"
