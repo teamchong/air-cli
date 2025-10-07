@@ -114,12 +114,13 @@ export function isInteractive(node: any): boolean {
  * ```
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function findElementByRef(
   node: any,
   targetRef: string,
   _path: string = ''
 ): any {
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   // Extract all interactive elements with their refs
   const elements = extractInteractiveElements(node)
 
@@ -262,12 +263,13 @@ export function nodeToSelector(node: any): string {
  * ```
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function extractInteractiveElements(
   node: any,
   path: string = '',
   results: any[] = []
 ): any[] {
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   // Reset counter when starting fresh (empty results array)
   if (results.length === 0) {
     resetLabelCounter()

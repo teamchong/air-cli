@@ -211,10 +211,11 @@ export const fillCommand = createCommand<FillWithRefOptions>({
           })
           // Also get labels
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           const labels = Array.from(
             (globalThis as any).document.querySelectorAll('label')
           )
+          /* eslint-enable @typescript-eslint/no-explicit-any */
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           labels.forEach((label: any) => {
             const text = label.textContent?.trim()
