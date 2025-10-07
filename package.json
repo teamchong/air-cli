@@ -20,10 +20,10 @@
   "scripts": {
     "prepare": "husky",
     "dev": "bun run src/index.ts",
-    "build:bun": "mkdir -p bin && bun build src/index.ts --compile --outfile bin/air-bun --external electron --external chromium-bidi",
+    "build:bun": "mkdir -p bin && bun build src/index.ts --compile --outfile bin/air --external electron --external chromium-bidi",
     "build:ts": "tsc -p tsconfig.build.json",
     "build:node": "mkdir -p bin && echo '#!/usr/bin/env bash' > bin/air && echo 'DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"' >> bin/air && echo 'exec node \"$DIR/../dist/src/index.js\" \"$@\"' >> bin/air && chmod +x bin/air",
-    "build": "bun run build:ts && bun run build:node",
+    "build": "bun run build:bun",
     "build:windows": "mkdir -p bin && bun run build:ts && pkg dist/src/index.js --targets node18-win-x64 --output bin/air.exe",
     "build:linux": "mkdir -p bin && bun run build:ts && pkg dist/src/index.js --targets node18-linux-x64 --output bin/air",
     "build:all": "mkdir -p bin && bun run build:ts && pkg dist/src/index.js --targets node18-macos-arm64,node18-win-x64,node18-linux-x64 --output bin/air",
@@ -57,6 +57,7 @@
     "node-mac-permissions": "^2.5.0",
     "ora": "^5.4.1",
     "playwright": "1.55.0",
+    "ws": "^8.18.3",
     "yargs": "^17.7.2"
   },
   "lint-staged": {
