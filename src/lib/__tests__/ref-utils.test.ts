@@ -193,8 +193,15 @@ describe('ref-utils', () => {
       );
     });
 
-    it('should fallback to text content selector', () => {
+    it('should fallback to role-based selector for unknown roles', () => {
       const node = { role: 'unknown', name: 'Some text' };
+      expect(nodeToSelector(node)).toBe(
+        '[role="unknown"][aria-label="Some text"]'
+      );
+    });
+
+    it('should fallback to text content selector when no role', () => {
+      const node = { name: 'Some text' };
       expect(nodeToSelector(node)).toBe(':has-text("Some text")');
     });
 
