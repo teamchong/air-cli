@@ -11,42 +11,42 @@
  *        (both can send/receive anytime)
  */
 
-import { readFileSync } from 'fs'
-import { createServer, Server as HTTPSServer } from 'https'
+import { readFileSync } from 'fs';
+import { createServer, Server as HTTPSServer } from 'https';
 
-import WebSocket, { WebSocketServer } from 'ws'
+import WebSocket, { WebSocketServer } from 'ws';
 
-import { certificateManager } from './security/certificate-manager'
+import { certificateManager } from './security/certificate-manager';
 
 export interface P2PMessage {
-  type: string
+  type: string;
 
-  data: any // eslint-disable-line @typescript-eslint/no-explicit-any
-  requestId?: string
+  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  requestId?: string;
 }
 
 export interface P2PPeer {
-  name: string
-  host: string
-  port: number
-  services: string[]
-  socket?: WebSocket
+  name: string;
+  host: string;
+  port: number;
+  services: string[];
+  socket?: WebSocket;
 }
 
 export type MessageHandler = (
   _message: P2PMessage,
   _peer: P2PPeer
-) => Promise<any> // eslint-disable-line @typescript-eslint/no-explicit-any
+) => Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export class P2PNode {
-  private nodeName: string
-  private server?: HTTPSServer
-  private wss?: WebSocketServer
-  private peers = new Map<string, P2PPeer>()
-  private handlers = new Map<string, MessageHandler>()
+  private nodeName: string;
+  private server?: HTTPSServer;
+  private wss?: WebSocketServer;
+  private peers = new Map<string, P2PPeer>();
+  private handlers = new Map<string, MessageHandler>();
 
   constructor(nodeName: string) {
-    this.nodeName = nodeName
+    this.nodeName = nodeName;
   }
 
   /**
@@ -54,10 +54,10 @@ export class P2PNode {
    */
   async start(port: number): Promise<void> {
     if (!certificateManager.hasNodeCertificate(this.nodeName)) {
-      throw new Error(`Missing certificates for ${this.nodeName}`)
+      throw new Error(`Missing certificates for ${this.nodeName}`);
     }
 
-    const paths = certificateManager.getNodePaths(this.nodeName)
+    const paths = certificateManager.getNodePaths(this.nodeName);
 
     // Create HTTPS server for WebSocket upgrade
     this.server = createServer({
@@ -66,62 +66,62 @@ export class P2PNode {
       requestCert: true,
       rejectUnauthorized: true,
       ca: readFileSync(paths.ca),
-      minVersion: 'TLSv1.2',
-    })
+      minVersion: 'TLSv1.2'
+    });
 
     // Create WebSocket server on top of HTTPS
-    this.wss = new WebSocketServer({ server: this.server })
+    this.wss = new WebSocketServer({ server: this.server });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.wss.on('connection', (ws: WebSocket, req: any) => {
       // Extract peer identity from mTLS certificate
-      const socket = req.socket
-      const peerCert = socket.getPeerCertificate()
-      const peerName = peerCert.subject?.CN || 'unknown'
+      const socket = req.socket;
+      const peerCert = socket.getPeerCertificate();
+      const peerName = peerCert.subject?.CN || 'unknown';
 
-      console.log(`🔗 P2P connection established with: ${peerName}`)
+      console.log(`🔗 P2P connection established with: ${peerName}`);
 
       const peer: P2PPeer = {
         name: peerName,
         host: req.socket.remoteAddress || '',
         port: req.socket.remotePort || 0,
         services: [],
-        socket: ws,
-      }
+        socket: ws
+      };
 
-      this.peers.set(peerName, peer)
+      this.peers.set(peerName, peer);
 
       // Handle incoming messages
       ws.on('message', async (data: Buffer) => {
         try {
-          const message: P2PMessage = JSON.parse(data.toString())
-          await this.handleMessage(message, peer)
+          const message: P2PMessage = JSON.parse(data.toString());
+          await this.handleMessage(message, peer);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           console.error(
             `❌ Error handling message from ${peerName}:`,
             error.message
-          )
+          );
         }
-      })
+      });
 
       ws.on('close', () => {
-        console.log(`🔌 ${peerName} disconnected`)
-        this.peers.delete(peerName)
-      })
+        console.log(`🔌 ${peerName} disconnected`);
+        this.peers.delete(peerName);
+      });
 
       ws.on('error', (error: Error) => {
-        console.error(`❌ WebSocket error from ${peerName}:`, error.message)
-      })
-    })
+        console.error(`❌ WebSocket error from ${peerName}:`, error.message);
+      });
+    });
 
     return new Promise(resolve => {
       this.server!.listen(port, () => {
-        console.log(`🔒 P2P node '${this.nodeName}' started on port ${port}`)
-        console.log('🔐 WebSocket + mTLS enabled')
-        resolve()
-      })
-    })
+        console.log(`🔒 P2P node '${this.nodeName}' started on port ${port}`);
+        console.log('🔐 WebSocket + mTLS enabled');
+        resolve();
+      });
+    });
   }
 
   /**
@@ -132,59 +132,59 @@ export class P2PNode {
     host: string,
     port: number
   ): Promise<void> {
-    const paths = certificateManager.getNodePaths(this.nodeName)
+    const paths = certificateManager.getNodePaths(this.nodeName);
 
     const ws = new WebSocket(`wss://${host}:${port}`, {
       key: readFileSync(paths.key),
       cert: readFileSync(paths.cert),
       ca: readFileSync(paths.ca),
-      rejectUnauthorized: true,
-    })
+      rejectUnauthorized: true
+    });
 
     return new Promise((resolve, reject) => {
       ws.on('open', () => {
-        console.log(`✅ Connected to peer: ${peerName}`)
+        console.log(`✅ Connected to peer: ${peerName}`);
 
         const peer: P2PPeer = {
           name: peerName,
           host,
           port,
           services: [],
-          socket: ws,
-        }
+          socket: ws
+        };
 
-        this.peers.set(peerName, peer)
+        this.peers.set(peerName, peer);
 
         // Handle messages from this peer
         ws.on('message', async (data: Buffer) => {
           try {
-            const message: P2PMessage = JSON.parse(data.toString())
-            await this.handleMessage(message, peer)
+            const message: P2PMessage = JSON.parse(data.toString());
+            await this.handleMessage(message, peer);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
-            console.error(`❌ Error from ${peerName}:`, error.message)
+            console.error(`❌ Error from ${peerName}:`, error.message);
           }
-        })
+        });
 
         ws.on('close', () => {
-          console.log(`🔌 Disconnected from ${peerName}`)
-          this.peers.delete(peerName)
-        })
+          console.log(`🔌 Disconnected from ${peerName}`);
+          this.peers.delete(peerName);
+        });
 
-        resolve()
-      })
+        resolve();
+      });
 
       ws.on('error', (error: Error) => {
-        reject(new Error(`Failed to connect to ${peerName}: ${error.message}`))
-      })
-    })
+        reject(new Error(`Failed to connect to ${peerName}: ${error.message}`));
+      });
+    });
   }
 
   /**
    * Register a message handler
    */
   on(messageType: string, handler: MessageHandler): void {
-    this.handlers.set(messageType, handler)
+    this.handlers.set(messageType, handler);
   }
 
   /**
@@ -194,50 +194,50 @@ export class P2PNode {
     message: P2PMessage,
     peer: P2PPeer
   ): Promise<void> {
-    console.log(`📨 Message from ${peer.name}: ${message.type}`)
+    console.log(`📨 Message from ${peer.name}: ${message.type}`);
 
     // Try exact match first
-    let handler = this.handlers.get(message.type)
+    let handler = this.handlers.get(message.type);
 
     // Try wildcard match if no exact match
     if (!handler) {
       for (const [pattern, h] of this.handlers.entries()) {
         if (pattern.endsWith(':*')) {
-          const prefix = pattern.slice(0, -2)
+          const prefix = pattern.slice(0, -2);
           if (message.type.startsWith(prefix + ':')) {
-            handler = h
-            break
+            handler = h;
+            break;
           }
         }
       }
     }
 
     if (!handler) {
-      console.warn(`⚠️  No handler for message type: ${message.type}`)
-      return
+      console.warn(`⚠️  No handler for message type: ${message.type}`);
+      return;
     }
 
     try {
-      const response = await handler(message, peer)
+      const response = await handler(message, peer);
 
       // Send response if this was a request
       if (message.requestId && response !== undefined) {
         this.send(peer.name, {
           type: `${message.type}:response`,
           data: response,
-          requestId: message.requestId,
-        })
+          requestId: message.requestId
+        });
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error('❌ Handler error:', error.message)
+      console.error('❌ Handler error:', error.message);
 
       if (message.requestId) {
         this.send(peer.name, {
           type: 'error',
           data: { error: error.message },
-          requestId: message.requestId,
-        })
+          requestId: message.requestId
+        });
       }
     }
   }
@@ -246,13 +246,13 @@ export class P2PNode {
    * Send message to a peer (push, no response expected)
    */
   send(peerName: string, message: P2PMessage): void {
-    const peer = this.peers.get(peerName)
+    const peer = this.peers.get(peerName);
 
     if (!peer || !peer.socket) {
-      throw new Error(`Peer ${peerName} not connected`)
+      throw new Error(`Peer ${peerName} not connected`);
     }
 
-    peer.socket.send(JSON.stringify(message))
+    peer.socket.send(JSON.stringify(message));
   }
 
   /**
@@ -266,52 +266,52 @@ export class P2PNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     // eslint-disable-next-line no-undef
-    const requestId = crypto.randomUUID()
+    const requestId = crypto.randomUUID();
 
-    const peer = this.peers.get(peerName)
+    const peer = this.peers.get(peerName);
     if (!peer || !peer.socket) {
-      throw new Error(`Peer ${peerName} not connected`)
+      throw new Error(`Peer ${peerName} not connected`);
     }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error(`Request timeout: ${messageType}`))
-      }, 30000)
+        reject(new Error(`Request timeout: ${messageType}`));
+      }, 30000);
 
       // Listen for response
-      const responseType = `${messageType}:response`
-      const errorType = 'error'
+      const responseType = `${messageType}:response`;
+      const errorType = 'error';
 
       const handleResponse = (data: Buffer): void => {
         try {
-          const message: P2PMessage = JSON.parse(data.toString())
+          const message: P2PMessage = JSON.parse(data.toString());
 
           if (message.requestId === requestId) {
             if (message.type === responseType) {
-              clearTimeout(timeout)
-              peer.socket!.off('message', handleResponse)
-              resolve(message.data)
+              clearTimeout(timeout);
+              peer.socket!.off('message', handleResponse);
+              resolve(message.data);
             } else if (message.type === errorType) {
-              clearTimeout(timeout)
-              peer.socket!.off('message', handleResponse)
-              reject(new Error(message.data.error))
+              clearTimeout(timeout);
+              peer.socket!.off('message', handleResponse);
+              reject(new Error(message.data.error));
             }
           }
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-          reject(error)
+          reject(error);
         }
-      }
+      };
 
-      peer.socket?.on('message', handleResponse)
+      peer.socket?.on('message', handleResponse);
 
       // Send request
       this.send(peerName, {
         type: messageType,
         data,
-        requestId,
-      })
-    })
+        requestId
+      });
+    });
   }
 
   /**
@@ -321,10 +321,10 @@ export class P2PNode {
     for (const [peerName, peer] of this.peers.entries()) {
       if (peer.socket) {
         try {
-          peer.socket.send(JSON.stringify(message))
+          peer.socket.send(JSON.stringify(message));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-          console.error(`❌ Failed to send to ${peerName}:`, error.message)
+          console.error(`❌ Failed to send to ${peerName}:`, error.message);
         }
       }
     }
@@ -334,18 +334,18 @@ export class P2PNode {
    * Get list of connected peers
    */
   getPeers(): P2PPeer[] {
-    return Array.from(this.peers.values())
+    return Array.from(this.peers.values());
   }
 
   /**
    * Disconnect from a peer
    */
   disconnect(peerName: string): void {
-    const peer = this.peers.get(peerName)
+    const peer = this.peers.get(peerName);
     if (peer && peer.socket) {
-      peer.socket.close()
-      this.peers.delete(peerName)
-      console.log(`✅ Disconnected from ${peerName}`)
+      peer.socket.close();
+      this.peers.delete(peerName);
+      console.log(`✅ Disconnected from ${peerName}`);
     }
   }
 
@@ -357,25 +357,25 @@ export class P2PNode {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
     for (const [_peerName, peer] of this.peers.entries()) {
       if (peer.socket) {
-        peer.socket.close()
+        peer.socket.close();
       }
     }
 
-    this.peers.clear()
+    this.peers.clear();
 
     // Close WebSocket server
     if (this.wss) {
-      this.wss.close()
+      this.wss.close();
     }
 
     // Close HTTPS server
     if (this.server) {
       return new Promise(resolve => {
         this.server!.close(() => {
-          console.log(`✅ P2P node '${this.nodeName}' stopped`)
-          resolve()
-        })
-      })
+          console.log(`✅ P2P node '${this.nodeName}' stopped`);
+          resolve();
+        });
+      });
     }
   }
 }

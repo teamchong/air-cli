@@ -6,7 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
-  function Application(_name: string): any
+  function Application(_name: string): any;
 }
 
-export {}
+export {};

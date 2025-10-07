@@ -5,26 +5,26 @@
  * The browser tracks all tabs via CDP and provides instant lookups.
  */
 
-import { Browser, Page } from 'playwright'
+import { Browser, Page } from 'playwright';
 
-import { BrowserHelper } from './browser-helper'
-import { withTimeout } from './timeout-utils'
+import { BrowserHelper } from './browser-helper';
+import { withTimeout } from './timeout-utils';
 
 interface TabInfo {
-  id: string
-  url: string
-  title: string
-  contextId: string
-  pageIndex: number
+  id: string;
+  url: string;
+  title: string;
+  contextId: string;
+  pageIndex: number;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export class BrowserTabRegistry {
   private static readonly REGISTRY_URL =
-    'data:text/html,<title>Tab Registry</title><body>Tab Registry Active</body>'
-  private static registryPage: Page | null = null
-  private static lastRebuildTime = 0
-  private static readonly REBUILD_THROTTLE_MS = 100 // Only rebuild every 100ms max
+    'data:text/html,<title>Tab Registry</title><body>Tab Registry Active</body>';
+  private static registryPage: Page | null = null;
+  private static lastRebuildTime = 0;
+  private static readonly REBUILD_THROTTLE_MS = 100; // Only rebuild every 100ms max
 
   /**
    * Initialize or get the registry page
@@ -41,93 +41,93 @@ export class BrowserTabRegistry {
             page.title(),
             100,
             'Page title retrieval in getRegistryPage'
-          )
+          );
           if (title === 'Tab Registry') {
-            this.registryPage = page
+            this.registryPage = page;
 
             // Throttled rebuild: only rebuild if enough time has passed
             // CDP events are async and may not have completed between CLI invocations
-            const now = Date.now()
+            const now = Date.now();
             const shouldRebuild =
-              now - this.lastRebuildTime > this.REBUILD_THROTTLE_MS
+              now - this.lastRebuildTime > this.REBUILD_THROTTLE_MS;
 
             if (shouldRebuild) {
               await page.evaluate(() => {
-                ;(globalThis as any).__tabRegistry = new Map()
-              })
+                (globalThis as any).__tabRegistry = new Map();
+              });
 
               // Use a temporary CDP client for rebuilding
-              const tempCdpClient = await browser.newBrowserCDPSession()
+              const tempCdpClient = await browser.newBrowserCDPSession();
               try {
                 await tempCdpClient.send('Target.setDiscoverTargets', {
-                  discover: true,
-                })
+                  discover: true
+                });
                 const { targetInfos } =
-                  await tempCdpClient.send('Target.getTargets')
+                  await tempCdpClient.send('Target.getTargets');
 
                 await page.evaluate(targets => {
-                  const registry = (globalThis as any).__tabRegistry
+                  const registry = (globalThis as any).__tabRegistry;
                   for (const target of targets) {
                     if (target.type === 'page') {
                       registry.set(target.targetId, {
                         id: target.targetId,
                         url: target.url,
                         title: target.title || '',
-                        browserContextId: target.browserContextId,
-                      })
+                        browserContextId: target.browserContextId
+                      });
                     }
                   }
-                }, targetInfos)
+                }, targetInfos);
               } finally {
-                await tempCdpClient.detach()
+                await tempCdpClient.detach();
               }
 
-              this.lastRebuildTime = now
+              this.lastRebuildTime = now;
             }
 
             // Check if monitoring is already set up
             const isMonitoring = await page.evaluate(() => {
-              return (globalThis as any).__registryMonitoring === true
-            })
+              return (globalThis as any).__registryMonitoring === true;
+            });
 
             if (!isMonitoring) {
               await page.evaluate(() => {
-                ;(globalThis as any).__registryMonitoring = true
-              })
+                (globalThis as any).__registryMonitoring = true;
+              });
 
               // Create persistent CDP client for monitoring
-              const cdpClient = await browser.newBrowserCDPSession()
+              const cdpClient = await browser.newBrowserCDPSession();
               await cdpClient.send('Target.setDiscoverTargets', {
-                discover: true,
-              })
+                discover: true
+              });
 
               // Set up monitoring with error handling
               cdpClient.on('Target.targetCreated', async event => {
                 if (event.targetInfo.type === 'page') {
                   try {
                     await page.evaluate(info => {
-                      ;(globalThis as any).__tabRegistry.set(info.targetId, {
+                      (globalThis as any).__tabRegistry.set(info.targetId, {
                         id: info.targetId,
                         url: info.url,
                         title: info.title || '',
-                        browserContextId: info.browserContextId,
-                      })
-                    }, event.targetInfo)
+                        browserContextId: info.browserContextId
+                      });
+                    }, event.targetInfo);
                   } catch {
                     // Ignore errors if registry page is closed or unavailable
                   }
                 }
-              })
+              });
 
               cdpClient.on('Target.targetDestroyed', async event => {
                 try {
                   await page.evaluate(targetId => {
-                    ;(globalThis as any).__tabRegistry.delete(targetId)
-                  }, event.targetId)
+                    (globalThis as any).__tabRegistry.delete(targetId);
+                  }, event.targetId);
                 } catch {
                   // Ignore errors if registry page is closed or unavailable
                 }
-              })
+              });
 
               cdpClient.on('Target.targetInfoChanged', async event => {
                 if (event.targetInfo.type === 'page') {
@@ -135,54 +135,54 @@ export class BrowserTabRegistry {
                     await page.evaluate(info => {
                       const existing = (globalThis as any).__tabRegistry.get(
                         info.targetId
-                      )
+                      );
                       if (existing) {
-                        ;(globalThis as any).__tabRegistry.set(info.targetId, {
+                        (globalThis as any).__tabRegistry.set(info.targetId, {
                           ...existing,
                           url: info.url,
-                          title: info.title || existing.title,
-                        })
+                          title: info.title || existing.title
+                        });
                       }
-                    }, event.targetInfo)
+                    }, event.targetInfo);
                   } catch {
                     // Ignore errors if registry page is closed or unavailable
                   }
                 }
-              })
+              });
             }
 
-            return page
+            return page;
           }
         } catch {
           // Ignore timeout or errors for individual pages and continue checking others
           // This prevents one unresponsive tab from hanging the entire registry lookup
-          continue
+          continue;
         }
       }
     }
 
     // Create registry page
-    const context = browser.contexts()[0] || (await browser.newContext())
-    const page = await context.newPage()
-    await page.goto(this.REGISTRY_URL)
+    const context = browser.contexts()[0] || (await browser.newContext());
+    const page = await context.newPage();
+    await page.goto(this.REGISTRY_URL);
 
     // Initialize the registry map
     await page.evaluate(() => {
-      ;(globalThis as any).__tabRegistry = new Map()
-    })
+      (globalThis as any).__tabRegistry = new Map();
+    });
 
     // Get browser-level CDP client to monitor ALL targets across contexts
-    const cdpClient = await browser.newBrowserCDPSession()
+    const cdpClient = await browser.newBrowserCDPSession();
 
     // Enable Target discovery at browser level
-    await cdpClient.send('Target.setDiscoverTargets', { discover: true })
+    await cdpClient.send('Target.setDiscoverTargets', { discover: true });
 
     // Build initial registry from existing targets
-    const { targetInfos } = await cdpClient.send('Target.getTargets')
+    const { targetInfos } = await cdpClient.send('Target.getTargets');
 
     await page.evaluate(targets => {
-      const registry = (globalThis as any).__tabRegistry
-      console.log('Initializing registry with targets:', targets.length)
+      const registry = (globalThis as any).__tabRegistry;
+      console.log('Initializing registry with targets:', targets.length);
 
       for (const target of targets) {
         if (target.type === 'page') {
@@ -190,42 +190,42 @@ export class BrowserTabRegistry {
             id: target.targetId,
             url: target.url,
             title: target.title || '',
-            browserContextId: target.browserContextId,
-          })
-          console.log(`Added tab ${target.targetId} - ${target.url}`)
+            browserContextId: target.browserContextId
+          });
+          console.log(`Added tab ${target.targetId} - ${target.url}`);
         }
       }
 
-      console.log(`Registry initialized with ${registry.size} tabs`)
-    }, targetInfos)
+      console.log(`Registry initialized with ${registry.size} tabs`);
+    }, targetInfos);
 
     // Set up live CDP monitoring at browser level with error handling
     cdpClient.on('Target.targetCreated', async event => {
       if (event.targetInfo.type === 'page') {
         try {
           await page.evaluate(info => {
-            ;(globalThis as any).__tabRegistry.set(info.targetId, {
+            (globalThis as any).__tabRegistry.set(info.targetId, {
               id: info.targetId,
               url: info.url,
               title: info.title || '',
-              browserContextId: info.browserContextId,
-            })
-          }, event.targetInfo)
+              browserContextId: info.browserContextId
+            });
+          }, event.targetInfo);
         } catch {
           // Ignore errors if registry page is closed or unavailable
         }
       }
-    })
+    });
 
     cdpClient.on('Target.targetDestroyed', async event => {
       try {
         await page.evaluate(targetId => {
-          ;(globalThis as any).__tabRegistry.delete(targetId)
-        }, event.targetId)
+          (globalThis as any).__tabRegistry.delete(targetId);
+        }, event.targetId);
       } catch {
         // Ignore errors if registry page is closed or unavailable
       }
-    })
+    });
 
     cdpClient.on('Target.targetInfoChanged', async event => {
       if (event.targetInfo.type === 'page') {
@@ -233,28 +233,28 @@ export class BrowserTabRegistry {
           await page.evaluate(info => {
             const existing = (globalThis as any).__tabRegistry.get(
               info.targetId
-            )
+            );
             if (existing) {
-              ;(globalThis as any).__tabRegistry.set(info.targetId, {
+              (globalThis as any).__tabRegistry.set(info.targetId, {
                 ...existing,
                 url: info.url,
-                title: info.title || existing.title,
-              })
+                title: info.title || existing.title
+              });
             }
-          }, event.targetInfo)
+          }, event.targetInfo);
         } catch {
           // Ignore errors if registry page is closed or unavailable
         }
       }
-    })
+    });
 
     // Mark monitoring as active in browser
     await page.evaluate(() => {
-      ;(globalThis as any).__registryMonitoring = true
-    })
+      (globalThis as any).__registryMonitoring = true;
+    });
 
-    this.registryPage = page
-    return page
+    this.registryPage = page;
+    return page;
   }
 
   /**
@@ -265,27 +265,27 @@ export class BrowserTabRegistry {
 
     tabId: string
   ): Promise<Page | null> {
-    const registry = await this.getRegistryPage(browser)
+    const registry = await this.getRegistryPage(browser);
 
     // Query the browser's registry
     const tabInfo = (await registry.evaluate(id => {
-      const registry = (globalThis as any).__tabRegistry
+      const registry = (globalThis as any).__tabRegistry;
       console.log(
         `Looking for tab ${id} in registry with ${registry.size} entries`
-      )
-      const info = registry.get(id)
+      );
+      const info = registry.get(id);
       if (info) {
-        console.log('Found tab info:', info)
+        console.log('Found tab info:', info);
       } else {
-        console.log(`Tab ${id} not found in registry`)
-        console.log('Registry has tabs:', Array.from(registry.keys()))
+        console.log(`Tab ${id} not found in registry`);
+        console.log('Registry has tabs:', Array.from(registry.keys()));
       }
-      return info
-    }, tabId)) as TabInfo | undefined
+      return info;
+    }, tabId)) as TabInfo | undefined;
 
     if (!tabInfo) {
-      console.log(`Tab ${tabId} not found in registry`)
-      return null
+      console.log(`Tab ${tabId} not found in registry`);
+      return null;
     }
 
     // Find the actual page object by context and URL
@@ -294,9 +294,11 @@ export class BrowserTabRegistry {
         // Fast match by URL first
         if (page.url() === tabInfo.url) {
           // Verify with single CDP call
-          const actualId = await BrowserHelper.getPageId(page).catch(() => null)
+          const actualId = await BrowserHelper.getPageId(page).catch(
+            () => null
+          );
           if (actualId === tabId) {
-            return page
+            return page;
           }
         }
       }
@@ -305,79 +307,79 @@ export class BrowserTabRegistry {
     // Fallback: URL might have changed, search by CDP
     for (const context of browser.contexts()) {
       for (const page of context.pages()) {
-        const actualId = await BrowserHelper.getPageId(page).catch(() => null)
+        const actualId = await BrowserHelper.getPageId(page).catch(() => null);
         if (actualId === tabId) {
           // Update registry with new URL
           await registry.evaluate(
             (args: { id: string; url: string }) => {
-              const entry = (globalThis as any).__tabRegistry.get(args.id)
+              const entry = (globalThis as any).__tabRegistry.get(args.id);
               if (entry) {
-                entry.url = args.url
+                entry.url = args.url;
               }
             },
             { id: tabId, url: page.url() }
-          )
-          return page
+          );
+          return page;
         }
       }
     }
 
-    return null
+    return null;
   }
 
   /**
    * Get registry statistics
    */
   static async getStats(browser: Browser): Promise<{
-    tabCount: number
-    tabs: string[]
+    tabCount: number;
+    tabs: string[];
   }> {
-    const registry = await this.getRegistryPage(browser)
+    const registry = await this.getRegistryPage(browser);
 
     return registry.evaluate(() => {
-      const entries = Array.from((globalThis as any).__tabRegistry.entries())
+      const entries = Array.from((globalThis as any).__tabRegistry.entries());
       return {
         tabCount: entries.length,
 
-        tabs: entries.map((entry: any) => entry[0]),
-      }
-    })
+        tabs: entries.map((entry: any) => entry[0])
+      };
+    });
   }
 
   /**
    * Clear and rebuild registry
    */
   static async rebuild(browser: Browser): Promise<void> {
-    const registry = await this.getRegistryPage(browser)
+    const registry = await this.getRegistryPage(browser);
 
     await registry.evaluate(() => {
-      ;(globalThis as any).__tabRegistry.clear()
-    })
+      (globalThis as any).__tabRegistry.clear();
+    });
 
     // Rebuild from browser-level CDP
-    const cdpClient = await browser.newBrowserCDPSession()
-    const { targetInfos } = await cdpClient.send('Target.getTargets')
+    const cdpClient = await browser.newBrowserCDPSession();
+    const { targetInfos } = await cdpClient.send('Target.getTargets');
 
     await registry.evaluate(targets => {
       for (const target of targets) {
         if (target.type === 'page') {
-          ;(globalThis as any).__tabRegistry.set(target.targetId, {
+          (globalThis as any).__tabRegistry.set(target.targetId, {
             id: target.targetId,
             url: target.url,
             title: target.title || '',
-            browserContextId: target.browserContextId,
-          })
+            browserContextId: target.browserContextId
+          });
         }
       }
-    }, targetInfos)
+    }, targetInfos);
 
-    await cdpClient.detach()
+    await cdpClient.detach();
   }
 }
 
 // Add TypeScript declarations for the browser context
 declare global {
   interface Window {
-    __tabRegistry: Map<string, TabInfo>
+    __tabRegistry: Map<string, TabInfo>;
   }
 }

@@ -18,12 +18,12 @@
  * @version 1.0.0
  */
 
-import { CDPConnectionPool } from './lib/cdp-connection-pool'
-import { cli } from './yargs/cli'
+import { CDPConnectionPool } from './lib/cdp-connection-pool';
+import { cli } from './yargs/cli';
 
 // Fix for Bun compiled binaries: remove the extra argv entry
 if (process.argv[0] === 'bun' && process.argv[2]?.includes('air')) {
-  process.argv.splice(2, 1)
+  process.argv.splice(2, 1);
 }
 
 // Parse and execute the CLI
@@ -31,73 +31,73 @@ cli
   .parseAsync()
   .then(async () => {
     if (process.env.DEBUG_EXIT) {
-      console.error('[DEBUG] Command completed, starting shutdown...')
+      console.error('[DEBUG] Command completed, starting shutdown...');
     }
 
     // Shutdown the connection pool to allow process to exit
     // The pool keeps connections alive which prevents natural exit
-    const pool = CDPConnectionPool.getInstance()
+    const pool = CDPConnectionPool.getInstance();
 
     // Set a timeout to force exit if shutdown takes too long
     // Playwright CDP connections don't always close cleanly
     const forceExitTimer = setTimeout(() => {
       if (process.env.DEBUG_EXIT) {
-        console.error('[DEBUG] Shutdown timeout, forcing immediate exit...')
+        console.error('[DEBUG] Shutdown timeout, forcing immediate exit...');
       }
-      process.exit(0)
-    }, 3000) // 3 second max wait (shutdown has 2s internal timeout)
+      process.exit(0);
+    }, 3000); // 3 second max wait (shutdown has 2s internal timeout)
 
     // Unref the timer so it doesn't keep the process alive
-    forceExitTimer.unref()
+    forceExitTimer.unref();
 
     await pool.shutdown().catch(() => {
       // Ignore shutdown errors, we're exiting anyway
-    })
+    });
 
     if (process.env.DEBUG_EXIT) {
-      console.error('[DEBUG] Shutdown complete, exiting...')
+      console.error('[DEBUG] Shutdown complete, exiting...');
     }
 
     // Clear the force-exit timeout since shutdown completed successfully
-    clearTimeout(forceExitTimer)
+    clearTimeout(forceExitTimer);
 
     // Give a small moment for I/O to flush, then exit
     // 50ms should be enough for console output to flush
     setTimeout(() => {
-      process.exit(0)
-    }, 50).unref()
+      process.exit(0);
+    }, 50).unref();
   })
   .catch(async err => {
     // Ensure error message is output for test capture
     if (err?.message) {
-      console.error(err.message)
+      console.error(err.message);
     }
 
     if (process.env.DEBUG_EXIT) {
-      console.error('[DEBUG] Error occurred, shutting down...')
+      console.error('[DEBUG] Error occurred, shutting down...');
     }
 
     // Set timeout for error case too
     const forceExitTimer = setTimeout(() => {
-      process.exit(1)
-    }, 3000)
+      process.exit(1);
+    }, 3000);
 
     // Unref the timer so it doesn't keep the process alive
-    forceExitTimer.unref()
+    forceExitTimer.unref();
 
     // Shutdown pool on error too
-    const pool = CDPConnectionPool.getInstance()
-    await pool.shutdown().catch(() => {})
+    const pool = CDPConnectionPool.getInstance();
+    await pool.shutdown().catch(() => {});
 
     if (process.env.DEBUG_EXIT) {
-      console.error('[DEBUG] Shutdown complete, exiting with error...')
+      console.error('[DEBUG] Shutdown complete, exiting with error...');
     }
 
-    clearTimeout(forceExitTimer)
+    clearTimeout(forceExitTimer);
 
     // Exit with error code after cleanup, with small delay for I/O flush
     // 50ms should be enough for console output to flush
     setTimeout(() => {
-      process.exit(1)
-    }, 50).unref()
-  })
+      process.exit(1);
+    }, 50).unref();
+  });

@@ -4,16 +4,16 @@
  * Call a service on a remote mesh node
  */
 
-import { AirMesh } from '../../../mesh/air-mesh'
-import { createCommand } from '../../lib/command-builder'
-import type { BaseCommandOptions } from '../../types'
+import { AirMesh } from '../../../mesh/air-mesh';
+import { createCommand } from '../../lib/command-builder';
+import type { BaseCommandOptions } from '../../types';
 
 interface CallMeshOptions extends BaseCommandOptions {
-  from: string
-  to: string
-  service: string
-  params?: string
-  timeout?: number
+  from: string;
+  to: string;
+  service: string;
+  params?: string;
+  timeout?: number;
 }
 
 export const callMeshCommand = createCommand<CallMeshOptions>({
@@ -21,7 +21,7 @@ export const callMeshCommand = createCommand<CallMeshOptions>({
     name: 'call',
     category: 'mesh',
     description: 'Call a service on a remote node',
-    aliases: [],
+    aliases: []
   },
   command: 'call',
   describe: 'Call a service on a remote node',
@@ -31,26 +31,26 @@ export const callMeshCommand = createCommand<CallMeshOptions>({
       .option('from', {
         type: 'string',
         describe: 'Local node name',
-        demandOption: true,
+        demandOption: true
       })
       .option('to', {
         type: 'string',
         describe: 'Remote node name',
-        demandOption: true,
+        demandOption: true
       })
       .option('service', {
         type: 'string',
         describe: 'Service name to call',
-        demandOption: true,
+        demandOption: true
       })
       .option('params', {
         type: 'string',
-        describe: 'Parameters as JSON string',
+        describe: 'Parameters as JSON string'
       })
       .option('timeout', {
         type: 'number',
         describe: 'Timeout in milliseconds',
-        default: 30000,
+        default: 30000
       })
       .example(
         '$0 mesh call --from my-node --to mail-node --service get-mail-inbox',
@@ -61,46 +61,46 @@ export const callMeshCommand = createCommand<CallMeshOptions>({
         'Get JSON output'
       ),
   handler: async context => {
-    const { from, to, service, params, json, timeout } = context.argv
+    const { from, to, service, params, json, timeout } = context.argv;
 
     if (!json) {
-      console.log(`📞 Calling ${service} on ${to}...`)
+      console.log(`📞 Calling ${service} on ${to}...`);
     }
 
     // Parse params if provided
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let parsedParams: any = undefined
+    let parsedParams: any = undefined;
     if (params) {
       try {
-        parsedParams = JSON.parse(params)
+        parsedParams = JSON.parse(params);
       } catch {
-        console.error(`❌ Invalid JSON params: ${params}`)
-        process.exit(1)
+        console.error(`❌ Invalid JSON params: ${params}`);
+        process.exit(1);
       }
     }
 
     // Note: This assumes local node is already running
-    const node = new AirMesh(from)
+    const node = new AirMesh(from);
 
     try {
-      const result = await node.call(to, service, parsedParams, { timeout })
+      const result = await node.call(to, service, parsedParams, { timeout });
 
       if (json) {
-        console.log(JSON.stringify({ success: true, data: result }, null, 2))
+        console.log(JSON.stringify({ success: true, data: result }, null, 2));
       } else {
-        console.log('\n✅ Result:')
-        console.log(JSON.stringify(result, null, 2))
+        console.log('\n✅ Result:');
+        console.log(JSON.stringify(result, null, 2));
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (json) {
         console.log(
           JSON.stringify({ success: false, error: error.message }, null, 2)
-        )
+        );
       } else {
-        console.error(`❌ Call failed: ${error.message}`)
+        console.error(`❌ Call failed: ${error.message}`);
       }
-      process.exit(1)
+      process.exit(1);
     }
-  },
-})
+  }
+});

@@ -1,24 +1,24 @@
-import { performance } from 'perf_hooks'
+import { performance } from 'perf_hooks';
 
 export interface RetryConfig {
-  maxAttempts: number
-  baseDelayMs: number
-  maxDelayMs: number
-  timeoutMs: number
-  retryableErrors: string[]
+  maxAttempts: number;
+  baseDelayMs: number;
+  maxDelayMs: number;
+  timeoutMs: number;
+  retryableErrors: string[];
 }
 
 export interface RetryMetrics {
-  totalAttempts: number
-  successfulAttempts: number
-  failedAttempts: number
-  totalRetryTime: number
-  lastError?: Error
-  circuitBreakerState: 'closed' | 'open' | 'half-open'
+  totalAttempts: number;
+  successfulAttempts: number;
+  failedAttempts: number;
+  totalRetryTime: number;
+  lastError?: Error;
+  circuitBreakerState: 'closed' | 'open' | 'half-open';
 }
 
 export interface RetryableOperation<T> {
-  (): Promise<T>
+  (): Promise<T>;
 }
 
 /**
@@ -30,64 +30,64 @@ export abstract class RetryStrategy {
     successfulAttempts: 0,
     failedAttempts: 0,
     totalRetryTime: 0,
-    circuitBreakerState: 'closed',
-  }
+    circuitBreakerState: 'closed'
+  };
 
   constructor(protected _config: RetryConfig) {}
 
-  abstract calculateDelay(_attempt: number): number
+  abstract calculateDelay(_attempt: number): number;
 
   async execute<T>(operation: RetryableOperation<T>): Promise<T> {
-    const startTime = performance.now()
-    let lastError: Error = new Error('Operation failed')
+    const startTime = performance.now();
+    let lastError: Error = new Error('Operation failed');
 
     for (let attempt = 1; attempt <= this._config.maxAttempts; attempt++) {
-      this.metrics.totalAttempts++
+      this.metrics.totalAttempts++;
 
       try {
         // Check circuit breaker state
         if (this.metrics.circuitBreakerState === 'open') {
-          throw new Error('Circuit breaker is open - operation blocked')
+          throw new Error('Circuit breaker is open - operation blocked');
         }
 
-        const result = await this.executeWithTimeout(operation)
-        this.metrics.successfulAttempts++
+        const result = await this.executeWithTimeout(operation);
+        this.metrics.successfulAttempts++;
 
         // Reset circuit breaker on success
         if (this.metrics.circuitBreakerState === 'half-open') {
-          this.metrics.circuitBreakerState = 'closed'
+          this.metrics.circuitBreakerState = 'closed';
         }
 
-        this.metrics.totalRetryTime = performance.now() - startTime
-        return result
+        this.metrics.totalRetryTime = performance.now() - startTime;
+        return result;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        lastError = error
-        this.metrics.failedAttempts++
-        this.metrics.lastError = error
+        lastError = error;
+        this.metrics.failedAttempts++;
+        this.metrics.lastError = error;
 
         // Check if error is retryable
         if (!this.isRetryableError(error)) {
-          this.updateCircuitBreaker(false)
-          throw error
+          this.updateCircuitBreaker(false);
+          throw error;
         }
 
         // If this was the last attempt, fail
         if (attempt === this._config.maxAttempts) {
-          this.updateCircuitBreaker(false)
-          break
+          this.updateCircuitBreaker(false);
+          break;
         }
 
         // Calculate delay and wait
-        const delay = this.calculateDelay(attempt)
-        await this.delay(delay)
+        const delay = this.calculateDelay(attempt);
+        await this.delay(delay);
       }
     }
 
-    this.metrics.totalRetryTime = performance.now() - startTime
+    this.metrics.totalRetryTime = performance.now() - startTime;
     throw new Error(
       `Operation failed after ${this._config.maxAttempts} attempts. Last error: ${lastError.message}`
-    )
+    );
   }
 
   private async executeWithTimeout<T>(
@@ -97,49 +97,49 @@ export abstract class RetryStrategy {
       const timeout = setTimeout(() => {
         reject(
           new Error(`Operation timed out after ${this._config.timeoutMs}ms`)
-        )
-      }, this._config.timeoutMs)
+        );
+      }, this._config.timeoutMs);
 
       operation()
         .then(result => {
-          clearTimeout(timeout)
-          resolve(result)
+          clearTimeout(timeout);
+          resolve(result);
         })
         .catch(error => {
-          clearTimeout(timeout)
-          reject(error)
-        })
-    })
+          clearTimeout(timeout);
+          reject(error);
+        });
+    });
   }
 
   private isRetryableError(error: Error): boolean {
-    const message = error.message.toLowerCase()
+    const message = error.message.toLowerCase();
     return this._config.retryableErrors.some(retryableError =>
       message.includes(retryableError.toLowerCase())
-    )
+    );
   }
 
   private updateCircuitBreaker(success: boolean): void {
     if (!success) {
       // Simple circuit breaker: open after 3 consecutive failures
       if (this.metrics.failedAttempts >= 3) {
-        this.metrics.circuitBreakerState = 'open'
+        this.metrics.circuitBreakerState = 'open';
         // Auto-reset to half-open after 30 seconds
         setTimeout(() => {
           if (this.metrics.circuitBreakerState === 'open') {
-            this.metrics.circuitBreakerState = 'half-open'
+            this.metrics.circuitBreakerState = 'half-open';
           }
-        }, 30000)
+        }, 30000);
       }
     }
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   getMetrics(): RetryMetrics {
-    return { ...this.metrics }
+    return { ...this.metrics };
   }
 
   resetMetrics(): void {
@@ -148,8 +148,8 @@ export abstract class RetryStrategy {
       successfulAttempts: 0,
       failedAttempts: 0,
       totalRetryTime: 0,
-      circuitBreakerState: 'closed',
-    }
+      circuitBreakerState: 'closed'
+    };
   }
 }
 
@@ -158,8 +158,8 @@ export abstract class RetryStrategy {
  */
 export class LinearRetryStrategy extends RetryStrategy {
   calculateDelay(_attempt: number): number {
-    const delay = this._config.baseDelayMs * _attempt
-    return Math.min(delay, this._config.maxDelayMs)
+    const delay = this._config.baseDelayMs * _attempt;
+    return Math.min(delay, this._config.maxDelayMs);
   }
 }
 
@@ -168,8 +168,8 @@ export class LinearRetryStrategy extends RetryStrategy {
  */
 export class ExponentialRetryStrategy extends RetryStrategy {
   calculateDelay(_attempt: number): number {
-    const delay = this._config.baseDelayMs * Math.pow(2, _attempt - 1)
-    return Math.min(delay, this._config.maxDelayMs)
+    const delay = this._config.baseDelayMs * Math.pow(2, _attempt - 1);
+    return Math.min(delay, this._config.maxDelayMs);
   }
 }
 
@@ -178,7 +178,7 @@ export class ExponentialRetryStrategy extends RetryStrategy {
  */
 export class FixedRetryStrategy extends RetryStrategy {
   calculateDelay(_attempt: number): number {
-    return this._config.baseDelayMs
+    return this._config.baseDelayMs;
   }
 }
 
@@ -192,13 +192,13 @@ export class RetryStrategyFactory {
   ): RetryStrategy {
     switch (type) {
       case 'linear':
-        return new LinearRetryStrategy(config)
+        return new LinearRetryStrategy(config);
       case 'exponential':
-        return new ExponentialRetryStrategy(config)
+        return new ExponentialRetryStrategy(config);
       case 'fixed':
-        return new FixedRetryStrategy(config)
+        return new FixedRetryStrategy(config);
       default:
-        throw new Error(`Unknown retry strategy type: ${type}`)
+        throw new Error(`Unknown retry strategy type: ${type}`);
     }
   }
 }
@@ -218,8 +218,8 @@ export const RetryConfigs: Record<string, RetryConfig> = {
       'connection refused',
       'timeout',
       'network error',
-      'browser closed',
-    ],
+      'browser closed'
+    ]
   },
 
   // For page interaction operations
@@ -233,8 +233,8 @@ export const RetryConfigs: Record<string, RetryConfig> = {
       'element not visible',
       'element not clickable',
       'timeout waiting for',
-      'navigation timeout',
-    ],
+      'navigation timeout'
+    ]
   },
 
   // For network-related operations
@@ -248,8 +248,8 @@ export const RetryConfigs: Record<string, RetryConfig> = {
       'connection refused',
       'timeout',
       'dns resolution failed',
-      'socket hang up',
-    ],
+      'socket hang up'
+    ]
   },
 
   // For file operations
@@ -262,7 +262,7 @@ export const RetryConfigs: Record<string, RetryConfig> = {
       'file not found',
       'permission denied',
       'resource busy',
-      'operation not permitted',
-    ],
-  },
-} as const
+      'operation not permitted'
+    ]
+  }
+} as const;

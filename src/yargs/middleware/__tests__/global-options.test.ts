@@ -5,9 +5,9 @@ import {
   beforeEach,
   afterEach,
   spyOn,
-  mock,
-} from 'bun:test'
-import chalk from 'chalk'
+  mock
+} from 'bun:test';
+import chalk from 'chalk';
 
 import {
   environmentConfigMiddleware,
@@ -22,128 +22,128 @@ import {
   getGlobalState,
   conditionalMiddleware,
   requiresBrowser,
-  middleware,
-} from '../global-options'
+  middleware
+} from '../global-options';
 
 // Create mock functions
-const mockGetLastUsedBrowser = mock().mockResolvedValue('chrome')
-const mockSaveLastUsedBrowser = mock().mockResolvedValue(undefined)
+const mockGetLastUsedBrowser = mock().mockResolvedValue('chrome');
+const mockSaveLastUsedBrowser = mock().mockResolvedValue(undefined);
 
 // Mock the BrowserConfig module
 mock.module('../../../lib/browser-config', () => ({
   BrowserConfig: {
     getLastUsedBrowser: mockGetLastUsedBrowser,
-    saveLastUsedBrowser: mockSaveLastUsedBrowser,
-  },
-}))
+    saveLastUsedBrowser: mockSaveLastUsedBrowser
+  }
+}));
 
 describe('Global Options Middleware', () => {
-  let originalEnv: Record<string, string | undefined>
-  let originalChalkLevel: number
+  let originalEnv: Record<string, string | undefined>;
+  let originalChalkLevel: number;
 
   beforeEach(() => {
-    originalEnv = { ...process.env }
-    originalChalkLevel = chalk.level
-    resetGlobalState()
-    mockGetLastUsedBrowser.mockClear()
-    mockSaveLastUsedBrowser.mockClear()
-  })
+    originalEnv = { ...process.env };
+    originalChalkLevel = chalk.level;
+    resetGlobalState();
+    mockGetLastUsedBrowser.mockClear();
+    mockSaveLastUsedBrowser.mockClear();
+  });
 
   afterEach(() => {
-    process.env = originalEnv
-    chalk.level = originalChalkLevel as 0 | 1 | 2 | 3
-  })
+    process.env = originalEnv;
+    chalk.level = originalChalkLevel as 0 | 1 | 2 | 3;
+  });
 
   describe('environmentConfigMiddleware', () => {
     it('should load port from environment variable', async () => {
-      process.env.PLAYWRIGHT_PORT = '8080'
+      process.env.PLAYWRIGHT_PORT = '8080';
 
-      const argv = { port: 9222, _: ['test'], $0: 'cli' } as any
-      await environmentConfigMiddleware(argv)
+      const argv = { port: 9222, _: ['test'], $0: 'cli' } as any;
+      await environmentConfigMiddleware(argv);
 
       // Should not override existing port
-      expect(argv.port).toBe(9222)
-    })
+      expect(argv.port).toBe(9222);
+    });
 
     it('should set port from environment when not provided', async () => {
-      process.env.PLAYWRIGHT_PORT = '8080'
+      process.env.PLAYWRIGHT_PORT = '8080';
 
-      const argv = { _: ['test'], $0: 'cli' } as any
-      await environmentConfigMiddleware(argv)
+      const argv = { _: ['test'], $0: 'cli' } as any;
+      await environmentConfigMiddleware(argv);
 
-      expect(argv.port).toBe(8080)
-    })
+      expect(argv.port).toBe(8080);
+    });
 
     it('should set verbose from environment', async () => {
-      process.env.PLAYWRIGHT_VERBOSE = 'true'
+      process.env.PLAYWRIGHT_VERBOSE = 'true';
 
-      const argv = { _: ['test'], $0: 'cli' } as any
-      await environmentConfigMiddleware(argv)
+      const argv = { _: ['test'], $0: 'cli' } as any;
+      await environmentConfigMiddleware(argv);
 
-      expect(argv.verbose).toBe(true)
-    })
+      expect(argv.verbose).toBe(true);
+    });
 
     it('should set debug mode from environment', async () => {
-      process.env.PLAYWRIGHT_DEBUG = 'true'
+      process.env.PLAYWRIGHT_DEBUG = 'true';
 
-      const argv = { _: ['test'], $0: 'cli' } as any
-      await environmentConfigMiddleware(argv)
+      const argv = { _: ['test'], $0: 'cli' } as any;
+      await environmentConfigMiddleware(argv);
 
-      expect(argv.verbose).toBe(true)
-      expect(process.env.DEBUG).toBe('playwright:*')
-    })
+      expect(argv.verbose).toBe(true);
+      expect(process.env.DEBUG).toBe('playwright:*');
+    });
 
     it('should only apply environment config once', async () => {
-      process.env.PLAYWRIGHT_PORT = '8080'
+      process.env.PLAYWRIGHT_PORT = '8080';
 
-      const argv1 = { _: ['test'], $0: 'cli' } as any
-      const argv2 = { _: ['test'], $0: 'cli' } as any
+      const argv1 = { _: ['test'], $0: 'cli' } as any;
+      const argv2 = { _: ['test'], $0: 'cli' } as any;
 
-      await environmentConfigMiddleware(argv1)
-      await environmentConfigMiddleware(argv2)
+      await environmentConfigMiddleware(argv1);
+      await environmentConfigMiddleware(argv2);
 
-      expect(argv1.port).toBe(8080)
-      expect(argv2.port).toBeUndefined() // Should not be set on second call
-    })
-  })
+      expect(argv1.port).toBe(8080);
+      expect(argv2.port).toBeUndefined(); // Should not be set on second call
+    });
+  });
 
   describe('globalOptionsMiddleware', () => {
     it('should disable colors when color is false', async () => {
-      const argv = { port: 9222, color: false, _: ['test'], $0: 'cli' } as any
-      await globalOptionsMiddleware(argv)
+      const argv = { port: 9222, color: false, _: ['test'], $0: 'cli' } as any;
+      await globalOptionsMiddleware(argv);
 
-      expect(chalk.level).toBe(0)
-    })
+      expect(chalk.level).toBe(0);
+    });
 
     it('should disable colors when NO_COLOR environment is set', async () => {
-      process.env.NO_COLOR = '1'
+      process.env.NO_COLOR = '1';
 
-      const argv = { port: 9222, _: ['test'], $0: 'cli' } as any
-      await globalOptionsMiddleware(argv)
+      const argv = { port: 9222, _: ['test'], $0: 'cli' } as any;
+      await globalOptionsMiddleware(argv);
 
-      expect(chalk.level).toBe(0)
-    })
+      expect(chalk.level).toBe(0);
+    });
 
     it('should handle conflicting verbose and quiet flags', async () => {
-      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {});
 
       const argv = {
         port: 9222,
         verbose: true,
         quiet: true,
         _: ['test'],
-        $0: 'cli',
-      } as any
-      await globalOptionsMiddleware(argv)
+        $0: 'cli'
+      } as any;
+      await globalOptionsMiddleware(argv);
 
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Both --quiet and --verbose specified')
-      )
-      expect(argv.quiet).toBe(false)
-      expect(argv.verbose).toBe(true)
+      );
+      expect(argv.quiet).toBe(false);
+      expect(argv.verbose).toBe(true);
 
-      consoleError.mockRestore()
-    })
+      consoleError.mockRestore();
+    });
 
     it('should set environment variables', async () => {
       const argv = {
@@ -151,261 +151,271 @@ describe('Global Options Middleware', () => {
         verbose: true,
         quiet: false,
         _: ['test'],
-        $0: 'cli',
-      } as any
-      await globalOptionsMiddleware(argv)
+        $0: 'cli'
+      } as any;
+      await globalOptionsMiddleware(argv);
 
-      expect(process.env.PLAYWRIGHT_VERBOSE).toBe('true')
-      expect(process.env.PLAYWRIGHT_PORT).toBe('8080')
-    })
+      expect(process.env.PLAYWRIGHT_VERBOSE).toBe('true');
+      expect(process.env.PLAYWRIGHT_PORT).toBe('8080');
+    });
 
     it('should validate port number', async () => {
-      const argv = { port: 70000, _: ['test'], $0: 'cli' } as any
+      const argv = { port: 70000, _: ['test'], $0: 'cli' } as any;
 
       await expect(globalOptionsMiddleware(argv)).rejects.toThrow(
         'Invalid port number'
-      )
-    })
+      );
+    });
 
     it('should set default port if not provided', async () => {
-      const argv = { _: ['test'], $0: 'cli' } as any
-      await globalOptionsMiddleware(argv)
+      const argv = { _: ['test'], $0: 'cli' } as any;
+      await globalOptionsMiddleware(argv);
 
-      expect(argv.port).toBe(9222)
-    })
-  })
+      expect(argv.port).toBe(9222);
+    });
+  });
 
   describe('selectorShorthandMiddleware', () => {
     it('should transform button shorthand', () => {
-      const argv = { selector: 'button:Login', _: ['click'], $0: 'cli' } as any
-      selectorShorthandMiddleware(argv)
+      const argv = { selector: 'button:Login', _: ['click'], $0: 'cli' } as any;
+      selectorShorthandMiddleware(argv);
 
-      expect(argv.selector).toBe('button:has-text("Login")')
-    })
+      expect(argv.selector).toBe('button:has-text("Login")');
+    });
 
     it('should transform link shorthand', () => {
-      const argv = { selector: 'link:Home', _: ['click'], $0: 'cli' } as any
-      selectorShorthandMiddleware(argv)
+      const argv = { selector: 'link:Home', _: ['click'], $0: 'cli' } as any;
+      selectorShorthandMiddleware(argv);
 
-      expect(argv.selector).toBe('a:has-text("Home")')
-    })
+      expect(argv.selector).toBe('a:has-text("Home")');
+    });
 
     it('should transform text shorthand', () => {
-      const argv = { selector: 'text:Submit', _: ['click'], $0: 'cli' } as any
-      selectorShorthandMiddleware(argv)
+      const argv = { selector: 'text:Submit', _: ['click'], $0: 'cli' } as any;
+      selectorShorthandMiddleware(argv);
 
-      expect(argv.selector).toBe(':has-text("Submit")')
-    })
+      expect(argv.selector).toBe(':has-text("Submit")');
+    });
 
     it('should transform input shorthand', () => {
-      const argv = { selector: 'input:email', _: ['fill'], $0: 'cli' } as any
-      selectorShorthandMiddleware(argv)
+      const argv = { selector: 'input:email', _: ['fill'], $0: 'cli' } as any;
+      selectorShorthandMiddleware(argv);
 
       expect(argv.selector).toBe(
         'input[placeholder*="email" i], input[name*="email" i], input[id*="email" i]'
-      )
-    })
+      );
+    });
 
     it('should not transform regular selectors', () => {
-      const argv = { selector: '#button', _: ['click'], $0: 'cli' } as any
-      const original = argv.selector
+      const argv = { selector: '#button', _: ['click'], $0: 'cli' } as any;
+      const original = argv.selector;
 
-      selectorShorthandMiddleware(argv)
+      selectorShorthandMiddleware(argv);
 
-      expect(argv.selector).toBe(original)
-    })
+      expect(argv.selector).toBe(original);
+    });
 
     it('should not transform complex selectors', () => {
       const argv = {
         selector: '[data-test="button"]',
         _: ['click'],
-        $0: 'cli',
-      } as any
-      const original = argv.selector
+        $0: 'cli'
+      } as any;
+      const original = argv.selector;
 
-      selectorShorthandMiddleware(argv)
+      selectorShorthandMiddleware(argv);
 
-      expect(argv.selector).toBe(original)
-    })
+      expect(argv.selector).toBe(original);
+    });
 
     it('should log transformation in verbose mode', () => {
-      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {});
 
       const argv = {
         selector: 'button:Login',
         verbose: true,
         _: ['click'],
-        $0: 'cli',
-      } as any
-      selectorShorthandMiddleware(argv)
+        $0: 'cli'
+      } as any;
+      selectorShorthandMiddleware(argv);
 
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Transformed selector')
-      )
+      );
 
-      consoleError.mockRestore()
-    })
-  })
+      consoleError.mockRestore();
+    });
+  });
 
   describe('loggingMiddleware', () => {
     it('should log command start in verbose mode', async () => {
-      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {});
 
-      const argv = { port: 9222, verbose: true, _: ['click'], $0: 'cli' } as any
-      await loggingMiddleware(argv)
+      const argv = {
+        port: 9222,
+        verbose: true,
+        _: ['click'],
+        $0: 'cli'
+      } as any;
+      await loggingMiddleware(argv);
 
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Starting command: click')
-      )
+      );
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Port: 9222')
-      )
+      );
 
-      consoleError.mockRestore()
-    })
+      consoleError.mockRestore();
+    });
 
     it('should not log in quiet mode', async () => {
-      const consoleLog = spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLog = spyOn(console, 'log').mockImplementation(() => {});
 
       const argv = {
         port: 9222,
         verbose: false,
         _: ['click'],
-        $0: 'cli',
-      } as any
-      await loggingMiddleware(argv)
+        $0: 'cli'
+      } as any;
+      await loggingMiddleware(argv);
 
-      expect(consoleLog).not.toHaveBeenCalled()
+      expect(consoleLog).not.toHaveBeenCalled();
 
-      consoleLog.mockRestore()
-    })
-  })
+      consoleLog.mockRestore();
+    });
+  });
 
   describe('browserConnectionMiddleware', () => {
     it('should require port for browser commands', async () => {
-      const argv = { _: ['click'], $0: 'cli' } as any
+      const argv = { _: ['click'], $0: 'cli' } as any;
 
       await expect(browserConnectionMiddleware(argv)).rejects.toThrow(
         'Port is required'
-      )
-    })
+      );
+    });
 
     it('should succeed with valid port', async () => {
-      const argv = { port: 9222, _: ['click'], $0: 'cli' } as any
+      const argv = { port: 9222, _: ['click'], $0: 'cli' } as any;
 
-      await expect(browserConnectionMiddleware(argv)).resolves.toBeUndefined()
-    })
+      await expect(browserConnectionMiddleware(argv)).resolves.toBeUndefined();
+    });
 
     it('should log connection details in verbose mode', async () => {
-      const consoleError = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleError = spyOn(console, 'error').mockImplementation(() => {});
 
-      const argv = { port: 9222, verbose: true, _: ['click'], $0: 'cli' } as any
-      await browserConnectionMiddleware(argv)
+      const argv = {
+        port: 9222,
+        verbose: true,
+        _: ['click'],
+        $0: 'cli'
+      } as any;
+      await browserConnectionMiddleware(argv);
 
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining('Will connect to browser on port 9222')
-      )
+      );
 
-      consoleError.mockRestore()
-    })
-  })
+      consoleError.mockRestore();
+    });
+  });
 
   describe('globalMiddlewareChain', () => {
     it('should run all middleware in order', async () => {
       // Note: Yargs sets the default port to 9222, but when calling middleware directly
       // we need to provide it since middleware doesn't set defaults
-      const argv = { _: ['click'], $0: 'cli', port: 9222 } as any
+      const argv = { _: ['click'], $0: 'cli', port: 9222 } as any;
 
-      await globalMiddlewareChain(argv)
+      await globalMiddlewareChain(argv);
 
       // Should preserve the port value
-      expect(argv.port).toBe(9222)
-    })
+      expect(argv.port).toBe(9222);
+    });
 
     it('should apply selector shorthand for commands with selectors', async () => {
-      const argv = { selector: 'button:Login', _: ['click'], $0: 'cli' } as any
+      const argv = { selector: 'button:Login', _: ['click'], $0: 'cli' } as any;
 
-      await globalMiddlewareChain(argv)
+      await globalMiddlewareChain(argv);
 
-      expect(argv.selector).toBe('button:has-text("Login")')
-    })
-  })
+      expect(argv.selector).toBe('button:has-text("Login")');
+    });
+  });
 
   describe('utility functions', () => {
     it('should identify browser commands correctly', () => {
-      expect(requiresBrowser({ _: ['click'], $0: 'cli' } as any)).toBe(true)
+      expect(requiresBrowser({ _: ['click'], $0: 'cli' } as any)).toBe(true);
       expect(requiresBrowser({ _: ['screenshot'], $0: 'cli' } as any)).toBe(
         true
-      )
-      expect(requiresBrowser({ _: ['install'], $0: 'cli' } as any)).toBe(false)
-      expect(requiresBrowser({ _: ['version'], $0: 'cli' } as any)).toBe(false)
-    })
+      );
+      expect(requiresBrowser({ _: ['install'], $0: 'cli' } as any)).toBe(false);
+      expect(requiresBrowser({ _: ['version'], $0: 'cli' } as any)).toBe(false);
+    });
 
     it('should create conditional middleware', async () => {
-      const mockMiddleware = mock().mockResolvedValue(undefined)
+      const mockMiddleware = mock().mockResolvedValue(undefined);
 
-      const condition = (argv: any) => argv.test === true
+      const condition = (argv: any) => argv.test === true;
 
-      const conditionalMw = conditionalMiddleware(condition, mockMiddleware)
+      const conditionalMw = conditionalMiddleware(condition, mockMiddleware);
 
       // Should run when condition is true
-      await conditionalMw({ test: true, _: [], $0: 'cli' } as any)
-      expect(mockMiddleware).toHaveBeenCalled()
+      await conditionalMw({ test: true, _: [], $0: 'cli' } as any);
+      expect(mockMiddleware).toHaveBeenCalled();
 
-      mockMiddleware.mockClear()
+      mockMiddleware.mockClear();
 
       // Should not run when condition is false
-      await conditionalMw({ test: false, _: [], $0: 'cli' } as any)
-      expect(mockMiddleware).not.toHaveBeenCalled()
-    })
+      await conditionalMw({ test: false, _: [], $0: 'cli' } as any);
+      expect(mockMiddleware).not.toHaveBeenCalled();
+    });
 
     it('should provide global state access', () => {
-      initializeGlobalState()
-      const state = getGlobalState()
+      initializeGlobalState();
+      const state = getGlobalState();
 
-      expect(state).toHaveProperty('startTime')
-      expect(state).toHaveProperty('config')
-      expect(state).toHaveProperty('environmentApplied')
-      expect(state).toHaveProperty('browserConfigLoaded')
-    })
+      expect(state).toHaveProperty('startTime');
+      expect(state).toHaveProperty('config');
+      expect(state).toHaveProperty('environmentApplied');
+      expect(state).toHaveProperty('browserConfigLoaded');
+    });
 
     it('should reset global state', () => {
-      const state1 = getGlobalState()
-      const originalTime = state1.startTime
+      const state1 = getGlobalState();
+      const originalTime = state1.startTime;
 
       // Wait a bit then reset
       setTimeout(() => {
-        resetGlobalState()
-        const state2 = getGlobalState()
-        expect(state2.startTime).toBeGreaterThan(originalTime)
-      }, 10)
-    })
-  })
+        resetGlobalState();
+        const state2 = getGlobalState();
+        expect(state2.startTime).toBeGreaterThan(originalTime);
+      }, 10);
+    });
+  });
 
   describe('configFileMiddleware', () => {
     it('should skip when no config file exists', async () => {
-      const argv = { _: ['test'], $0: 'cli' } as any
+      const argv = { _: ['test'], $0: 'cli' } as any;
 
       // Should not throw when config files don't exist
-      await expect(configFileMiddleware(argv)).resolves.toBeUndefined()
-    })
+      await expect(configFileMiddleware(argv)).resolves.toBeUndefined();
+    });
 
     // Note: Testing actual file loading would require mocking fs module
     // which is complex in this context. The middleware handles file not found gracefully.
-  })
+  });
 
   describe('middleware object', () => {
     it('should export individual middleware functions', () => {
-      expect(middleware).toHaveProperty('environmentConfig')
-      expect(middleware).toHaveProperty('configFile')
-      expect(middleware).toHaveProperty('globalOptions')
-      expect(middleware).toHaveProperty('browserConfig')
-      expect(middleware).toHaveProperty('logging')
-      expect(middleware).toHaveProperty('selectorShorthand')
-      expect(middleware).toHaveProperty('browserConnection')
+      expect(middleware).toHaveProperty('environmentConfig');
+      expect(middleware).toHaveProperty('configFile');
+      expect(middleware).toHaveProperty('globalOptions');
+      expect(middleware).toHaveProperty('browserConfig');
+      expect(middleware).toHaveProperty('logging');
+      expect(middleware).toHaveProperty('selectorShorthand');
+      expect(middleware).toHaveProperty('browserConnection');
 
-      expect(typeof middleware.environmentConfig).toBe('function')
-      expect(typeof middleware.globalOptions).toBe('function')
-    })
-  })
-})
+      expect(typeof middleware.environmentConfig).toBe('function');
+      expect(typeof middleware.globalOptions).toBe('function');
+    });
+  });
+});

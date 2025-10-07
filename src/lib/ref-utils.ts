@@ -4,26 +4,26 @@
  * @returns Excel-style column string
  */
 export function numberToExcelColumn(num: number): string {
-  let column = ''
-  let n = num
+  let column = '';
+  let n = num;
 
   while (n >= 0) {
-    column = String.fromCharCode(65 + (n % 26)) + column
-    n = Math.floor(n / 26) - 1
-    if (n < 0) break
+    column = String.fromCharCode(65 + (n % 26)) + column;
+    n = Math.floor(n / 26) - 1;
+    if (n < 0) break;
   }
 
-  return column
+  return column;
 }
 
 // Global counter for generating sequential labels
-let labelCounter = 0
+let labelCounter = 0;
 
 /**
  * Resets the label counter (useful for new pages or snapshots)
  */
 export function resetLabelCounter(): void {
-  labelCounter = 0
+  labelCounter = 0;
 }
 
 /**
@@ -42,9 +42,9 @@ export function resetLabelCounter(): void {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateRef(node: any, _path: string = ''): string {
-  const ref = numberToExcelColumn(labelCounter)
-  labelCounter++
-  return ref
+  const ref = numberToExcelColumn(labelCounter);
+  labelCounter++;
+  return ref;
 }
 
 /**
@@ -78,20 +78,20 @@ export function isInteractive(node: any): boolean {
     'slider',
     'searchbox',
     'spinbutton',
-    'option',
-  ]
+    'option'
+  ];
 
   // Check role
   if (interactiveRoles.includes(node.role)) {
-    return true
+    return true;
   }
 
   // Check if it's clickable/focusable
   if (node.focusable || node.clickable) {
-    return true
+    return true;
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -122,15 +122,15 @@ export function findElementByRef(
 ): any {
   /* eslint-enable @typescript-eslint/no-explicit-any */
   // Extract all interactive elements with their refs
-  const elements = extractInteractiveElements(node)
+  const elements = extractInteractiveElements(node);
 
   // Find the element with matching ref
-  const targetElement = elements.find(elem => elem.ref === targetRef)
+  const targetElement = elements.find(elem => elem.ref === targetRef);
 
-  if (!targetElement) return null
+  if (!targetElement) return null;
 
   // Now find the actual node in the tree that matches this element
-  return findNodeByProperties(node, targetElement)
+  return findNodeByProperties(node, targetElement);
 }
 
 /**
@@ -138,7 +138,7 @@ export function findElementByRef(
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function findNodeByProperties(node: any, target: any): any {
-  if (!node) return null
+  if (!node) return null;
 
   // Check if current node matches
   if (
@@ -146,18 +146,18 @@ function findNodeByProperties(node: any, target: any): any {
     (node.name === target.name || node.value === target.name) &&
     node.description === target.description
   ) {
-    return node
+    return node;
   }
 
   // Recurse through children
   if (node.children) {
     for (const child of node.children) {
-      const found = findNodeByProperties(child, target)
-      if (found) return found
+      const found = findNodeByProperties(child, target);
+      if (found) return found;
     }
   }
 
-  return null
+  return null;
 }
 
 /**
@@ -182,56 +182,56 @@ function findNodeByProperties(node: any, target: any): any {
 export function nodeToSelector(node: any): string {
   // Try to create a unique selector based on the node properties
   if (node.role === 'button' && node.name) {
-    return `button:has-text("${node.name}")`
+    return `button:has-text("${node.name}")`;
   }
   if (node.role === 'link' && node.name) {
-    return `a:has-text("${node.name}")`
+    return `a:has-text("${node.name}")`;
   }
   if (node.role === 'textbox') {
     if (node.name) {
       // Try placeholder first, then aria-label
-      return `input[placeholder="${node.name}"], input[aria-label="${node.name}"]`
+      return `input[placeholder="${node.name}"], input[aria-label="${node.name}"]`;
     }
     if (node.value) {
-      return `input[value="${node.value}"]`
+      return `input[value="${node.value}"]`;
     }
-    return 'input[type="text"]'
+    return 'input[type="text"]';
   }
   if (node.role === 'combobox') {
     // Combobox can be select, input with autocomplete, or textarea with role
     if (node.name) {
-      return `[role="combobox"][aria-label="${node.name}"], select[aria-label="${node.name}"], textarea[aria-label="${node.name}"], input[aria-label="${node.name}"][role="combobox"]`
+      return `[role="combobox"][aria-label="${node.name}"], select[aria-label="${node.name}"], textarea[aria-label="${node.name}"], input[aria-label="${node.name}"][role="combobox"]`;
     }
-    return '[role="combobox"]'
+    return '[role="combobox"]';
   }
   if (node.role === 'searchbox') {
     if (node.name) {
-      return `input[type="search"][aria-label="${node.name}"], input[type="search"][placeholder="${node.name}"]`
+      return `input[type="search"][aria-label="${node.name}"], input[type="search"][placeholder="${node.name}"]`;
     }
-    return 'input[type="search"]'
+    return 'input[type="search"]';
   }
   if (node.role === 'checkbox') {
     return node.name
       ? `input[type="checkbox"][aria-label="${node.name}"]`
-      : 'input[type="checkbox"]'
+      : 'input[type="checkbox"]';
   }
   if (node.role === 'radio') {
     return node.name
       ? `input[type="radio"][aria-label="${node.name}"]`
-      : 'input[type="radio"]'
+      : 'input[type="radio"]';
   }
 
   // Fallback to role-based selector first
   if (node.role && node.name) {
-    return `[role="${node.role}"][aria-label="${node.name}"]`
+    return `[role="${node.role}"][aria-label="${node.name}"]`;
   }
 
   // Last resort: text content (can be ambiguous)
   if (node.name) {
-    return `:has-text("${node.name}")`
+    return `:has-text("${node.name}")`;
   }
 
-  return '*' // Last resort
+  return '*'; // Last resort
 }
 
 /**
@@ -272,29 +272,29 @@ export function extractInteractiveElements(
   /* eslint-enable @typescript-eslint/no-explicit-any */
   // Reset counter when starting fresh (empty results array)
   if (results.length === 0) {
-    resetLabelCounter()
+    resetLabelCounter();
   }
 
-  if (!node) return results
+  if (!node) return results;
 
   // Add current node if interactive
   if (isInteractive(node)) {
-    const ref = generateRef(node, path)
+    const ref = generateRef(node, path);
     results.push({
       role: node.role,
       name: node.name || node.value || '',
       ref: ref,
-      description: node.description,
-    })
+      description: node.description
+    });
   }
 
   // Recurse through children
   if (node.children) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     node.children.forEach((child: any, index: number) => {
-      extractInteractiveElements(child, `${path}-${index}`, results)
-    })
+      extractInteractiveElements(child, `${path}-${index}`, results);
+    });
   }
 
-  return results
+  return results;
 }

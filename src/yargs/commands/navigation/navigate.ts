@@ -5,17 +5,17 @@
  * Supports various waitUntil conditions and timeout options.
  */
 
-import { actionHistory } from '../../../lib/action-history'
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { createCommand } from '../../lib/command-builder'
-import type { NavigateOptions } from '../../types'
+import { actionHistory } from '../../../lib/action-history';
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { createCommand } from '../../lib/command-builder';
+import type { NavigateOptions } from '../../types';
 
 export const navigateCommand = createCommand<NavigateOptions>({
   metadata: {
     name: 'navigate',
     category: 'navigation',
     description: 'Navigate to a URL',
-    aliases: ['goto'],
+    aliases: ['goto']
   },
 
   command: 'navigate <url>',
@@ -26,65 +26,65 @@ export const navigateCommand = createCommand<NavigateOptions>({
       .positional('url', {
         describe: 'URL to navigate to',
         type: 'string',
-        demandOption: true,
+        demandOption: true
       })
       .option('port', {
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p',
+        alias: 'p'
       })
       .option('waitUntil', {
         describe: 'Wait until event occurs before completing',
         type: 'string',
         choices: ['load', 'domcontentloaded', 'networkidle', 'commit'],
         default: 'load',
-        alias: 'w',
+        alias: 'w'
       })
       .option('timeout', {
         describe: 'Navigation timeout in milliseconds',
         type: 'number',
         default: 10000,
-        alias: 't',
+        alias: 't'
       })
       .option('referer', {
         describe: 'Referer header value',
-        type: 'string',
+        type: 'string'
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab',
+        alias: 'tab'
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string',
+        type: 'string'
       })
-      .conflicts('tab-index', 'tab-id')
+      .conflicts('tab-index', 'tab-id');
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { url, waitUntil, timeout, referer } = argv
-    const tabIndex = argv['tab-index'] as number | undefined
-    const tabId = argv['tab-id'] as string | undefined
+    const { url, waitUntil, timeout, referer } = argv;
+    const tabIndex = argv['tab-index'] as number | undefined;
+    const tabId = argv['tab-id'] as string | undefined;
 
     const tabTarget =
       tabIndex !== undefined
         ? ` in tab ${tabIndex}`
         : tabId !== undefined
           ? ` in tab ${tabId.slice(0, 8)}...`
-          : ''
+          : '';
 
     if (spinner) {
-      spinner.start(`Navigating to ${url}${tabTarget}...`)
+      spinner.start(`Navigating to ${url}${tabTarget}...`);
     }
 
     // Validate URL format (allow data: URLs for testing)
     if (!url.startsWith('data:') && !url.startsWith('http')) {
       try {
-        new URL(url)
+        new URL(url);
       } catch {
-        throw new Error(`Invalid URL format: ${url}`)
+        throw new Error(`Invalid URL format: ${url}`);
       }
     }
 
@@ -96,27 +96,27 @@ export const navigateCommand = createCommand<NavigateOptions>({
       async page => {
         // Navigate with options
         const navigationOptions: {
-          waitUntil: 'load' | 'domcontentloaded' | 'networkidle' | 'commit'
-          timeout?: number
-          referer?: string
+          waitUntil: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+          timeout?: number;
+          referer?: string;
         } = {
           waitUntil: waitUntil as
             | 'load'
             | 'domcontentloaded'
             | 'networkidle'
-            | 'commit',
-        }
+            | 'commit'
+        };
 
         if (timeout !== undefined) {
-          navigationOptions.timeout = timeout
+          navigationOptions.timeout = timeout;
         }
 
         if (referer) {
-          navigationOptions.referer = referer
+          navigationOptions.referer = referer;
         }
 
         try {
-          await page.goto(url, navigationOptions)
+          await page.goto(url, navigationOptions);
         } catch (error: unknown) {
           if (
             error instanceof Error &&
@@ -125,16 +125,16 @@ export const navigateCommand = createCommand<NavigateOptions>({
           ) {
             throw new Error(
               `Navigation timeout: Failed to load ${url} within ${timeout}ms`
-            )
+            );
           }
-          throw error
+          throw error;
         }
 
         // ENHANCEMENT: Ensure page is fully ready for interaction
         // Wait for network to be idle (best effort - don't fail if it times out)
         if (waitUntil !== 'networkidle') {
           try {
-            await page.waitForLoadState('networkidle', { timeout: 2000 })
+            await page.waitForLoadState('networkidle', { timeout: 2000 });
           } catch {
             // Network may not go idle, that's ok - continue
           }
@@ -142,34 +142,34 @@ export const navigateCommand = createCommand<NavigateOptions>({
 
         // ENHANCEMENT: Verify page is responsive after navigation
         try {
-          await page.evaluate('document.readyState', { timeout: 1000 })
+          await page.evaluate('document.readyState', { timeout: 1000 });
         } catch (error) {
           throw new Error(
             `Page became unresponsive after navigating to ${url}: ${error instanceof Error ? error.message : String(error)}`
-          )
+          );
         }
 
         // Track the navigation action
         await actionHistory.addAction({
           type: 'navigate',
           target: url,
-          tabId: tabId,
-        })
+          tabId: tabId
+        });
 
         // Get page info
-        const title = await page.title()
-        const finalUrl = page.url()
+        const title = await page.title();
+        const finalUrl = page.url();
 
         if (spinner) {
-          spinner.succeed(`Navigated to ${url}${tabTarget}`)
+          spinner.succeed(`Navigated to ${url}${tabTarget}`);
         }
 
         // Output results
-        logger.success(`Successfully navigated to ${url}${tabTarget}`)
-        logger.info(`Title: ${title}`)
+        logger.success(`Successfully navigated to ${url}${tabTarget}`);
+        logger.info(`Title: ${title}`);
 
         if (finalUrl !== url) {
-          logger.info(`Final URL: ${finalUrl}`)
+          logger.info(`Final URL: ${finalUrl}`);
         }
 
         // JSON output for programmatic use
@@ -180,16 +180,16 @@ export const navigateCommand = createCommand<NavigateOptions>({
             finalUrl,
             title,
             waitUntil,
-            timeout,
-          })
+            timeout
+          });
         }
 
         // Flush action history to ensure it's persisted before command exits
-        await actionHistory.flush()
+        await actionHistory.flush();
       }
-    )
+    );
   },
 
   // Enable JSON output support
-  supportsJson: true,
-})
+  supportsJson: true
+});

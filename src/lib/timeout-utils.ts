@@ -7,8 +7,8 @@ export class TimeoutError extends Error {
     message: string,
     public readonly _operation?: string
   ) {
-    super(message)
-    this.name = 'TimeoutError'
+    super(message);
+    this.name = 'TimeoutError';
   }
 }
 
@@ -24,26 +24,26 @@ export async function withTimeout<T>(
   timeoutMs: number,
   operation?: string
 ): Promise<T> {
-  let timeoutId: NodeJS.Timeout
+  let timeoutId: NodeJS.Timeout;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => {
       const message = operation
         ? `Operation '${operation}' timed out after ${timeoutMs}ms`
-        : `Operation timed out after ${timeoutMs}ms`
-      reject(new TimeoutError(message, operation))
-    }, timeoutMs)
+        : `Operation timed out after ${timeoutMs}ms`;
+      reject(new TimeoutError(message, operation));
+    }, timeoutMs);
     // Unref so this timer doesn't keep process alive
-    timeoutId.unref()
-  })
+    timeoutId.unref();
+  });
 
   try {
-    const result = await Promise.race([promise, timeoutPromise])
-    clearTimeout(timeoutId!)
-    return result
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
   } catch (error) {
-    clearTimeout(timeoutId!)
-    throw error
+    clearTimeout(timeoutId!);
+    throw error;
   }
 }
 
@@ -59,8 +59,8 @@ export function timeoutProtected<T extends any[], R>(
   defaultTimeoutMs = 5000
 ): (..._args: T) => Promise<R> {
   return async (...args: T): Promise<R> => {
-    return withTimeout(fn(...args), defaultTimeoutMs, fn.name)
-  }
+    return withTimeout(fn(...args), defaultTimeoutMs, fn.name);
+  };
 }
 
 /**
@@ -75,25 +75,25 @@ export async function retryWithBackoff<T>(
   maxRetries = 3,
   initialDelayMs = 100
 ): Promise<T> {
-  let lastError: Error
-  let delay = initialDelayMs
+  let lastError: Error;
+  let delay = initialDelayMs;
 
   for (let i = 0; i <= maxRetries; i++) {
     try {
-      return await fn()
+      return await fn();
     } catch (error) {
-      lastError = error as Error
+      lastError = error as Error;
       if (i < maxRetries) {
         await new Promise(resolve => {
-          const timer = setTimeout(resolve, delay)
-          timer.unref() // Don't keep process alive
-        })
-        delay *= 2 // Exponential backoff
+          const timer = setTimeout(resolve, delay);
+          timer.unref(); // Don't keep process alive
+        });
+        delay *= 2; // Exponential backoff
       }
     }
   }
 
-  throw lastError!
+  throw lastError!;
 }
 
 /**
@@ -109,11 +109,11 @@ export async function withTimeoutOrDefault<T>(
   defaultValue: T
 ): Promise<T> {
   try {
-    return await withTimeout(promise, timeoutMs)
+    return await withTimeout(promise, timeoutMs);
   } catch (error) {
     if (error instanceof TimeoutError) {
-      return defaultValue
+      return defaultValue;
     }
-    throw error
+    throw error;
   }
 }

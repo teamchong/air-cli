@@ -1,67 +1,67 @@
-import { spawnSync } from 'child_process'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
-import { homedir } from 'os'
-import { join } from 'path'
+import { spawnSync } from 'child_process';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 
-import { chromium, firefox, webkit } from 'playwright'
+import { chromium, firefox, webkit } from 'playwright';
 
-import { logger } from './logger'
-import { PlatformHelper } from './platform-helper'
+import { logger } from './logger';
+import { PlatformHelper } from './platform-helper';
 
-const OLD_CONFIG_FILE = join(homedir(), '.air-cli-config.json')
+const OLD_CONFIG_FILE = join(homedir(), '.air-cli-config.json');
 
 // Helper functions to get paths dynamically (so they can be mocked in tests)
 function getClaudeDir(): string {
-  return PlatformHelper.getClaudeDir()
+  return PlatformHelper.getClaudeDir();
 }
 
 function getConfigFile(): string {
-  return join(getClaudeDir(), 'playwright-config.json')
+  return join(getClaudeDir(), 'playwright-config.json');
 }
 
-export type BrowserType = 'chromium' | 'firefox' | 'webkit'
+export type BrowserType = 'chromium' | 'firefox' | 'webkit';
 
 interface Config {
-  defaultBrowser: BrowserType
-  browsersInstalled: boolean
-  lastUsedBrowser?: string
-  lastUsedPort?: number
+  defaultBrowser: BrowserType;
+  browsersInstalled: boolean;
+  lastUsedBrowser?: string;
+  lastUsedPort?: number;
   lastUsedOptions?: {
-    headless?: boolean
-    devtools?: boolean
-  }
+    headless?: boolean;
+    devtools?: boolean;
+  };
 }
 
 export class BrowserConfig {
-  private static config: Config | null = null
+  private static config: Config | null = null;
 
   static async loadConfig(): Promise<Config> {
-    if (this.config) return this.config
+    if (this.config) return this.config;
 
     try {
       // Try new location first
-      const configFile = getConfigFile()
+      const configFile = getConfigFile();
       if (existsSync(configFile)) {
-        const data = readFileSync(configFile, 'utf-8')
-        this.config = JSON.parse(data)
-        return this.config!
+        const data = readFileSync(configFile, 'utf-8');
+        this.config = JSON.parse(data);
+        return this.config!;
       }
       // Migrate from old location if exists
       if (existsSync(OLD_CONFIG_FILE)) {
-        const data = readFileSync(OLD_CONFIG_FILE, 'utf-8')
-        this.config = JSON.parse(data)
+        const data = readFileSync(OLD_CONFIG_FILE, 'utf-8');
+        this.config = JSON.parse(data);
         // Save to new location
         if (this.config) {
-          await this.saveConfig(this.config)
+          await this.saveConfig(this.config);
         }
         // Delete old file
         try {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
-          require('fs').unlinkSync(OLD_CONFIG_FILE)
+          require('fs').unlinkSync(OLD_CONFIG_FILE);
         } catch {
           // Ignore deletion errors
         }
-        return this.config!
+        return this.config!;
       }
     } catch {
       // Ignore config loading errors
@@ -70,19 +70,19 @@ export class BrowserConfig {
     // Default config
     this.config = {
       defaultBrowser: 'chromium',
-      browsersInstalled: false,
-    }
-    return this.config
+      browsersInstalled: false
+    };
+    return this.config;
   }
 
   static async saveConfig(config: Partial<Config>): Promise<void> {
-    const current = await this.loadConfig()
-    this.config = { ...current, ...config }
+    const current = await this.loadConfig();
+    this.config = { ...current, ...config };
 
     // Ensure Claude directory exists
-    PlatformHelper.getOrCreateClaudeDir()
+    PlatformHelper.getOrCreateClaudeDir();
 
-    writeFileSync(getConfigFile(), JSON.stringify(this.config, null, 2))
+    writeFileSync(getConfigFile(), JSON.stringify(this.config, null, 2));
   }
 
   static async checkBrowsersInstalled(): Promise<boolean> {
@@ -92,59 +92,59 @@ export class BrowserConfig {
       const browsers = [
         chromium.executablePath(),
         firefox.executablePath(),
-        webkit.executablePath(),
-      ]
+        webkit.executablePath()
+      ];
 
       // Check if at least one exists
-      return browsers.some(path => path && existsSync(path))
+      return browsers.some(path => path && existsSync(path));
     } catch {
-      return false
+      return false;
     }
   }
 
   static async installBrowsers(): Promise<boolean> {
-    logger.info('📦 Installing Playwright browsers...')
-    logger.info('This may take a few minutes on first run.')
+    logger.info('📦 Installing Playwright browsers...');
+    logger.info('This may take a few minutes on first run.');
 
     const result = spawnSync('npx', ['playwright', 'install'], {
       stdio: 'inherit',
-      shell: true,
-    })
+      shell: true
+    });
 
     if (result.status === 0) {
-      await this.saveConfig({ browsersInstalled: true })
-      return true
+      await this.saveConfig({ browsersInstalled: true });
+      return true;
     }
-    return false
+    return false;
   }
 
   static async getBrowser(
     type?: BrowserType
   ): Promise<typeof chromium | typeof firefox | typeof webkit> {
-    const config = await this.loadConfig()
-    const browserType = type || config.defaultBrowser
+    const config = await this.loadConfig();
+    const browserType = type || config.defaultBrowser;
 
     switch (browserType) {
       case 'firefox':
-        return firefox
+        return firefox;
       case 'webkit':
-        return webkit
+        return webkit;
       case 'chromium':
       default:
-        return chromium
+        return chromium;
     }
   }
 
   static async selectBrowser(): Promise<BrowserType> {
     // In a real implementation, this would prompt the user
     // For now, return the default
-    const config = await this.loadConfig()
-    return config.defaultBrowser
+    const config = await this.loadConfig();
+    return config.defaultBrowser;
   }
 
   static async getLastUsedBrowser(): Promise<string | undefined> {
-    const config = await this.loadConfig()
-    return config.lastUsedBrowser
+    const config = await this.loadConfig();
+    return config.lastUsedBrowser;
   }
 
   static async saveLastUsedBrowser(
@@ -152,20 +152,20 @@ export class BrowserConfig {
   ): Promise<void> {
     if (browserPath === undefined || browserPath === 'default') {
       // Clear the saved browser
-      const config = await this.loadConfig()
-      delete config.lastUsedBrowser
-      await this.saveConfig(config)
+      const config = await this.loadConfig();
+      delete config.lastUsedBrowser;
+      await this.saveConfig(config);
     } else {
-      await this.saveConfig({ lastUsedBrowser: browserPath })
+      await this.saveConfig({ lastUsedBrowser: browserPath });
     }
   }
 
   static async saveLastUsedOptions(options: {
-    port?: number
-    headless?: boolean
-    devtools?: boolean
+    port?: number;
+    headless?: boolean;
+    devtools?: boolean;
   }): Promise<void> {
-    const config = await this.loadConfig()
+    const config = await this.loadConfig();
     await this.saveConfig({
       lastUsedPort: options.port || config.lastUsedPort,
       lastUsedOptions: {
@@ -176,8 +176,8 @@ export class BrowserConfig {
         devtools:
           options.devtools !== undefined
             ? options.devtools
-            : config.lastUsedOptions?.devtools,
-      },
-    })
+            : config.lastUsedOptions?.devtools
+      }
+    });
   }
 }

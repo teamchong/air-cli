@@ -6,90 +6,90 @@
  */
 
 export interface SelectorResolution {
-  selector: string
-  confidence: 'exact' | 'high' | 'medium' | 'low'
+  selector: string;
+  confidence: 'exact' | 'high' | 'medium' | 'low';
   strategy:
     | 'css'
     | 'text-exact'
     | 'text-partial'
     | 'aria-label'
     | 'placeholder'
-    | 'title'
+    | 'title';
 }
 
 /**
  * Resolve a text-based input to a CSS selector
  */
 export function resolveSelector(input: string): SelectorResolution[] {
-  const resolutions: SelectorResolution[] = []
+  const resolutions: SelectorResolution[] = [];
 
   // If it's already a CSS selector, return as-is with highest confidence
   if (isCssSelector(input)) {
     resolutions.push({
       selector: input,
       confidence: 'exact',
-      strategy: 'css',
-    })
-    return resolutions
+      strategy: 'css'
+    });
+    return resolutions;
   }
 
   // Try exact text match for buttons and links
   resolutions.push({
     selector: `button:has-text("${escapeText(input)}")`,
     confidence: 'high',
-    strategy: 'text-exact',
-  })
+    strategy: 'text-exact'
+  });
 
   resolutions.push({
     selector: `a:has-text("${escapeText(input)}")`,
     confidence: 'high',
-    strategy: 'text-exact',
-  })
+    strategy: 'text-exact'
+  });
 
   // Try partial text match
   resolutions.push({
     selector: `button:has-text("${escapeText(input)}")`,
     confidence: 'medium',
-    strategy: 'text-partial',
-  })
+    strategy: 'text-partial'
+  });
 
   resolutions.push({
     selector: `a:has-text("${escapeText(input)}")`,
     confidence: 'medium',
-    strategy: 'text-partial',
-  })
+    strategy: 'text-partial'
+  });
 
   // Try aria-label match
   resolutions.push({
     selector: `[aria-label*="${escapeText(input)}" i]`,
     confidence: 'medium',
-    strategy: 'aria-label',
-  })
+    strategy: 'aria-label'
+  });
 
   // Try placeholder for inputs
   resolutions.push({
     selector: `input[placeholder*="${escapeText(input)}" i]`,
     confidence: 'medium',
-    strategy: 'placeholder',
-  })
+    strategy: 'placeholder'
+  });
 
   // Try title attribute
   resolutions.push({
     selector: `[title*="${escapeText(input)}" i]`,
     confidence: 'low',
-    strategy: 'title',
-  })
+    strategy: 'title'
+  });
 
   // Try role-based selectors for common text
   if (input.toLowerCase().includes('button')) {
     resolutions.push({
       selector: '[role="button"]',
       confidence: 'low',
-      strategy: 'aria-label',
-    })
+      strategy: 'aria-label'
+    });
   }
 
-  return resolutions
+  return resolutions;
 }
 
 /**
@@ -98,7 +98,7 @@ export function resolveSelector(input: string): SelectorResolution[] {
 function isCssSelector(input: string): boolean {
   // If input has spaces, it's likely text content, not a CSS selector
   if (input.includes(' ') && !input.match(/[>+~]/)) {
-    return false
+    return false;
   }
 
   // Common CSS selector patterns
@@ -147,15 +147,15 @@ function isCssSelector(input: string): boolean {
     'g',
     'rect',
     'circle',
-    'text',
-  ]
+    'text'
+  ];
 
   // Check if it's a valid HTML tag name
   if (
     /^[a-zA-Z][\w-]*$/.test(input) &&
     validTags.includes(input.toLowerCase())
   ) {
-    return true
+    return true;
   }
 
   const cssPatterns = [
@@ -165,24 +165,24 @@ function isCssSelector(input: string): boolean {
     /^[\w-]+\[.+\]$/, // Tag with attribute: input[type="text"]
     /[>+~]/, // Combinators: > + ~
     /^:[\w-]+/, // Pseudo: :hover
-    /::[\w-]+/, // Pseudo-element: ::before
-  ]
+    /::[\w-]+/ // Pseudo-element: ::before
+  ];
 
-  return cssPatterns.some(pattern => pattern.test(input))
+  return cssPatterns.some(pattern => pattern.test(input));
 }
 
 /**
  * Escape text for use in selectors
  */
 function escapeText(text: string): string {
-  return text.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'")
+  return text.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'");
 }
 
 /**
  * Generate Playwright-compatible text selectors
  */
 export function generatePlaywrightTextSelector(text: string): string[] {
-  const escaped = escapeText(text)
+  const escaped = escapeText(text);
 
   return [
     // Button with exact text (highest priority for buttons)
@@ -216,8 +216,8 @@ export function generatePlaywrightTextSelector(text: string): string[] {
     `input:near(label:has-text("${escaped}"))`,
 
     // Title attribute match
-    `[title*="${escaped}" i]`,
-  ]
+    `[title*="${escaped}" i]`
+  ];
 }
 
 /**
@@ -232,14 +232,14 @@ export async function findBestSelector(
   if (isCssSelector(textInput)) {
     return {
       selector: textInput,
-      strategy: 'css',
-    }
+      strategy: 'css'
+    };
   }
 
   // Debug logging
-  const debug = process.env.DEBUG || false
+  const debug = process.env.DEBUG || false;
   if (debug) {
-    console.log(`[findBestSelector] Looking for text: "${textInput}"`)
+    console.log(`[findBestSelector] Looking for text: "${textInput}"`);
   }
 
   // Try different approaches to find elements by text
@@ -247,89 +247,89 @@ export async function findBestSelector(
     // Try form field by name attribute (high priority for form filling)
     {
       selector: `input[name="${textInput}"], textarea[name="${textInput}"], select[name="${textInput}"]`,
-      strategy: 'form-name',
+      strategy: 'form-name'
     },
     // Try form field by id attribute
     {
       selector: `input[id="${textInput}"], textarea[id="${textInput}"], select[id="${textInput}"]`,
-      strategy: 'form-id',
+      strategy: 'form-id'
     },
     // Try exact button text - using getByRole with exact match
     {
       selector: `button:text-is("${textInput}")`,
-      strategy: 'button-exact',
+      strategy: 'button-exact'
     },
     // Try exact link text
     {
       selector: `a:text-is("${textInput}")`,
-      strategy: 'link-exact',
+      strategy: 'link-exact'
     },
     // Try exact text match on any element
     {
       selector: `:text-is("${textInput}")`,
-      strategy: 'text-exact',
+      strategy: 'text-exact'
     },
     // Try button with partial text
     {
       selector: `button:has-text("${textInput}")`,
-      strategy: 'button-partial',
+      strategy: 'button-partial'
     },
     // Try link with partial text
     {
       selector: `a:has-text("${textInput}")`,
-      strategy: 'link-partial',
+      strategy: 'link-partial'
     },
     // Try partial text on any element
     {
       selector: `:has-text("${textInput}")`,
-      strategy: 'text-partial',
+      strategy: 'text-partial'
     },
     // Try input placeholder - case insensitive partial match
     {
       selector: `input[placeholder*="${textInput}" i]`,
-      strategy: 'placeholder',
+      strategy: 'placeholder'
     },
     // Try aria-label - case insensitive partial match
     {
       selector: `[aria-label*="${textInput}" i]`,
-      strategy: 'aria-label',
+      strategy: 'aria-label'
     },
     // Try elements with role=button
     {
       selector: `[role="button"]:has-text("${textInput}")`,
-      strategy: 'role-button',
-    },
-  ]
+      strategy: 'role-button'
+    }
+  ];
 
   // Try each strategy
   for (const { selector, strategy } of strategies) {
     try {
-      const count = await page.locator(selector).count()
+      const count = await page.locator(selector).count();
       if (debug) {
         console.log(
           `[findBestSelector] Testing ${strategy}: "${selector}" - found ${count} elements`
-        )
+        );
       }
       if (count === 1) {
         // Perfect match - exactly one element
         if (debug) {
           console.log(
             `[findBestSelector] ✓ Found single match with ${strategy}`
-          )
+          );
         }
-        return { selector, strategy }
+        return { selector, strategy };
       } else if (count > 1) {
         // Multiple matches - return first one
         // Use .first() which is the proper Playwright way
         if (debug) {
           console.log(
             `[findBestSelector] ✓ Found ${count} matches with ${strategy}, using first`
-          )
+          );
         }
         return {
           selector: selector,
-          strategy: strategy + '+first',
-        }
+          strategy: strategy + '+first'
+        };
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -338,16 +338,16 @@ export async function findBestSelector(
       if (debug) {
         console.error(
           `[findBestSelector] ✗ ${strategy} failed: ${error?.message || error}`
-        )
+        );
       }
-      continue
+      continue;
     }
   }
 
   if (debug) {
-    console.log(`[findBestSelector] ✗ No selector found for "${textInput}"`)
+    console.log(`[findBestSelector] ✗ No selector found for "${textInput}"`);
   }
-  return null
+  return null;
 }
 
 // Removed unused function getStrategyFromSelector

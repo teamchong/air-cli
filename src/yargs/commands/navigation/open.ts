@@ -4,12 +4,12 @@
  * Opens browser (connects if running, launches if not) and optionally navigates to a URL.
  */
 
-import { execSync } from 'child_process'
-import net from 'net'
+import { execSync } from 'child_process';
+import net from 'net';
 
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { createCommand } from '../../lib/command-builder'
-import type { OpenOptions } from '../../types'
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { createCommand } from '../../lib/command-builder';
+import type { OpenOptions } from '../../types';
 
 /**
  * Checks if a port is open and accepting connections.
@@ -18,31 +18,31 @@ import type { OpenOptions } from '../../types'
 async function isPortOpen(port: number): Promise<boolean> {
   try {
     return new Promise(resolve => {
-      const socket = net.createConnection(port, 'localhost')
+      const socket = net.createConnection(port, 'localhost');
 
       const cleanup = (): void => {
-        socket.removeAllListeners()
+        socket.removeAllListeners();
         if (!socket.destroyed) {
-          socket.destroy()
+          socket.destroy();
         }
-      }
+      };
 
       socket.on('connect', () => {
-        cleanup()
-        resolve(true)
-      })
+        cleanup();
+        resolve(true);
+      });
       socket.on('error', () => {
-        cleanup()
-        resolve(false)
-      })
-      socket.setTimeout(1000)
+        cleanup();
+        resolve(false);
+      });
+      socket.setTimeout(1000);
       socket.on('timeout', () => {
-        cleanup()
-        resolve(false)
-      })
-    })
+        cleanup();
+        resolve(false);
+      });
+    });
   } catch {
-    return false
+    return false;
   }
 }
 
@@ -50,7 +50,7 @@ export const openCommand = createCommand<OpenOptions>({
   metadata: {
     name: 'open',
     category: 'navigation',
-    description: 'Open browser (connects if running, launches if not)',
+    description: 'Open browser (connects if running, launches if not)'
   },
 
   command: 'open [url]',
@@ -60,34 +60,34 @@ export const openCommand = createCommand<OpenOptions>({
     return yargs
       .positional('url', {
         describe: 'Optional URL to navigate to',
-        type: 'string',
+        type: 'string'
       })
       .option('port', {
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p',
+        alias: 'p'
       })
       .option('newTab', {
         describe: 'Always open URL in a new tab',
         type: 'boolean',
-        alias: 'n',
+        alias: 'n'
       })
       .option('newWindow', {
         describe: 'Open URL in a new window',
-        type: 'boolean',
+        type: 'boolean'
       })
       .option('device', {
         describe: 'Device to emulate',
-        type: 'string',
+        type: 'string'
       })
       .option('geolocation', {
         describe: 'Geolocation override (latitude,longitude)',
-        type: 'string',
+        type: 'string'
       })
       .option('timezone', {
         describe: 'Timezone override',
-        type: 'string',
+        type: 'string'
       })
       .example('$0 open', 'Open browser')
       .example(
@@ -98,78 +98,78 @@ export const openCommand = createCommand<OpenOptions>({
       .example(
         '$0 open https://example.com --device "iPhone 12"',
         'Open with device emulation'
-      )
+      );
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { url, newTab, newWindow, device, geolocation, timezone } = argv
+    const { url, newTab, newWindow, device, geolocation, timezone } = argv;
 
     if (spinner) {
-      spinner.start('Opening browser...')
+      spinner.start('Opening browser...');
     }
 
     try {
       // First, check if browser is already running
-      const isRunning = await isPortOpen(argv.port)
+      const isRunning = await isPortOpen(argv.port);
 
       if (!isRunning) {
         // Launch new browser if not running
         if (spinner) {
-          spinner.text = 'Launching browser...'
+          spinner.text = 'Launching browser...';
         }
 
         // Launch browser WITHOUT URL to avoid Chrome crashes on invalid URLs
         // We'll navigate using Playwright which has better error handling
-        await BrowserHelper.launchChrome(argv.port, undefined, undefined)
+        await BrowserHelper.launchChrome(argv.port, undefined, undefined);
 
         if (spinner) {
-          spinner.succeed(`Browser launched on port ${argv.port}`)
+          spinner.succeed(`Browser launched on port ${argv.port}`);
         }
 
         // If URL was provided, navigate to it and validate
         if (url) {
           await BrowserHelper.withBrowser(argv.port, async browser => {
-            if (argv.verbose) console.log('withBrowser callback started')
-            const contexts = browser.contexts()
-            if (argv.verbose) console.log('Got contexts:', contexts.length)
+            if (argv.verbose) console.log('withBrowser callback started');
+            const contexts = browser.contexts();
+            if (argv.verbose) console.log('Got contexts:', contexts.length);
             const context =
-              contexts.length > 0 ? contexts[0] : await browser.newContext()
-            if (argv.verbose) console.log('Got context')
-            const pages = context.pages()
-            if (argv.verbose) console.log('Got pages:', pages.length)
+              contexts.length > 0 ? contexts[0] : await browser.newContext();
+            if (argv.verbose) console.log('Got context');
+            const pages = context.pages();
+            if (argv.verbose) console.log('Got pages:', pages.length);
 
-            let page
+            let page;
             if (pages.length > 0) {
-              page = pages[0]
+              page = pages[0];
             } else {
-              page = await context.newPage()
+              page = await context.newPage();
             }
-            if (argv.verbose) console.log('Got page')
+            if (argv.verbose) console.log('Got page');
 
             // Add protocol if missing
-            const urlString = url as string
+            const urlString = url as string;
             const fullUrl = urlString.includes('://')
               ? urlString
-              : `https://${urlString}`
-            if (argv.verbose) console.log('About to navigate to:', fullUrl)
+              : `https://${urlString}`;
+            if (argv.verbose) console.log('About to navigate to:', fullUrl);
 
             // Navigate using Playwright which validates properly
             const response = await Promise.race([
               page.goto(fullUrl, {
                 waitUntil: 'domcontentloaded',
-                timeout: 5000,
+                timeout: 5000
               }),
               new Promise<never>((_, reject) =>
                 setTimeout(
                   () => reject(new Error('Navigation timeout after 5000ms')),
                   5000
                 )
-              ),
-            ])
-            if (argv.verbose) console.log('Navigation completed')
+              )
+            ]);
+            if (argv.verbose) console.log('Navigation completed');
 
             // Check if navigation succeeded
-            const finalUrl = page.url()
+            const finalUrl = page.url();
             if (
               !response ||
               (response.status && response.status() >= 400) ||
@@ -177,14 +177,14 @@ export const openCommand = createCommand<OpenOptions>({
             ) {
               throw new Error(
                 `Cannot navigate to invalid URL or unreachable server: ${fullUrl}`
-              )
+              );
             }
 
-            logger.success(`Navigated to ${url}`)
-          })
+            logger.success(`Navigated to ${url}`);
+          });
         }
 
-        return // Exit early since launch handles navigation
+        return; // Exit early since launch handles navigation
       }
 
       // Port is open - try to connect, but handle zombie processes
@@ -192,57 +192,57 @@ export const openCommand = createCommand<OpenOptions>({
         await BrowserHelper.withBrowser(argv.port, async browser => {
           // Connection succeeded, browser is responsive
           if (spinner) {
-            spinner.text = 'Browser connected'
+            spinner.text = 'Browser connected';
           }
 
           // Get or create context
-          const contexts = browser.contexts()
+          const contexts = browser.contexts();
           const context =
-            contexts.length > 0 ? contexts[0] : await browser.newContext()
+            contexts.length > 0 ? contexts[0] : await browser.newContext();
 
           // Apply device emulation if specified
           if (device) {
             // This would need device registry implementation
-            logger.info(`Device emulation: ${device}`)
+            logger.info(`Device emulation: ${device}`);
           }
 
           // Apply geolocation if specified
           if (geolocation) {
-            const [latitude, longitude] = geolocation.split(',').map(Number)
+            const [latitude, longitude] = geolocation.split(',').map(Number);
             if (!isNaN(latitude) && !isNaN(longitude)) {
-              await context.setGeolocation({ latitude, longitude })
-              await context.grantPermissions(['geolocation'])
-              logger.info(`Geolocation set to: ${latitude}, ${longitude}`)
+              await context.setGeolocation({ latitude, longitude });
+              await context.grantPermissions(['geolocation']);
+              logger.info(`Geolocation set to: ${latitude}, ${longitude}`);
             } else {
               throw new Error(
                 'Invalid geolocation format. Use: latitude,longitude'
-              )
+              );
             }
           }
 
           // Apply timezone if specified
           if (timezone) {
-            await context.setExtraHTTPHeaders({ timezone: timezone })
-            logger.info(`Timezone set to: ${timezone}`)
+            await context.setExtraHTTPHeaders({ timezone: timezone });
+            logger.info(`Timezone set to: ${timezone}`);
           }
 
-          let tabId: string | undefined
+          let tabId: string | undefined;
 
           // Handle URL navigation
           if (url && typeof url === 'string') {
-            const fullUrl = url.includes('://') ? url : `https://${url}`
+            const fullUrl = url.includes('://') ? url : `https://${url}`;
 
             if (newWindow) {
               // Create new context for new window
-              const newContext = await browser.newContext()
-              const page = await newContext.newPage()
+              const newContext = await browser.newContext();
+              const page = await newContext.newPage();
 
               const response = await page.goto(fullUrl, {
                 waitUntil: 'domcontentloaded',
-                timeout: 5000,
-              })
+                timeout: 5000
+              });
               // Check if navigation succeeded
-              const finalUrl = page.url()
+              const finalUrl = page.url();
               // Allow redirects but catch error pages
               if (
                 !response ||
@@ -251,22 +251,22 @@ export const openCommand = createCommand<OpenOptions>({
               ) {
                 throw new Error(
                   `Cannot navigate to invalid URL or unreachable server: ${fullUrl}`
-                )
+                );
               }
 
-              tabId = await BrowserHelper.getPageId(page)
-              logger.info(`Opened new window: ${fullUrl}`)
-              logger.info(`Tab ID: ${tabId}`)
+              tabId = await BrowserHelper.getPageId(page);
+              logger.info(`Opened new window: ${fullUrl}`);
+              logger.info(`Tab ID: ${tabId}`);
             } else if (newTab) {
               // Create new tab in existing context
-              const page = await context.newPage()
+              const page = await context.newPage();
 
               const response = await page.goto(fullUrl, {
                 waitUntil: 'domcontentloaded',
-                timeout: 5000,
-              })
+                timeout: 5000
+              });
               // Check if navigation succeeded
-              const finalUrl = page.url()
+              const finalUrl = page.url();
               // Allow redirects but catch error pages
               if (
                 !response ||
@@ -275,31 +275,31 @@ export const openCommand = createCommand<OpenOptions>({
               ) {
                 throw new Error(
                   `Cannot navigate to invalid URL or unreachable server: ${fullUrl}`
-                )
+                );
               }
 
-              tabId = await BrowserHelper.getPageId(page)
-              logger.info(`Opened new tab: ${fullUrl}`)
-              logger.info(`Tab ID: ${tabId}`)
+              tabId = await BrowserHelper.getPageId(page);
+              logger.info(`Opened new tab: ${fullUrl}`);
+              logger.info(`Tab ID: ${tabId}`);
             } else {
               // Check if URL is already open in any tab - if so, reuse it
-              const pages = context.pages()
-              const existingPage = pages.find(p => p.url() === fullUrl)
+              const pages = context.pages();
+              const existingPage = pages.find(p => p.url() === fullUrl);
 
               if (existingPage) {
                 // URL is already open - just switch to that tab
-                await existingPage.bringToFront()
-                tabId = await BrowserHelper.getPageId(existingPage)
-                logger.info(`✅ Already on ${fullUrl} - using existing tab`)
-                logger.info(`Tab ID: ${tabId}`)
+                await existingPage.bringToFront();
+                tabId = await BrowserHelper.getPageId(existingPage);
+                logger.info(`✅ Already on ${fullUrl} - using existing tab`);
+                logger.info(`Tab ID: ${tabId}`);
               } else if (pages.length > 0) {
                 // Use first available tab and navigate
                 const response = await pages[0].goto(fullUrl, {
                   waitUntil: 'domcontentloaded',
-                  timeout: 5000,
-                })
+                  timeout: 5000
+                });
                 // Check if navigation succeeded
-                const finalUrl = pages[0].url()
+                const finalUrl = pages[0].url();
                 // Allow redirects but catch error pages
                 if (
                   !response ||
@@ -308,21 +308,21 @@ export const openCommand = createCommand<OpenOptions>({
                 ) {
                   throw new Error(
                     `Cannot navigate to invalid URL or unreachable server: ${fullUrl}`
-                  )
+                  );
                 }
 
-                tabId = await BrowserHelper.getPageId(pages[0])
-                logger.info(`Navigated to: ${fullUrl}`)
-                logger.info(`Tab ID: ${tabId}`)
+                tabId = await BrowserHelper.getPageId(pages[0]);
+                logger.info(`Navigated to: ${fullUrl}`);
+                logger.info(`Tab ID: ${tabId}`);
               } else {
-                const page = await context.newPage()
+                const page = await context.newPage();
 
                 const response = await page.goto(fullUrl, {
                   waitUntil: 'domcontentloaded',
-                  timeout: 5000,
-                })
+                  timeout: 5000
+                });
                 // Check if navigation succeeded
-                const finalUrl = page.url()
+                const finalUrl = page.url();
                 // Allow redirects but catch error pages
                 if (
                   !response ||
@@ -331,33 +331,33 @@ export const openCommand = createCommand<OpenOptions>({
                 ) {
                   throw new Error(
                     `Cannot navigate to invalid URL or unreachable server: ${fullUrl}`
-                  )
+                  );
                 }
 
-                tabId = await BrowserHelper.getPageId(page)
-                logger.info(`Opened new tab: ${fullUrl}`)
-                logger.info(`Tab ID: ${tabId}`)
+                tabId = await BrowserHelper.getPageId(page);
+                logger.info(`Opened new tab: ${fullUrl}`);
+                logger.info(`Tab ID: ${tabId}`);
               }
             }
           } else {
             // No URL specified, just ensure we have a tab and return its ID
-            const pages = context.pages()
+            const pages = context.pages();
             if (pages.length > 0) {
-              tabId = await BrowserHelper.getPageId(pages[0])
-              logger.info(`Tab ID: ${tabId}`)
+              tabId = await BrowserHelper.getPageId(pages[0]);
+              logger.info(`Tab ID: ${tabId}`);
             } else {
-              const page = await context.newPage()
-              tabId = await BrowserHelper.getPageId(page)
-              logger.info('Created new tab')
-              logger.info(`Tab ID: ${tabId}`)
+              const page = await context.newPage();
+              tabId = await BrowserHelper.getPageId(page);
+              logger.info('Created new tab');
+              logger.info(`Tab ID: ${tabId}`);
             }
           }
 
           if (spinner) {
-            spinner.succeed('Browser opened successfully')
+            spinner.succeed('Browser opened successfully');
           }
 
-          logger.success(`Browser connected on port ${argv.port}`)
+          logger.success(`Browser connected on port ${argv.port}`);
 
           if (argv.json) {
             console.log(
@@ -370,49 +370,49 @@ export const openCommand = createCommand<OpenOptions>({
                 device: device || null,
                 geolocation: geolocation || null,
                 timezone: timezone || null,
-                tabId: tabId || null,
+                tabId: tabId || null
               })
-            )
+            );
           }
-        })
+        });
       } catch {
         // Port is open but connection failed - zombie process detected
         if (spinner) {
-          spinner.text = 'Zombie process detected, relaunching browser...'
+          spinner.text = 'Zombie process detected, relaunching browser...';
         }
 
         // Kill the zombie process
         try {
           execSync(`lsof -ti:${argv.port} | xargs kill -9`, {
-            stdio: 'ignore',
-          })
+            stdio: 'ignore'
+          });
         } catch {
           // If kill fails, continue anyway and try to launch
         }
 
         // Wait a bit for port to be released
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Now launch a fresh browser
         if (spinner) {
-          spinner.text = 'Launching browser...'
+          spinner.text = 'Launching browser...';
         }
 
         await BrowserHelper.launchChrome(
           argv.port,
           undefined,
           url as string | undefined
-        )
+        );
 
         if (spinner) {
-          spinner.succeed(`Browser launched on port ${argv.port}`)
+          spinner.succeed(`Browser launched on port ${argv.port}`);
         }
 
         if (url) {
-          logger.success(`Navigated to ${url}`)
+          logger.success(`Navigated to ${url}`);
         }
 
-        return
+        return;
       }
     } catch (error: unknown) {
       if (spinner) {
@@ -424,9 +424,9 @@ export const openCommand = createCommand<OpenOptions>({
             error.message.includes('net::ERR_') ||
             error.message.includes('Protocol error'))
         ) {
-          spinner.fail('Connection failed - no server running')
+          spinner.fail('Connection failed - no server running');
         } else {
-          spinner.fail('Failed to open browser')
+          spinner.fail('Failed to open browser');
         }
       }
 
@@ -440,13 +440,13 @@ export const openCommand = createCommand<OpenOptions>({
       ) {
         throw new Error(
           'Connection failed - make sure a server is running at the target URL'
-        )
+        );
       } else {
-        const message = error instanceof Error ? error.message : String(error)
-        throw new Error(`Browser connection failed: ${message}`)
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Browser connection failed: ${message}`);
       }
     }
   },
 
-  supportsJson: true,
-})
+  supportsJson: true
+});

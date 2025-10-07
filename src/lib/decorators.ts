@@ -7,22 +7,22 @@ import {
   ValidationError,
   ValidatorFunction,
   ValidationUtils,
-  Validators,
-} from './validation'
+  Validators
+} from './validation';
 
 // Metadata storage for decorators
 const validationMetadata = new WeakMap<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   any,
   Record<string, ValidatorFunction[]>
->()
+>();
 
 const sanitizationMetadata = new WeakMap<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Record<string, (_value: any) => any>
->()
+>();
 
 /**
  * Decorator for validating command parameters
@@ -40,12 +40,12 @@ export function validate(...validators: ValidatorFunction[]): (
     _propertyKey: string | symbol,
     _parameterIndex: number
   ): void {
-    const existingMetadata = validationMetadata.get(_target) || {}
-    const paramName = String(_propertyKey)
+    const existingMetadata = validationMetadata.get(_target) || {};
+    const paramName = String(_propertyKey);
 
-    existingMetadata[paramName] = validators
-    validationMetadata.set(_target, existingMetadata)
-  }
+    existingMetadata[paramName] = validators;
+    validationMetadata.set(_target, existingMetadata);
+  };
 }
 
 /**
@@ -55,7 +55,7 @@ export function ValidateUrl(
   required = false,
   message?: string
 ): ReturnType<typeof validate> {
-  return validate(Validators.url({ required, message }))
+  return validate(Validators.url({ required, message }));
 }
 
 /**
@@ -65,7 +65,7 @@ export function ValidatePort(
   required = false,
   message?: string
 ): ReturnType<typeof validate> {
-  return validate(Validators.port({ required, message }))
+  return validate(Validators.port({ required, message }));
 }
 
 /**
@@ -75,7 +75,7 @@ export function ValidateTimeout(
   required = false,
   message?: string
 ): ReturnType<typeof validate> {
-  return validate(Validators.timeout({ required, message }))
+  return validate(Validators.timeout({ required, message }));
 }
 
 /**
@@ -85,7 +85,7 @@ export function ValidateSelector(
   required = true,
   message?: string
 ): ReturnType<typeof validate> {
-  return validate(Validators.selector({ required, message }))
+  return validate(Validators.selector({ required, message }));
 }
 
 /**
@@ -96,7 +96,7 @@ export function ValidateEnum<T>(
   required = false,
   message?: string
 ): ReturnType<typeof validate> {
-  return validate(Validators.enum(allowedValues, { required, message }))
+  return validate(Validators.enum(allowedValues, { required, message }));
 }
 
 /**
@@ -110,7 +110,7 @@ export function ValidateString(
 ): ReturnType<typeof validate> {
   return validate(
     Validators.string(minLength, maxLength, { required, message })
-  )
+  );
 }
 
 /**
@@ -129,12 +129,12 @@ export function sanitize(
     _target: any,
     _propertyKey: string | symbol
   ): void {
-    const existingMetadata = sanitizationMetadata.get(_target) || {}
-    const paramName = String(_propertyKey)
+    const existingMetadata = sanitizationMetadata.get(_target) || {};
+    const paramName = String(_propertyKey);
 
-    existingMetadata[paramName] = sanitizer
-    sanitizationMetadata.set(_target, existingMetadata)
-  }
+    existingMetadata[paramName] = sanitizer;
+    sanitizationMetadata.set(_target, existingMetadata);
+  };
 }
 
 /**
@@ -146,7 +146,7 @@ export class Sanitizers {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static trim(value: any): any {
-    return typeof value === 'string' ? value.trim() : value
+    return typeof value === 'string' ? value.trim() : value;
   }
 
   /**
@@ -154,7 +154,7 @@ export class Sanitizers {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static toLowerCase(value: any): any {
-    return typeof value === 'string' ? value.toLowerCase() : value
+    return typeof value === 'string' ? value.toLowerCase() : value;
   }
 
   /**
@@ -162,14 +162,14 @@ export class Sanitizers {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static escapeHtml(value: any): any {
-    if (typeof value !== 'string') return value
+    if (typeof value !== 'string') return value;
 
     return value
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -177,17 +177,17 @@ export class Sanitizers {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static normalizeUrl(value: any): any {
-    if (typeof value !== 'string') return value
+    if (typeof value !== 'string') return value;
 
-    const trimmed = value.trim()
-    if (!trimmed) return trimmed
+    const trimmed = value.trim();
+    if (!trimmed) return trimmed;
 
     // Add https:// if no protocol specified
     if (!trimmed.match(/^https?:\/\//i)) {
-      return `https://${trimmed}`
+      return `https://${trimmed}`;
     }
 
-    return trimmed
+    return trimmed;
   }
 
   /**
@@ -195,12 +195,12 @@ export class Sanitizers {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static toNumber(value: any): any {
-    if (typeof value === 'number') return value
+    if (typeof value === 'number') return value;
     if (typeof value === 'string') {
-      const num = parseInt(value, 10)
-      return isNaN(num) ? value : num
+      const num = parseInt(value, 10);
+      return isNaN(num) ? value : num;
     }
-    return value
+    return value;
   }
 }
 
@@ -214,80 +214,80 @@ export function validateParams(
   propertyName: string,
   descriptor: PropertyDescriptor
 ): PropertyDescriptor {
-  const method = descriptor.value
+  const method = descriptor.value;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   descriptor.value = async function (...args: any[]): Promise<any> {
     const validators =
-      validationMetadata.get(target.constructor.prototype) || {}
+      validationMetadata.get(target.constructor.prototype) || {};
     const sanitizers =
-      sanitizationMetadata.get(target.constructor.prototype) || {}
+      sanitizationMetadata.get(target.constructor.prototype) || {};
 
     // Create parameter map based on method signature
-    const paramNames = getParameterNames(method)
+    const paramNames = getParameterNames(method);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const paramMap: Record<string, any> = {}
+    const paramMap: Record<string, any> = {};
 
     paramNames.forEach((name, index) => {
-      paramMap[name] = args[index]
-    })
+      paramMap[name] = args[index];
+    });
 
     // Apply sanitization first
     for (const [paramName, sanitizer] of Object.entries(sanitizers)) {
       if (paramMap[paramName] !== undefined) {
-        paramMap[paramName] = sanitizer(paramMap[paramName])
+        paramMap[paramName] = sanitizer(paramMap[paramName]);
       }
     }
 
     // Apply validation
-    const validationSchema: Record<string, ValidatorFunction[]> = {}
+    const validationSchema: Record<string, ValidatorFunction[]> = {};
     for (const [paramName, validatorList] of Object.entries(validators)) {
-      validationSchema[paramName] = validatorList
+      validationSchema[paramName] = validatorList;
     }
 
     if (Object.keys(validationSchema).length > 0) {
       const { isValid, errors, sanitizedData } = ValidationUtils.validateObject(
         paramMap,
         validationSchema
-      )
+      );
 
       if (!isValid) {
         const errorMessages = Object.entries(errors).flatMap(
           ([field, fieldErrors]) =>
             fieldErrors.map(error => `${field}: ${error}`)
-        )
-        throw new ValidationError(errorMessages)
+        );
+        throw new ValidationError(errorMessages);
       }
 
       // Update args with sanitized data
       paramNames.forEach((name, index) => {
         if (sanitizedData[name] !== undefined) {
-          args[index] = sanitizedData[name]
+          args[index] = sanitizedData[name];
         } else if (paramMap[name] !== undefined) {
-          args[index] = paramMap[name]
+          args[index] = paramMap[name];
         }
-      })
+      });
     }
 
     // Call original method with validated/sanitized parameters
-    return method.apply(this, args)
-  }
+    return method.apply(this, args);
+  };
 
-  return descriptor
+  return descriptor;
 }
 
 /**
  * Class decorator that automatically applies parameter validation to all execute methods
  */
 export function ValidatedCommand(constructor: Function): void {
-  const originalExecute = constructor.prototype.execute
+  const originalExecute = constructor.prototype.execute;
 
   if (originalExecute) {
     constructor.prototype.execute = validateParams(
       constructor.prototype,
       'execute',
       { value: originalExecute }
-    ).value
+    ).value;
   }
 }
 
@@ -296,51 +296,51 @@ export function ValidatedCommand(constructor: Function): void {
  * Used for mapping args to parameter names
  */
 function getParameterNames(func: Function): string[] {
-  const funcString = func.toString()
+  const funcString = func.toString();
 
   // Match function parameters
-  const paramMatch = funcString.match(/\(([^)]*)\)/)
-  if (!paramMatch) return []
+  const paramMatch = funcString.match(/\(([^)]*)\)/);
+  if (!paramMatch) return [];
 
-  const params = paramMatch[1]
-  if (!params.trim()) return []
+  const params = paramMatch[1];
+  if (!params.trim()) return [];
 
   // Split parameters and clean them
   return params
     .split(',')
     .map(param => param.trim().split(/[=\s]/)[0].trim())
-    .filter(param => param && !param.startsWith('...'))
+    .filter(param => param && !param.startsWith('...'));
 }
 
 /**
  * Validation chain builder for fluent API
  */
 export class ValidationChain {
-  private validators: ValidatorFunction[] = []
+  private validators: ValidatorFunction[] = [];
 
   url(required = false, message?: string): this {
-    this.validators.push(Validators.url({ required, message }))
-    return this
+    this.validators.push(Validators.url({ required, message }));
+    return this;
   }
 
   port(required = false, message?: string): this {
-    this.validators.push(Validators.port({ required, message }))
-    return this
+    this.validators.push(Validators.port({ required, message }));
+    return this;
   }
 
   timeout(required = false, message?: string): this {
-    this.validators.push(Validators.timeout({ required, message }))
-    return this
+    this.validators.push(Validators.timeout({ required, message }));
+    return this;
   }
 
   selector(required = true, message?: string): this {
-    this.validators.push(Validators.selector({ required, message }))
-    return this
+    this.validators.push(Validators.selector({ required, message }));
+    return this;
   }
 
   enum<T>(allowedValues: T[], required = false, message?: string): this {
-    this.validators.push(Validators.enum(allowedValues, { required, message }))
-    return this
+    this.validators.push(Validators.enum(allowedValues, { required, message }));
+    return this;
   }
 
   string(
@@ -351,22 +351,22 @@ export class ValidationChain {
   ): this {
     this.validators.push(
       Validators.string(minLength, maxLength, { required, message })
-    )
-    return this
+    );
+    return this;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   custom(validatorFn: (_value: any) => boolean, errorMessage: string): this {
-    this.validators.push(Validators.custom(validatorFn, errorMessage))
-    return this
+    this.validators.push(Validators.custom(validatorFn, errorMessage));
+    return this;
   }
 
   build(): ValidatorFunction[] {
-    return [...this.validators]
+    return [...this.validators];
   }
 }
 
 /**
  * Factory for creating validation chains
  */
-export const validation = (): ValidationChain => new ValidationChain()
+export const validation = (): ValidationChain => new ValidationChain();

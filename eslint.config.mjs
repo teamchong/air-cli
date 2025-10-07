@@ -73,7 +73,6 @@ export default [
       'comma-dangle': ['error', 'never'],
       'object-curly-spacing': ['error', 'always'],
       'array-bracket-spacing': ['error', 'never'],
-      'indent': ['error', 2],
       'linebreak-style': ['error', 'unix'],
       'eol-last': ['error', 'always']
     }

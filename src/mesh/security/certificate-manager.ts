@@ -11,28 +11,28 @@
  * - Mutual TLS ensures both client and server are authenticated
  */
 
-import { execSync } from 'child_process'
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs'
-import { homedir } from 'os'
-import { join } from 'path'
+import { execSync } from 'child_process';
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 
 export interface CertificateInfo {
-  commonName: string
-  certPath: string
-  keyPath: string
-  createdAt: Date
-  expiresAt: Date
+  commonName: string;
+  certPath: string;
+  keyPath: string;
+  createdAt: Date;
+  expiresAt: Date;
 }
 
 export class CertificateManager {
-  private certDir: string
-  private caKeyPath: string
-  private caCertPath: string
+  private certDir: string;
+  private caKeyPath: string;
+  private caCertPath: string;
 
   constructor(certDir?: string) {
-    this.certDir = certDir || join(homedir(), '.air-mesh', 'certs')
-    this.caKeyPath = join(this.certDir, 'ca-key.pem')
-    this.caCertPath = join(this.certDir, 'ca-cert.pem')
+    this.certDir = certDir || join(homedir(), '.air-mesh', 'certs');
+    this.caKeyPath = join(this.certDir, 'ca-key.pem');
+    this.caCertPath = join(this.certDir, 'ca-cert.pem');
   }
 
   /**
@@ -40,11 +40,11 @@ export class CertificateManager {
    */
   async initialize(): Promise<void> {
     if (!existsSync(this.certDir)) {
-      mkdirSync(this.certDir, { recursive: true })
+      mkdirSync(this.certDir, { recursive: true });
     }
 
     if (!this.hasCA()) {
-      await this.createCA()
+      await this.createCA();
     }
   }
 
@@ -52,14 +52,14 @@ export class CertificateManager {
    * Check if CA certificate exists
    */
   hasCA(): boolean {
-    return existsSync(this.caKeyPath) && existsSync(this.caCertPath)
+    return existsSync(this.caKeyPath) && existsSync(this.caCertPath);
   }
 
   /**
    * Create Certificate Authority (root of trust)
    */
   async createCA(): Promise<void> {
-    console.log('🔐 Creating Certificate Authority...')
+    console.log('🔐 Creating Certificate Authority...');
 
     try {
       // Generate CA private key and self-signed certificate
@@ -69,20 +69,20 @@ export class CertificateManager {
         -out "${this.caCertPath}" \
         -subj "/CN=air-mesh-ca/O=air-cli/C=US"`,
         { stdio: 'pipe' }
-      )
+      );
 
       // Set restrictive permissions on CA private key
       if (process.platform !== 'win32') {
-        execSync(`chmod 600 "${this.caKeyPath}"`)
+        execSync(`chmod 600 "${this.caKeyPath}"`);
       }
 
-      console.log('✅ CA certificate created')
-      console.log(`📁 Location: ${this.certDir}`)
-      console.log('⚠️  IMPORTANT: Keep ca-key.pem SECRET!')
-      console.log('📋 Share ca-cert.pem with all nodes')
+      console.log('✅ CA certificate created');
+      console.log(`📁 Location: ${this.certDir}`);
+      console.log('⚠️  IMPORTANT: Keep ca-key.pem SECRET!');
+      console.log('📋 Share ca-cert.pem with all nodes');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      throw new Error(`Failed to create CA: ${error.message}`)
+      throw new Error(`Failed to create CA: ${error.message}`);
     }
   }
 
@@ -91,14 +91,14 @@ export class CertificateManager {
    */
   async generateNodeCertificate(nodeName: string): Promise<CertificateInfo> {
     if (!this.hasCA()) {
-      throw new Error('CA does not exist. Run initialize() first.')
+      throw new Error('CA does not exist. Run initialize() first.');
     }
 
-    console.log(`🔐 Generating certificate for node: ${nodeName}`)
+    console.log(`🔐 Generating certificate for node: ${nodeName}`);
 
-    const keyPath = join(this.certDir, `${nodeName}-key.pem`)
-    const certPath = join(this.certDir, `${nodeName}-cert.pem`)
-    const reqPath = join(this.certDir, `${nodeName}-req.pem`)
+    const keyPath = join(this.certDir, `${nodeName}-key.pem`);
+    const certPath = join(this.certDir, `${nodeName}-cert.pem`);
+    const reqPath = join(this.certDir, `${nodeName}-req.pem`);
 
     try {
       // Generate node private key and CSR
@@ -108,7 +108,7 @@ export class CertificateManager {
         -out "${reqPath}" \
         -subj "/CN=${nodeName}/O=air-cli-node"`,
         { stdio: 'pipe' }
-      )
+      );
 
       // Sign CSR with CA
       execSync(
@@ -121,35 +121,35 @@ export class CertificateManager {
         -days 365 \
         -sha256`,
         { stdio: 'pipe' }
-      )
+      );
 
       // Set restrictive permissions on private key
       if (process.platform !== 'win32') {
-        execSync(`chmod 600 "${keyPath}"`)
+        execSync(`chmod 600 "${keyPath}"`);
       }
 
       // Clean up CSR
-      execSync(`rm "${reqPath}"`)
+      execSync(`rm "${reqPath}"`);
 
-      console.log(`✅ Certificate created for ${nodeName}`)
-      console.log(`📁 Certificate: ${certPath}`)
-      console.log(`🔑 Private key: ${keyPath}`)
+      console.log(`✅ Certificate created for ${nodeName}`);
+      console.log(`📁 Certificate: ${certPath}`);
+      console.log(`🔑 Private key: ${keyPath}`);
 
       // Get certificate info
-      const certInfo = this.getCertificateInfo(certPath)
+      const certInfo = this.getCertificateInfo(certPath);
 
       return {
         commonName: nodeName,
         certPath,
         keyPath,
         createdAt: new Date(),
-        expiresAt: certInfo.expiresAt,
-      }
+        expiresAt: certInfo.expiresAt
+      };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(
         `Failed to generate certificate for ${nodeName}: ${error.message}`
-      )
+      );
     }
   }
 
@@ -161,15 +161,15 @@ export class CertificateManager {
       const output = execSync(
         `openssl x509 -in "${certPath}" -noout -enddate`,
         { encoding: 'utf8' }
-      )
+      );
 
       // Parse: notAfter=Jan 1 00:00:00 2025 GMT
-      const match = output.match(/notAfter=(.+)/)
-      const expiresAt = match ? new Date(match[1]) : new Date()
+      const match = output.match(/notAfter=(.+)/);
+      const expiresAt = match ? new Date(match[1]) : new Date();
 
-      return { expiresAt }
+      return { expiresAt };
     } catch {
-      return { expiresAt: new Date() }
+      return { expiresAt: new Date() };
     }
   }
 
@@ -179,11 +179,11 @@ export class CertificateManager {
   verifyCertificate(certPath: string): boolean {
     try {
       execSync(`openssl verify -CAfile "${this.caCertPath}" "${certPath}"`, {
-        stdio: 'pipe',
-      })
-      return true
+        stdio: 'pipe'
+      });
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
@@ -191,29 +191,30 @@ export class CertificateManager {
    * List all certificates in the directory
    */
   listCertificates(): CertificateInfo[] {
-    const certs: CertificateInfo[] = []
+    const certs: CertificateInfo[] = [];
 
     try {
       const files = execSync(`ls "${this.certDir}"/*.pem 2>/dev/null || true`, {
-        encoding: 'utf8',
+        encoding: 'utf8'
       })
         .split('\n')
-        .filter(Boolean)
+        .filter(Boolean);
 
       for (const file of files) {
         if (file.endsWith('-cert.pem')) {
-          const nodeName = file.split('/').pop()?.replace('-cert.pem', '') || ''
-          const keyPath = file.replace('-cert.pem', '-key.pem')
+          const nodeName =
+            file.split('/').pop()?.replace('-cert.pem', '') || '';
+          const keyPath = file.replace('-cert.pem', '-key.pem');
 
           if (existsSync(keyPath)) {
-            const info = this.getCertificateInfo(file)
+            const info = this.getCertificateInfo(file);
             certs.push({
               commonName: nodeName,
               certPath: file,
               keyPath,
               createdAt: new Date(), // Would need to parse from cert
-              expiresAt: info.expiresAt,
-            })
+              expiresAt: info.expiresAt
+            });
           }
         }
       }
@@ -221,27 +222,27 @@ export class CertificateManager {
       // Ignore errors
     }
 
-    return certs
+    return certs;
   }
 
   /**
    * Revoke a certificate (delete it)
    */
   revokeCertificate(nodeName: string): void {
-    const keyPath = join(this.certDir, `${nodeName}-key.pem`)
-    const certPath = join(this.certDir, `${nodeName}-cert.pem`)
+    const keyPath = join(this.certDir, `${nodeName}-key.pem`);
+    const certPath = join(this.certDir, `${nodeName}-cert.pem`);
 
     try {
       if (existsSync(keyPath)) {
-        execSync(`rm "${keyPath}"`)
+        execSync(`rm "${keyPath}"`);
       }
       if (existsSync(certPath)) {
-        execSync(`rm "${certPath}"`)
+        execSync(`rm "${certPath}"`);
       }
-      console.log(`✅ Revoked certificate for ${nodeName}`)
+      console.log(`✅ Revoked certificate for ${nodeName}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      throw new Error(`Failed to revoke certificate: ${error.message}`)
+      throw new Error(`Failed to revoke certificate: ${error.message}`);
     }
   }
 
@@ -250,17 +251,17 @@ export class CertificateManager {
    */
   exportCACertificate(): string {
     if (!existsSync(this.caCertPath)) {
-      throw new Error('CA certificate does not exist')
+      throw new Error('CA certificate does not exist');
     }
-    return readFileSync(this.caCertPath, 'utf8')
+    return readFileSync(this.caCertPath, 'utf8');
   }
 
   /**
    * Import CA certificate from another node
    */
   importCACertificate(caCert: string): void {
-    writeFileSync(this.caCertPath, caCert, 'utf8')
-    console.log('✅ CA certificate imported')
+    writeFileSync(this.caCertPath, caCert, 'utf8');
+    console.log('✅ CA certificate imported');
   }
 
   /**
@@ -270,20 +271,20 @@ export class CertificateManager {
     return {
       key: join(this.certDir, `${nodeName}-key.pem`),
       cert: join(this.certDir, `${nodeName}-cert.pem`),
-      ca: this.caCertPath,
-    }
+      ca: this.caCertPath
+    };
   }
 
   /**
    * Check if a node has valid certificates
    */
   hasNodeCertificate(nodeName: string): boolean {
-    const paths = this.getNodePaths(nodeName)
+    const paths = this.getNodePaths(nodeName);
     return (
       existsSync(paths.key) && existsSync(paths.cert) && existsSync(paths.ca)
-    )
+    );
   }
 }
 
 // Export singleton instance
-export const certificateManager = new CertificateManager()
+export const certificateManager = new CertificateManager();

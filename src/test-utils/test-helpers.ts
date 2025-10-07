@@ -4,12 +4,12 @@
  * Common utilities for test files to ensure proper cleanup
  */
 
-import { execSync } from 'child_process'
+import { execSync } from 'child_process';
 
-import { CDPConnectionPool } from '../lib/cdp-connection-pool'
+import { CDPConnectionPool } from '../lib/cdp-connection-pool';
 
-import { TabManager } from './tab-manager'
-import { TEST_PORT, CLI } from './test-constants'
+import { TabManager } from './tab-manager';
+import { TEST_PORT, CLI } from './test-constants';
 
 /**
  * Create a test tab and register it for cleanup
@@ -20,30 +20,30 @@ export function createTestTab(html: string): string {
     `${CLI} tabs new --url "data:text/html,${encodeURIComponent(html)}" --port ${TEST_PORT}`,
     {
       encoding: 'utf8',
-      timeout: 5000,
+      timeout: 5000
     }
-  )
+  );
 
   // Extract and register the tab ID for cleanup
-  const tabId = TabManager.extractAndRegisterTabId(output)
-  return tabId
+  const tabId = TabManager.extractAndRegisterTabId(output);
+  return tabId;
 }
 
 /**
  * Close a test tab safely
  */
 export function unused_closeTestTab(tabId: string): void {
-  if (!tabId) return
+  if (!tabId) return;
 
   try {
     TabManager.runCommand(
       `${CLI} tabs close --tab-id ${tabId} --port ${TEST_PORT}`,
       3000
-    )
-    console.log(`Closed test tab ${tabId}`)
+    );
+    console.log(`Closed test tab ${tabId}`);
   } catch {
     // Log but continue - don't crash tests on cleanup failure
-    console.warn(`Failed to close tab ${tabId}`)
+    console.warn(`Failed to close tab ${tabId}`);
   }
 }
 
@@ -52,7 +52,7 @@ export function unused_closeTestTab(tabId: string): void {
  * Use this instead of local extractTabId functions
  */
 export function extractAndRegisterTabId(output: string): string {
-  return TabManager.extractAndRegisterTabId(output)
+  return TabManager.extractAndRegisterTabId(output);
 }
 
 /**
@@ -62,7 +62,7 @@ export function runCommand(
   cmd: string,
   timeout = 5000
 ): { output: string; exitCode: number } {
-  return TabManager.runCommand(cmd, timeout)
+  return TabManager.runCommand(cmd, timeout);
 }
 
 /**
@@ -70,7 +70,7 @@ export function runCommand(
  * Call this in afterAll() to ensure cleanup
  */
 export function cleanupAllTestTabs(): void {
-  TabManager.cleanupAllCreatedTabs()
+  TabManager.cleanupAllCreatedTabs();
 }
 
 /**
@@ -78,7 +78,7 @@ export function cleanupAllTestTabs(): void {
  * Call this in afterAll() of test suites that create many tabs
  */
 export function enforceTabLimit(): void {
-  TabManager.enforceTabLimit()
+  TabManager.enforceTabLimit();
 }
 
 /**
@@ -87,9 +87,9 @@ export function enforceTabLimit(): void {
  */
 export function getUniqueTestPort(): number {
   // Use base port 18000 + random offset up to 1000
-  const basePort = 18000
-  const offset = Math.floor(Math.random() * 1000)
-  return basePort + offset
+  const basePort = 18000;
+  const offset = Math.floor(Math.random() * 1000);
+  return basePort + offset;
 }
 
 /**
@@ -97,31 +97,31 @@ export function getUniqueTestPort(): number {
  * This provides automatic cleanup and tab reuse
  */
 export async function createManagedTestTab(options: {
-  html?: string
-  url?: string
-  testName?: string
+  html?: string;
+  url?: string;
+  testName?: string;
 }): Promise<{ tabId: string; cleanup: () => Promise<void> }> {
-  const pool = CDPConnectionPool.getInstance()
+  const pool = CDPConnectionPool.getInstance();
 
   // Create the URL if HTML is provided
-  let url = options.url
+  let url = options.url;
   if (options.html && !url) {
-    url = `data:text/html,${encodeURIComponent(options.html)}`
+    url = `data:text/html,${encodeURIComponent(options.html)}`;
   }
 
   // Get or create a managed tab
   const { tabId } = await pool.getOrCreateManagedTab({
     owner: options.testName || 'test',
-    url: url || 'about:blank',
-  })
+    url: url || 'about:blank'
+  });
 
   // Return tab info with cleanup function
   return {
     tabId,
     cleanup: async (): Promise<void> => {
-      await pool.releaseManagedTab(tabId)
-    },
-  }
+      await pool.releaseManagedTab(tabId);
+    }
+  };
 }
 
 /**
@@ -129,19 +129,19 @@ export async function createManagedTestTab(options: {
  * Call this in afterAll hooks
  */
 export async function cleanupAllManagedTabs(): Promise<void> {
-  const pool = CDPConnectionPool.getInstance()
-  await pool.cleanupAllManagedTabs()
+  const pool = CDPConnectionPool.getInstance();
+  await pool.cleanupAllManagedTabs();
 }
 
 /**
  * Get tab pool statistics
  */
 export function getTabPoolStats(): {
-  total: number
-  inUse: number
-  idle: number
-  maxTabs: number
+  total: number;
+  inUse: number;
+  idle: number;
+  maxTabs: number;
 } {
-  const pool = CDPConnectionPool.getInstance()
-  return pool.getManagedTabStats()
+  const pool = CDPConnectionPool.getInstance();
+  return pool.getManagedTabStats();
 }

@@ -5,15 +5,15 @@
  * Equivalent to the Commander.js close command with full feature parity.
  */
 
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { createCommand } from '../../lib/command-builder'
-import type { CloseOptions } from '../../types'
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { createCommand } from '../../lib/command-builder';
+import type { CloseOptions } from '../../types';
 
 export const closeCommand = createCommand<CloseOptions>({
   metadata: {
     name: 'close',
     category: 'navigation',
-    description: 'Close the browser',
+    description: 'Close the browser'
   },
 
   command: 'close',
@@ -25,66 +25,66 @@ export const closeCommand = createCommand<CloseOptions>({
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p',
+        alias: 'p'
       })
       .option('all', {
         describe: 'Close all tabs and windows',
         type: 'boolean',
         default: false,
-        alias: 'a',
+        alias: 'a'
       })
       .option('save-session', {
         describe: 'Save session before closing',
-        type: 'string',
+        type: 'string'
       })
       .example('$0 close', 'Close the browser')
       .example('$0 close --all', 'Close all tabs and windows')
       .example(
         '$0 close --save-session "my-session"',
         'Save session before closing'
-      )
+      );
   },
 
   handler: async ({ argv, logger, spinner }) => {
     if (spinner) {
-      spinner.start('Closing browser...')
+      spinner.start('Closing browser...');
     }
 
     try {
       // Save session if requested
       if (argv.saveSession) {
         if (spinner) {
-          spinner.text = `Saving session: ${argv.saveSession}`
+          spinner.text = `Saving session: ${argv.saveSession}`;
         }
         // Session saving would be implemented here
-        logger.info(`Session saved as: ${argv.saveSession}`)
+        logger.info(`Session saved as: ${argv.saveSession}`);
       }
 
       // Close browser
-      const browser = await BrowserHelper.getBrowser(argv.port)
+      const browser = await BrowserHelper.getBrowser(argv.port);
       if (!browser) {
         if (spinner) {
-          spinner.succeed('No browser session to close')
+          spinner.succeed('No browser session to close');
         }
-        logger.info('No browser session to close')
-        return
+        logger.info('No browser session to close');
+        return;
       }
 
-      await browser.close()
+      await browser.close();
 
       if (spinner) {
-        spinner.succeed('Browser closed')
+        spinner.succeed('Browser closed');
       }
 
-      logger.success('Browser closed successfully')
+      logger.success('Browser closed successfully');
 
       if (argv.json) {
         logger.json({
           success: true,
           action: 'close',
           sessionSaved: !!argv.saveSession,
-          sessionName: argv.saveSession || null,
-        })
+          sessionName: argv.saveSession || null
+        });
       }
     } catch (error: unknown) {
       // Handle case where browser is already closed
@@ -94,17 +94,17 @@ export const closeCommand = createCommand<CloseOptions>({
           error.message.includes('Connection closed'))
       ) {
         if (spinner) {
-          spinner.succeed('Browser was already closed')
+          spinner.succeed('Browser was already closed');
         }
-        logger.info('Browser was already closed')
-        return
+        logger.info('Browser was already closed');
+        return;
       }
 
-      const message = error instanceof Error ? error.message : String(error)
-      throw new Error(`Failed to close browser: ${message}`)
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to close browser: ${message}`);
     }
   },
 
   requiresBrowser: false, // Browser might not exist to close
-  supportsJson: true,
-})
+  supportsJson: true
+});

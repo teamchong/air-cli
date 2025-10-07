@@ -7,44 +7,44 @@
  * Monitor tab feature was completely removed to fix timeout issues.
  */
 
-import { type Browser, type BrowserContext, type Page } from 'playwright'
+import { type Browser, type BrowserContext, type Page } from 'playwright';
 
 interface PooledConnection {
-  browser: Browser
-  port: number
-  lastUsed: number
-  inUse: boolean
+  browser: Browser;
+  port: number;
+  lastUsed: number;
+  inUse: boolean;
 }
 
 interface ManagedTab {
-  tabId: string
-  page: Page
-  url: string
-  inUse: boolean
-  lastAccessed: number
-  createdAt: number
-  owner?: string // Test name or process that owns this tab
-  persistent?: boolean // Don't auto-cleanup if true
+  tabId: string;
+  page: Page;
+  url: string;
+  inUse: boolean;
+  lastAccessed: number;
+  createdAt: number;
+  owner?: string; // Test name or process that owns this tab
+  persistent?: boolean; // Don't auto-cleanup if true
 }
 
 export class CDPConnectionPool {
-  private static instance: CDPConnectionPool | null = null
-  private connections: Map<string, PooledConnection> = new Map()
-  private readonly maxConnections = 10
-  private readonly connectionTimeout = 60000 // 1 minute idle timeout
-  private cleanupInterval: NodeJS.Timeout | null = null
+  private static instance: CDPConnectionPool | null = null;
+  private connections: Map<string, PooledConnection> = new Map();
+  private readonly maxConnections = 10;
+  private readonly connectionTimeout = 60000; // 1 minute idle timeout
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   // Tab pool management
-  private managedTabs: Map<string, ManagedTab> = new Map()
-  private readonly MAX_TABS = 10 // Maximum tabs to prevent Chrome crashes (lowered from 50)
-  private readonly TAB_IDLE_TIMEOUT = 2 * 60 * 1000 // 2 minutes idle before cleanup (reduced from 5)
-  private tabCleanupInterval: NodeJS.Timeout | null = null
+  private managedTabs: Map<string, ManagedTab> = new Map();
+  private readonly MAX_TABS = 10; // Maximum tabs to prevent Chrome crashes (lowered from 50)
+  private readonly TAB_IDLE_TIMEOUT = 2 * 60 * 1000; // 2 minutes idle before cleanup (reduced from 5)
+  private tabCleanupInterval: NodeJS.Timeout | null = null;
 
   private constructor() {
     // Start cleanup interval to remove stale connections
-    this.startCleanupInterval()
+    this.startCleanupInterval();
     // Start tab cleanup interval
-    this.startTabCleanup()
+    this.startTabCleanup();
   }
 
   /**
@@ -52,54 +52,54 @@ export class CDPConnectionPool {
    */
   static getInstance(): CDPConnectionPool {
     if (!CDPConnectionPool.instance) {
-      CDPConnectionPool.instance = new CDPConnectionPool()
+      CDPConnectionPool.instance = new CDPConnectionPool();
     }
-    return CDPConnectionPool.instance
+    return CDPConnectionPool.instance;
   }
 
   /**
    * Get a connection from the pool or create a new one
    */
   async getConnection(port: number = 9222): Promise<Browser> {
-    const key = `port-${port}`
+    const key = `port-${port}`;
 
     // Check for existing connection (even if in use, validate it)
-    const existing = this.connections.get(key)
+    const existing = this.connections.get(key);
     if (existing) {
       // Verify connection is still alive before reusing
       try {
         // Quick health check - get contexts
-        existing.browser.contexts()
+        existing.browser.contexts();
 
         if (!existing.inUse) {
           // Available connection, reuse it
-          existing.inUse = true
-          existing.lastUsed = Date.now()
-          return existing.browser
+          existing.inUse = true;
+          existing.lastUsed = Date.now();
+          return existing.browser;
         }
         // Connection exists and is alive but in use - will create new one below
       } catch {
         // Connection is dead, remove it and create new
-        this.connections.delete(key)
+        this.connections.delete(key);
       }
     }
 
     // If already in use or doesn't exist, try to create new connection
     if (this.connections.size >= this.maxConnections) {
       // Try to find and close least recently used connection
-      const lru = this.findLeastRecentlyUsed()
+      const lru = this.findLeastRecentlyUsed();
       if (lru) {
         try {
           // Note: We can't actually close the browser (it's external)
           // but we can remove it from our pool
-          this.connections.delete(lru)
+          this.connections.delete(lru);
         } catch {
           // Intentionally empty - errors removing connections are non-critical
         }
       } else {
         throw new Error(
           `Connection pool exhausted (max: ${this.maxConnections})`
-        )
+        );
       }
     }
 
@@ -107,40 +107,40 @@ export class CDPConnectionPool {
     try {
       // Use require() to get fresh Playwright instance - fixes module corruption after many tests
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const playwright = require('playwright')
-      const chromeInstance = playwright.chromium
+      const playwright = require('playwright');
+      const chromeInstance = playwright.chromium;
 
       // Add timeout to CDP connection to prevent hanging
       const connectionPromise = chromeInstance.connectOverCDP(
         `http://localhost:${port}`
-      )
+      );
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('CDP connection timeout')), 10000)
-      })
+        setTimeout(() => reject(new Error('CDP connection timeout')), 10000);
+      });
 
-      const browser = await Promise.race([connectionPromise, timeoutPromise])
+      const browser = await Promise.race([connectionPromise, timeoutPromise]);
 
       // Set default timeout for all contexts
       browser.contexts().forEach((context: BrowserContext) => {
-        context.setDefaultTimeout(5000)
-      })
+        context.setDefaultTimeout(5000);
+      });
 
       const connection: PooledConnection = {
         browser,
         port,
         lastUsed: Date.now(),
-        inUse: true,
-      }
+        inUse: true
+      };
 
-      this.connections.set(key, connection)
-      return browser
+      this.connections.set(key, connection);
+      return browser;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // More detailed error message for debugging
-      const errorMsg = error.message || String(error)
+      const errorMsg = error.message || String(error);
       throw new Error(
         `Failed to connect to browser on port ${port}: ${errorMsg}\nEnsure Chrome is running with --remote-debugging-port=${port}`
-      )
+      );
     }
   }
 
@@ -148,23 +148,23 @@ export class CDPConnectionPool {
    * Release a connection back to the pool for reuse
    */
   release(port: number): void {
-    const key = `port-${port}`
-    const connection = this.connections.get(key)
+    const key = `port-${port}`;
+    const connection = this.connections.get(key);
 
     if (connection) {
-      connection.inUse = false
-      connection.lastUsed = Date.now()
+      connection.inUse = false;
+      connection.lastUsed = Date.now();
 
       // Clean up any empty contexts we may have created
       try {
         for (const context of connection.browser.contexts()) {
           if (context.pages().length === 0) {
-            context.close().catch(() => {})
+            context.close().catch(() => {});
           }
         }
       } catch {
         // Connection might be dead
-        this.connections.delete(key)
+        this.connections.delete(key);
       }
     }
   }
@@ -176,11 +176,11 @@ export class CDPConnectionPool {
     port: number,
     action: (_browser: Browser) => Promise<T>
   ): Promise<T> {
-    const browser = await this.getConnection(port)
+    const browser = await this.getConnection(port);
     try {
-      return await action(browser)
+      return await action(browser);
     } finally {
-      this.release(port)
+      this.release(port);
     }
   }
 
@@ -188,48 +188,48 @@ export class CDPConnectionPool {
    * Find least recently used connection that's not in use
    */
   private findLeastRecentlyUsed(): string | null {
-    let lruKey: string | null = null
-    let lruTime = Date.now()
+    let lruKey: string | null = null;
+    let lruTime = Date.now();
 
     for (const [key, conn] of this.connections) {
       if (!conn.inUse && conn.lastUsed < lruTime) {
-        lruKey = key
-        lruTime = conn.lastUsed
+        lruKey = key;
+        lruTime = conn.lastUsed;
       }
     }
 
-    return lruKey
+    return lruKey;
   }
 
   /**
    * Start cleanup interval for stale connections
    */
   private startCleanupInterval(): void {
-    if (this.cleanupInterval) return
+    if (this.cleanupInterval) return;
 
     this.cleanupInterval = setInterval(() => {
-      this.cleanupStaleConnections()
-    }, 30000) // Check every 30 seconds
+      this.cleanupStaleConnections();
+    }, 30000); // Check every 30 seconds
 
     // Unref so it doesn't keep the process alive
-    this.cleanupInterval.unref()
+    this.cleanupInterval.unref();
   }
 
   /**
    * Remove connections that have been idle too long
    */
   private cleanupStaleConnections(): void {
-    const now = Date.now()
-    const keysToDelete: string[] = []
+    const now = Date.now();
+    const keysToDelete: string[] = [];
 
     for (const [key, conn] of this.connections) {
       if (!conn.inUse && now - conn.lastUsed > this.connectionTimeout) {
-        keysToDelete.push(key)
+        keysToDelete.push(key);
       }
     }
 
     for (const key of keysToDelete) {
-      this.connections.delete(key)
+      this.connections.delete(key);
     }
   }
 
@@ -237,7 +237,7 @@ export class CDPConnectionPool {
    * Clear all connections (for testing)
    */
   clearAll(): void {
-    this.connections.clear()
+    this.connections.clear();
   }
 
   /**
@@ -250,55 +250,55 @@ export class CDPConnectionPool {
    */
   async getOrCreateManagedTab(
     options: {
-      owner?: string
-      url?: string
-      persistent?: boolean
+      owner?: string;
+      url?: string;
+      persistent?: boolean;
     } = {}
   ): Promise<{ page: Page; tabId: string }> {
     // First, enforce total Chrome tab limit (not just managed tabs)
-    const browser = await this.getConnection()
-    const totalTabs = await this.countAllTabs(browser)
+    const browser = await this.getConnection();
+    const totalTabs = await this.countAllTabs(browser);
 
     if (totalTabs >= this.MAX_TABS) {
       // Force cleanup of oldest idle tabs to stay under limit
-      await this.cleanupOldestIdleTabs()
+      await this.cleanupOldestIdleTabs();
 
       // If still at limit after cleanup, close oldest non-persistent tab
-      const remainingTabs = await this.countAllTabs(browser)
+      const remainingTabs = await this.countAllTabs(browser);
       if (remainingTabs >= this.MAX_TABS) {
-        await this.forceCloseOldestTab(browser)
+        await this.forceCloseOldestTab(browser);
       }
     }
 
     // Try to find an idle tab to reuse
-    const idleTab = this.findIdleTab()
+    const idleTab = this.findIdleTab();
     if (idleTab) {
       // Reset and reuse the idle tab
-      idleTab.inUse = true
-      idleTab.lastAccessed = Date.now()
-      idleTab.owner = options.owner
+      idleTab.inUse = true;
+      idleTab.lastAccessed = Date.now();
+      idleTab.owner = options.owner;
 
       if (options.url) {
-        await idleTab.page.goto(options.url)
+        await idleTab.page.goto(options.url);
       } else {
         // Navigate to blank page to reset
-        await idleTab.page.goto('about:blank')
+        await idleTab.page.goto('about:blank');
       }
 
       // Tab reused successfully
-      return { page: idleTab.page, tabId: idleTab.tabId }
+      return { page: idleTab.page, tabId: idleTab.tabId };
     }
 
     // Create a new managed tab (reuse browser from above)
-    const context = browser.contexts()[0] || (await browser.newContext())
-    const page = await context.newPage()
+    const context = browser.contexts()[0] || (await browser.newContext());
+    const page = await context.newPage();
 
     if (options.url) {
-      await page.goto(options.url)
+      await page.goto(options.url);
     }
 
     // Get the tab ID
-    const tabId = await this.getPageId(page)
+    const tabId = await this.getPageId(page);
 
     // Store in managed tabs
     const managedTab: ManagedTab = {
@@ -309,23 +309,23 @@ export class CDPConnectionPool {
       lastAccessed: Date.now(),
       createdAt: Date.now(),
       owner: options.owner,
-      persistent: options.persistent,
-    }
+      persistent: options.persistent
+    };
 
-    this.managedTabs.set(tabId, managedTab)
+    this.managedTabs.set(tabId, managedTab);
 
-    return { page, tabId }
+    return { page, tabId };
   }
 
   /**
    * Release a managed tab back to the pool
    */
   async releaseManagedTab(tabId: string): Promise<void> {
-    const tab = this.managedTabs.get(tabId)
+    const tab = this.managedTabs.get(tabId);
     if (tab) {
-      tab.inUse = false
-      tab.lastAccessed = Date.now()
-      tab.owner = undefined
+      tab.inUse = false;
+      tab.lastAccessed = Date.now();
+      tab.owner = undefined;
 
       // Tab released successfully
     }
@@ -337,38 +337,38 @@ export class CDPConnectionPool {
   private findIdleTab(): ManagedTab | null {
     for (const tab of this.managedTabs.values()) {
       if (!tab.inUse && !tab.persistent) {
-        return tab
+        return tab;
       }
     }
-    return null
+    return null;
   }
 
   /**
    * Cleanup oldest idle tabs when at limit
    */
   private async cleanupOldestIdleTabs(): Promise<void> {
-    const idleTabs: ManagedTab[] = []
+    const idleTabs: ManagedTab[] = [];
 
     for (const tab of this.managedTabs.values()) {
       if (!tab.inUse && !tab.persistent) {
-        idleTabs.push(tab)
+        idleTabs.push(tab);
       }
     }
 
     // Sort by last accessed time (oldest first)
-    idleTabs.sort((a, b) => a.lastAccessed - b.lastAccessed)
+    idleTabs.sort((a, b) => a.lastAccessed - b.lastAccessed);
 
     // Remove oldest 25% of idle tabs
-    const toRemove = Math.max(1, Math.floor(idleTabs.length * 0.25))
+    const toRemove = Math.max(1, Math.floor(idleTabs.length * 0.25));
 
     for (let i = 0; i < toRemove && i < idleTabs.length; i++) {
-      const tab = idleTabs[i]
+      const tab = idleTabs[i];
       try {
-        await tab.page.close()
+        await tab.page.close();
       } catch {
         // Page might already be closed
       }
-      this.managedTabs.delete(tab.tabId)
+      this.managedTabs.delete(tab.tabId);
       // Tab cleaned up
     }
   }
@@ -377,11 +377,11 @@ export class CDPConnectionPool {
    * Start periodic cleanup of idle tabs
    */
   startTabCleanup(): void {
-    if (this.tabCleanupInterval) return
+    if (this.tabCleanupInterval) return;
 
     this.tabCleanupInterval = setInterval(async () => {
-      const now = Date.now()
-      const toCleanup: string[] = []
+      const now = Date.now();
+      const toCleanup: string[] = [];
 
       for (const [id, tab] of this.managedTabs) {
         if (
@@ -389,41 +389,41 @@ export class CDPConnectionPool {
           !tab.persistent &&
           now - tab.lastAccessed > this.TAB_IDLE_TIMEOUT
         ) {
-          toCleanup.push(id)
+          toCleanup.push(id);
         }
       }
 
       for (const id of toCleanup) {
-        const tab = this.managedTabs.get(id)
+        const tab = this.managedTabs.get(id);
         if (tab) {
           try {
-            await tab.page.close()
+            await tab.page.close();
           } catch {
             // Page might already be closed
           }
-          this.managedTabs.delete(id)
+          this.managedTabs.delete(id);
           // Auto-cleaned idle tab
         }
       }
-    }, 30000) // Run every 30 seconds
+    }, 30000); // Run every 30 seconds
 
     // Unref so it doesn't keep the process alive
-    this.tabCleanupInterval.unref()
+    this.tabCleanupInterval.unref();
   }
 
   /**
    * Cleanup all managed tabs
    */
   async cleanupAllManagedTabs(): Promise<void> {
-    const toCleanup = Array.from(this.managedTabs.entries())
+    const toCleanup = Array.from(this.managedTabs.entries());
 
     for (const [id, tab] of toCleanup) {
       try {
-        await tab.page.close()
+        await tab.page.close();
       } catch {
         // Page might already be closed
       }
-      this.managedTabs.delete(id)
+      this.managedTabs.delete(id);
     }
   }
 
@@ -434,7 +434,7 @@ export class CDPConnectionPool {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cdpSession = await (page.context() as any)._browser._connection
-        ._transport._ws
+        ._transport._ws;
 
       const targetId =
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -442,11 +442,11 @@ export class CDPConnectionPool {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (page as any)._targetId ||
         cdpSession?.targetId ||
-        'unknown'
-      return targetId
+        'unknown';
+      return targetId;
     } catch {
       // Fallback to generating a unique ID
-      return `tab-${Date.now()}-${Math.random().toString(36).substring(7)}`
+      return `tab-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     }
   }
 
@@ -454,11 +454,11 @@ export class CDPConnectionPool {
    * Count all tabs currently open in Chrome (not just managed tabs)
    */
   private async countAllTabs(browser: Browser): Promise<number> {
-    let count = 0
+    let count = 0;
     for (const context of browser.contexts()) {
-      count += context.pages().length
+      count += context.pages().length;
     }
-    return count
+    return count;
   }
 
   /**
@@ -468,13 +468,13 @@ export class CDPConnectionPool {
     // Find oldest managed tab that's not persistent
     const tabs = Array.from(this.managedTabs.values())
       .filter(tab => !tab.persistent)
-      .sort((a, b) => a.createdAt - b.createdAt)
+      .sort((a, b) => a.createdAt - b.createdAt);
 
     if (tabs.length > 0) {
-      const oldest = tabs[0]
+      const oldest = tabs[0];
       try {
-        await oldest.page.close()
-        this.managedTabs.delete(oldest.tabId)
+        await oldest.page.close();
+        this.managedTabs.delete(oldest.tabId);
       } catch {
         // Ignore errors when closing tab
       }
@@ -485,20 +485,20 @@ export class CDPConnectionPool {
    * Get tab pool statistics
    */
   getManagedTabStats(): {
-    total: number
-    inUse: number
-    idle: number
-    maxTabs: number
-    idleTimeout: number
+    total: number;
+    inUse: number;
+    idle: number;
+    maxTabs: number;
+    idleTimeout: number;
   } {
-    let inUse = 0
-    let idle = 0
+    let inUse = 0;
+    let idle = 0;
 
     for (const tab of this.managedTabs.values()) {
       if (tab.inUse) {
-        inUse++
+        inUse++;
       } else {
-        idle++
+        idle++;
       }
     }
 
@@ -507,8 +507,8 @@ export class CDPConnectionPool {
       inUse,
       idle,
       maxTabs: this.MAX_TABS,
-      idleTimeout: this.TAB_IDLE_TIMEOUT,
-    }
+      idleTimeout: this.TAB_IDLE_TIMEOUT
+    };
   }
 
   /**
@@ -518,18 +518,18 @@ export class CDPConnectionPool {
   async shutdown(): Promise<void> {
     // Stop cleanup intervals
     if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval)
-      this.cleanupInterval = null
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
 
     if (this.tabCleanupInterval) {
-      clearInterval(this.tabCleanupInterval)
-      this.tabCleanupInterval = null
+      clearInterval(this.tabCleanupInterval);
+      this.tabCleanupInterval = null;
     }
 
     // Close all browser connections with timeout
     // Note: browser.close() disconnects from CDP but doesn't close external browser
-    const closePromises: Promise<void>[] = []
+    const closePromises: Promise<void>[] = [];
 
     for (const connection of this.connections.values()) {
       const closePromise = (async (): Promise<void> => {
@@ -538,44 +538,44 @@ export class CDPConnectionPool {
           await Promise.race([
             connection.browser.close(),
             new Promise<void>(resolve => {
-              const timer = setTimeout(resolve, 1000)
-              timer.unref() // Don't keep process alive
-            }),
-          ])
+              const timer = setTimeout(resolve, 1000);
+              timer.unref(); // Don't keep process alive
+            })
+          ]);
         } catch {
           // Ignore errors during shutdown
         }
-      })()
-      closePromises.push(closePromise)
+      })();
+      closePromises.push(closePromise);
     }
 
     // Wait for all connections to close (with timeout)
     await Promise.race([
       Promise.all(closePromises),
       new Promise<void>(resolve => {
-        const timer = setTimeout(resolve, 1500)
-        timer.unref() // Don't keep process alive
-      }),
-    ])
+        const timer = setTimeout(resolve, 1500);
+        timer.unref(); // Don't keep process alive
+      })
+    ]);
 
     // Clear the connections map
-    this.connections.clear()
+    this.connections.clear();
 
     // Cleanup all managed tabs with timeout
     await Promise.race([
       this.cleanupAllManagedTabs(),
       new Promise<void>(resolve => {
-        const timer = setTimeout(resolve, 500)
-        timer.unref() // Don't keep process alive
-      }),
-    ])
+        const timer = setTimeout(resolve, 500);
+        timer.unref(); // Don't keep process alive
+      })
+    ]);
   }
 
   /**
    * Force shutdown - completely destroys the instance (for testing)
    */
   async forceShutdown(): Promise<void> {
-    this.shutdown()
-    CDPConnectionPool.instance = null
+    this.shutdown();
+    CDPConnectionPool.instance = null;
   }
 }

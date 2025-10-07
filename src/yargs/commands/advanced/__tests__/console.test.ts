@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 
-import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants';
 import {
   extractAndRegisterTabId,
   runCommand,
   unused_closeTestTab,
-  enforceTabLimit,
-} from '../../../../test-utils/test-helpers'
+  enforceTabLimit
+} from '../../../../test-utils/test-helpers';
 
 /**
  * Real Console Command Tests
@@ -15,44 +15,44 @@ import {
  * NO MOCKS - everything is tested against a real implementation.
  */
 describe('console command - REAL TESTS', () => {
-  let testTabId: string
+  let testTabId: string;
 
   beforeAll(async () => {
     // Build the CLI only if needed
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     if (!require('fs').existsSync('dist/src/index.js')) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const execSync = require('child_process').execSync
-      execSync('bun run build', { stdio: 'ignore' })
+      const execSync = require('child_process').execSync;
+      execSync('bun run build', { stdio: 'ignore' });
     }
 
     // Browser already running from global setup
     // Create a dedicated test tab for this test suite and capture its ID
     const { output } = runCommand(
       `${CLI} tabs new --url "data:text/html,<div id='test-container'>Console Test Suite Ready</div>" --port ${TEST_PORT}`
-    )
-    testTabId = extractAndRegisterTabId(output) // This will register the tab for cleanup
-    console.log(`Console test suite using tab ID: ${testTabId}`)
-  })
+    );
+    testTabId = extractAndRegisterTabId(output); // This will register the tab for cleanup
+    console.log(`Console test suite using tab ID: ${testTabId}`);
+  });
 
   afterAll(async () => {
     // Clean up our test tab using the helper function
     if (testTabId) {
-      unused_closeTestTab(testTabId)
-      console.log(`Closed test tab ${testTabId}`)
+      unused_closeTestTab(testTabId);
+      console.log(`Closed test tab ${testTabId}`);
     }
     // Enforce tab limit to prevent browser crashes
-    enforceTabLimit()
-  })
+    enforceTabLimit();
+  });
 
   describe('command structure', () => {
     it('should have correct command definition', () => {
-      const { output, exitCode } = runCommand(`${CLI} console --help`)
-      expect(exitCode).toBe(0)
-      expect(output).toContain('Capture browser console output')
-      expect(output).toContain('console')
-    })
-  })
+      const { output, exitCode } = runCommand(`${CLI} console --help`);
+      expect(exitCode).toBe(0);
+      expect(output).toContain('Capture browser console output');
+      expect(output).toContain('console');
+    });
+  });
 
   describe('handler execution', () => {
     it('should monitor console with global session', () => {
@@ -61,39 +61,39 @@ describe('console command - REAL TESTS', () => {
       const { exitCode } = runCommand(
         `${CLI} console --port ${TEST_PORT}`,
         8000
-      )
+      );
       // Console command may succeed or timeout, both are acceptable
-      expect([0, 1]).toContain(exitCode)
-    })
+      expect([0, 1]).toContain(exitCode);
+    });
 
     it('should monitor console with specific tab ID', () => {
       // Test console monitoring - it will reload and capture all messages
       const { exitCode } = runCommand(
         `${CLI} console --tab-id ${testTabId} --port ${TEST_PORT}`,
         8000
-      )
+      );
       // Console command may succeed or timeout, both are acceptable for this test
-      expect([0, 1]).toContain(exitCode)
-    })
+      expect([0, 1]).toContain(exitCode);
+    });
 
     it('should handle invalid tab ID gracefully', () => {
       const { exitCode } = runCommand(
         `${CLI} console --tab-id "INVALID_ID" --port ${TEST_PORT}`,
         10000
-      )
-      expect(exitCode).toBe(1)
+      );
+      expect(exitCode).toBe(1);
       // The command should either output an error message or time out
       // Both are acceptable behaviors for invalid tab ID
-      expect(exitCode).toBe(1) // Just check exit code, output may vary
-    })
+      expect(exitCode).toBe(1); // Just check exit code, output may vary
+    });
 
     it('should prevent conflicting tab arguments', () => {
       const { exitCode } = runCommand(
         `${CLI} console --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         10000
-      )
-      expect(exitCode).toBe(1)
+      );
+      expect(exitCode).toBe(1);
       // Note: yargs validation output handling varies in test environment
-    })
-  })
-})
+    });
+  });
+});

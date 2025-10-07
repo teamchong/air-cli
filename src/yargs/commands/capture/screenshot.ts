@@ -1,20 +1,20 @@
-import { join } from 'path'
+import { join } from 'path';
 
-import chalk from 'chalk'
-import ora from 'ora'
-import { CommandModule, Arguments } from 'yargs'
+import chalk from 'chalk';
+import ora from 'ora';
+import { CommandModule, Arguments } from 'yargs';
 
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { TEST_TMP_DIR } from '../../../test-utils/test-constants'
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { TEST_TMP_DIR } from '../../../test-utils/test-constants';
 
 interface ScreenshotArgs extends Arguments {
-  'path': string
-  'port': number
-  'timeout': number
-  'fullPage'?: boolean
-  'selector'?: string
-  'tab-index'?: number
-  'tab-id'?: string
+  'path': string;
+  'port': number;
+  'timeout': number;
+  'fullPage'?: boolean;
+  'selector'?: string;
+  'tab-index'?: number;
+  'tab-id'?: string;
 }
 
 export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
@@ -27,44 +27,44 @@ export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
       .positional('path', {
         describe: 'Output file path',
         type: 'string',
-        default: join(TEST_TMP_DIR, 'screenshot.png'),
+        default: join(TEST_TMP_DIR, 'screenshot.png')
       })
       .option('port', {
         alias: 'p',
         describe: 'Chrome debugging port',
         type: 'number',
-        default: 9222,
+        default: 9222
       })
       .option('timeout', {
         alias: 't',
         describe: 'Timeout in milliseconds',
         type: 'number',
-        default: 30000,
+        default: 30000
       })
       .option('full-page', {
         describe: 'Capture full page',
-        type: 'boolean',
+        type: 'boolean'
       })
       .option('selector', {
         describe: 'Capture specific element',
-        type: 'string',
+        type: 'string'
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab',
+        alias: 'tab'
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string',
+        type: 'string'
       })
-      .conflicts('tab-index', 'tab-id')
+      .conflicts('tab-index', 'tab-id');
   },
 
   handler: async argv => {
-    const spinner = ora('Taking screenshot...').start()
-    const tabIndex = argv['tab-index'] as number | undefined
-    const tabId = argv['tab-id'] as string | undefined
+    const spinner = ora('Taking screenshot...').start();
+    const tabIndex = argv['tab-index'] as number | undefined;
+    const tabId = argv['tab-id'] as string | undefined;
 
     try {
       await BrowserHelper.withTargetPage(
@@ -75,28 +75,28 @@ export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const screenshotOptions: any = {
             path: argv.path,
-            fullPage: !!argv.fullPage,
-          }
+            fullPage: !!argv.fullPage
+          };
 
           if (argv.selector) {
-            const element = await page.$(argv.selector)
+            const element = await page.$(argv.selector);
             if (!element) {
-              throw new Error(`Element not found: ${argv.selector}`)
+              throw new Error(`Element not found: ${argv.selector}`);
             }
-            await element.screenshot({ path: argv.path })
+            await element.screenshot({ path: argv.path });
           } else {
-            await page.screenshot(screenshotOptions)
+            await page.screenshot(screenshotOptions);
           }
 
-          spinner.succeed(chalk.green(`✅ Screenshot saved to ${argv.path}`))
+          spinner.succeed(chalk.green(`✅ Screenshot saved to ${argv.path}`));
         }
-      )
+      );
 
-      return
+      return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      spinner.fail(chalk.red(`❌ Screenshot failed: ${error.message}`))
-      throw new Error('Command failed')
+      spinner.fail(chalk.red(`❌ Screenshot failed: ${error.message}`));
+      throw new Error('Command failed');
     }
-  },
-}
+  }
+};

@@ -9,19 +9,19 @@
  * - Type safety
  */
 
-import chalk from 'chalk'
-import ora, { Ora } from 'ora'
-import type { ArgumentsCamelCase, Argv } from 'yargs'
+import chalk from 'chalk';
+import ora, { Ora } from 'ora';
+import type { ArgumentsCamelCase, Argv } from 'yargs';
 
-import { BrowserHelper } from '../../lib/browser-helper'
-import { withTimeout as withTimeoutUtil } from '../../lib/timeout-utils'
+import { BrowserHelper } from '../../lib/browser-helper';
+import { withTimeout as withTimeoutUtil } from '../../lib/timeout-utils';
 import type {
   BaseCommandOptions,
   PlaywrightCommand,
   CommandMetadata,
   CommandResult,
-  Logger,
-} from '../types'
+  Logger
+} from '../types';
 
 // Default timeouts by command category (in milliseconds)
 const DEFAULT_TIMEOUTS: Record<string, number> = {
@@ -30,42 +30,42 @@ const DEFAULT_TIMEOUTS: Record<string, number> = {
   'capture': 20000,
   'advanced': 15000,
   'utility': 10000,
-  'browser management': 5000,
-}
+  'browser management': 5000
+};
 
 /**
  * Get default timeout for a command category
  */
 function getDefaultTimeout(category?: string): number {
-  return DEFAULT_TIMEOUTS[category || ''] || 10000
+  return DEFAULT_TIMEOUTS[category || ''] || 10000;
 }
 
 /**
  * Command execution context that's passed to handlers
  */
 export interface CommandContext<
-  T extends BaseCommandOptions = BaseCommandOptions,
+  T extends BaseCommandOptions = BaseCommandOptions
 > {
-  argv: ArgumentsCamelCase<T>
-  spinner?: Ora
-  logger: Logger
-  startTime: number
+  argv: ArgumentsCamelCase<T>;
+  spinner?: Ora;
+  logger: Logger;
+  startTime: number;
 }
 
 /**
  * Options for creating a command
  */
 export interface CreateCommandOptions<T extends BaseCommandOptions> {
-  metadata: CommandMetadata
-  command: string
-  describe: string
+  metadata: CommandMetadata;
+  command: string;
+  describe: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  builder: (_yargs: Argv) => Argv<T> | { [key: string]: any }
-  handler: (_context: CommandContext<T>) => Promise<void>
-  middleware?: Array<(_argv: ArgumentsCamelCase<T>) => void | Promise<void>>
-  validateArgs?: (_argv: ArgumentsCamelCase<T>) => void | string
-  requiresBrowser?: boolean
-  supportsJson?: boolean
+  builder: (_yargs: Argv) => Argv<T> | { [key: string]: any };
+  handler: (_context: CommandContext<T>) => Promise<void>;
+  middleware?: Array<(_argv: ArgumentsCamelCase<T>) => void | Promise<void>>;
+  validateArgs?: (_argv: ArgumentsCamelCase<T>) => void | string;
+  requiresBrowser?: boolean;
+  supportsJson?: boolean;
 }
 
 /**
@@ -82,8 +82,8 @@ export function createCommand<T extends BaseCommandOptions>(
     handler,
     middleware = [],
     validateArgs,
-    supportsJson = true,
-  } = options
+    supportsJson = true
+  } = options;
 
   return {
     command,
@@ -93,38 +93,38 @@ export function createCommand<T extends BaseCommandOptions>(
     builder: (yargs: Argv): Argv<T> => {
       // Apply the custom builder
       const built =
-        typeof builder === 'function' ? builder(yargs) : yargs.options(builder)
+        typeof builder === 'function' ? builder(yargs) : yargs.options(builder);
 
       // Add category for help grouping
-      return built.group([], `${metadata.category} Commands:`)
+      return built.group([], `${metadata.category} Commands:`);
     },
 
     handler: async (argv: ArgumentsCamelCase<T>): Promise<void> => {
-      const startTime = Date.now()
-      let spinner: Ora | undefined
+      const startTime = Date.now();
+      let spinner: Ora | undefined;
 
       try {
         // Run middleware
         for (const mw of middleware) {
-          await mw(argv)
+          await mw(argv);
         }
 
         // Validate arguments if validator provided
         if (validateArgs) {
-          const error = validateArgs(argv)
+          const error = validateArgs(argv);
           if (error) {
-            throw new Error(error)
+            throw new Error(error);
           }
         }
 
         // Create logger based on output preferences
-        const commandLogger = createLogger(argv)
+        const commandLogger = createLogger(argv);
 
         // Create spinner if not in quiet or json mode AND we're in a TTY
         // Ora spinners can hang in non-TTY environments (like when run through execSync)
-        const isTTY = process.stdout.isTTY && process.stderr.isTTY
+        const isTTY = process.stdout.isTTY && process.stderr.isTTY;
         if (!argv.quiet && !argv.json && isTTY) {
-          spinner = ora()
+          spinner = ora();
         }
 
         // Create context
@@ -132,37 +132,37 @@ export function createCommand<T extends BaseCommandOptions>(
           argv,
           spinner,
           logger: commandLogger,
-          startTime,
-        }
+          startTime
+        };
 
         // Always skip timeout wrapper in tests - it causes more problems than it solves
         const isTest =
           process.env.NODE_ENV?.includes('test') ||
           process.env.VITEST ||
-          process.env.AIR_CLI_HEADLESS
+          process.env.AIR_CLI_HEADLESS;
 
         if (isTest) {
-          await handler(context)
+          await handler(context);
         } else {
           // Use category default timeout for command execution
           // Don't use argv.timeout here - that's for operation-specific timeouts (like wait duration)
-          const commandTimeout = getDefaultTimeout(metadata.category)
+          const commandTimeout = getDefaultTimeout(metadata.category);
           await withTimeoutUtil(
             handler(context),
             commandTimeout,
             `Command ${command}`
-          )
+          );
         }
 
         // Success - stop spinner if running
         if (spinner?.isSpinning) {
-          spinner.succeed()
+          spinner.succeed();
         }
 
         // Log execution time in verbose mode
         if (argv.verbose) {
-          const duration = Date.now() - startTime
-          commandLogger.debug(`Command completed in ${duration}ms`)
+          const duration = Date.now() - startTime;
+          commandLogger.debug(`Command completed in ${duration}ms`);
         }
 
         // Success - handler completed without throwing
@@ -170,30 +170,30 @@ export function createCommand<T extends BaseCommandOptions>(
       } catch (error: any) {
         // Error handling
         if (spinner?.isSpinning) {
-          spinner.fail()
+          spinner.fail();
         }
 
         if (argv.json && supportsJson) {
           // Output error as JSON
           const result: CommandResult = {
             success: false,
-            error: error.message,
-          }
-          console.log(JSON.stringify(result, null, 2))
+            error: error.message
+          };
+          console.log(JSON.stringify(result, null, 2));
         } else {
           // Output error to stderr
-          console.error(chalk.red('Error:'), error.message)
+          console.error(chalk.red('Error:'), error.message);
 
           if (argv.verbose && error.stack) {
-            console.error(chalk.gray(error.stack))
+            console.error(chalk.gray(error.stack));
           }
         }
 
         // Re-throw the error for yargs to handle
-        throw error
+        throw error;
       }
-    },
-  }
+    }
+  };
 }
 
 /**
@@ -203,25 +203,25 @@ export function createLogger(argv: BaseCommandOptions): Logger {
   return {
     info: (message: string): void => {
       if (!argv.quiet && !argv.json) {
-        console.log(message)
+        console.log(message);
       }
     },
 
     success: (message: string): void => {
       if (!argv.quiet && !argv.json) {
-        console.log(chalk.green('✅'), message)
+        console.log(chalk.green('✅'), message);
       }
     },
 
     error: (message: string): void => {
       if (!argv.json) {
-        console.error(chalk.red('❌'), message)
+        console.error(chalk.red('❌'), message);
       }
     },
 
     warn: (message: string): void => {
       if (!argv.quiet && !argv.json) {
-        console.warn(chalk.yellow('⚠️'), message)
+        console.warn(chalk.yellow('⚠️'), message);
       }
     },
 
@@ -230,10 +230,10 @@ export function createLogger(argv: BaseCommandOptions): Logger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     json: (data: any): void => {
       if (argv.json) {
-        console.log(JSON.stringify(data, null, 2))
+        console.log(JSON.stringify(data, null, 2));
       }
-    },
-  }
+    }
+  };
 }
 
 /**
@@ -245,10 +245,10 @@ export const validators = {
    */
   isValidUrl: (url: string): boolean => {
     try {
-      new URL(url)
-      return true
+      new URL(url);
+      return true;
     } catch {
-      return false
+      return false;
     }
   },
 
@@ -256,29 +256,29 @@ export const validators = {
    * Validates that a port number is valid
    */
   isValidPort: (port: number): boolean => {
-    return Number.isInteger(port) && port > 0 && port <= 65535
+    return Number.isInteger(port) && port > 0 && port <= 65535;
   },
 
   /**
    * Validates that a selector is not empty
    */
   isValidSelector: (selector: string): boolean => {
-    return Boolean(selector && selector.trim().length > 0)
+    return Boolean(selector && selector.trim().length > 0);
   },
 
   /**
    * Validates file path exists (for upload commands, etc.)
    */
   fileExists: async (path: string): Promise<boolean> => {
-    const fs = await import('fs/promises')
+    const fs = await import('fs/promises');
     try {
-      await fs.access(path)
-      return true
+      await fs.access(path);
+      return true;
     } catch {
-      return false
+      return false;
     }
-  },
-}
+  }
+};
 
 /**
  * Helper to create a browser-based command
@@ -286,30 +286,30 @@ export const validators = {
 export function createBrowserCommand<T extends BaseCommandOptions>(
   options: Omit<CreateCommandOptions<T>, 'requiresBrowser'> & {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    browserHandler: (_page: any, _context: CommandContext<T>) => Promise<void>
+    browserHandler: (_page: any, _context: CommandContext<T>) => Promise<void>;
   }
 ): PlaywrightCommand<T> {
-  const { browserHandler, ...rest } = options
+  const { browserHandler, ...rest } = options;
 
   return createCommand({
     ...rest,
     requiresBrowser: true,
     handler: async context => {
-      const { argv, spinner } = context
+      const { argv, spinner } = context;
 
       if (spinner) {
-        spinner.start('Connecting to browser...')
+        spinner.start('Connecting to browser...');
       }
 
       await BrowserHelper.withActivePage(argv.port, async page => {
         if (spinner) {
-          spinner.text = 'Executing command...'
+          spinner.text = 'Executing command...';
         }
 
-        await browserHandler(page, context)
-      })
-    },
-  })
+        await browserHandler(page, context);
+      });
+    }
+  });
 }
 
 /**
@@ -320,7 +320,7 @@ export async function refSelectorMiddleware<T extends { selector?: string }>(
 ): Promise<void> {
   // Middleware for ref selectors if needed in the future
   // Currently refs use simple [A], [B], [C] format
-  return
+  return;
 }
 
 /**
@@ -330,23 +330,22 @@ export function modifierMiddleware<T extends BaseCommandOptions>(
   argv: ArgumentsCamelCase<T>
 ): void {
   // Parse modifier flags into an array
-  const modifiers: string[] = []
+  const modifiers: string[] = [];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((argv as any).shift === true) modifiers.push('Shift')
+  if ((argv as any).shift === true) modifiers.push('Shift');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((argv as any).ctrl === true) modifiers.push('Control')
+  if ((argv as any).ctrl === true) modifiers.push('Control');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((argv as any).alt === true) modifiers.push('Alt')
+  if ((argv as any).alt === true) modifiers.push('Alt');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((argv as any).meta === true) modifiers.push('Meta')
+  if ((argv as any).meta === true) modifiers.push('Meta');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((argv as any)['ctrl-or-meta'] === true)
-    modifiers.push('ControlOrMeta')
+  if ((argv as any)['ctrl-or-meta'] === true) modifiers.push('ControlOrMeta');
 
-    // Add modifiers array to argv
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(argv as any).modifiers = modifiers
+  // Add modifiers array to argv
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (argv as any).modifiers = modifiers;
 }
 
 /**
@@ -359,26 +358,26 @@ export function formatOutput(
 ): string {
   switch (format) {
     case 'json':
-      return JSON.stringify(data, null, 2)
+      return JSON.stringify(data, null, 2);
 
     case 'table':
       // Simple table formatting
       if (Array.isArray(data) && data.length > 0) {
-        const keys = Object.keys(data[0])
-        const header = keys.join('\t')
+        const keys = Object.keys(data[0]);
+        const header = keys.join('\t');
         const rows = data.map(item =>
           keys.map(key => String(item[key] ?? '')).join('\t')
-        )
-        return [header, ...rows].join('\n')
+        );
+        return [header, ...rows].join('\n');
       }
-      return String(data)
+      return String(data);
 
     case 'list':
     default:
       if (Array.isArray(data)) {
-        return data.map((item, i) => `${i + 1}. ${String(item)}`).join('\n')
+        return data.map((item, i) => `${i + 1}. ${String(item)}`).join('\n');
       }
-      return String(data)
+      return String(data);
   }
 }
 
@@ -391,10 +390,10 @@ export async function withTimeout<T>(
   errorMessage = 'Operation timed out'
 ): Promise<T> {
   const timeout = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
-  })
+    setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+  });
 
-  return Promise.race([promise, timeout])
+  return Promise.race([promise, timeout]);
 }
 
 /**
@@ -405,46 +404,46 @@ export async function withRetry<T>(
   maxRetries = 3,
   delayMs = 1000
 ): Promise<T> {
-  let lastError: Error | undefined
+  let lastError: Error | undefined;
 
   for (let i = 0; i <= maxRetries; i++) {
     try {
-      return await operation()
+      return await operation();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      lastError = error
+      lastError = error;
 
       if (i < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, delayMs))
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
   }
 
-  throw lastError || new Error('Operation failed after retries')
+  throw lastError || new Error('Operation failed after retries');
 }
 
 /**
  * Export a command registry for tracking all commands
  */
 export class CommandRegistry {
-  private commands: Map<string, CommandMetadata> = new Map()
+  private commands: Map<string, CommandMetadata> = new Map();
 
   register(command: string, metadata: CommandMetadata): void {
-    this.commands.set(command, metadata)
+    this.commands.set(command, metadata);
   }
 
   get(command: string): CommandMetadata | undefined {
-    return this.commands.get(command)
+    return this.commands.get(command);
   }
 
   getAll(): CommandMetadata[] {
-    return Array.from(this.commands.values())
+    return Array.from(this.commands.values());
   }
 
   getByCategory(category: string): CommandMetadata[] {
-    return this.getAll().filter(cmd => cmd.category === category)
+    return this.getAll().filter(cmd => cmd.category === category);
   }
 }
 
 // Global command registry instance
-export const commandRegistry = new CommandRegistry()
+export const commandRegistry = new CommandRegistry();

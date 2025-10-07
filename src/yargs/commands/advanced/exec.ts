@@ -5,21 +5,21 @@
  * Supports reading from files or stdin for script execution.
  */
 
-import * as fs from 'fs'
+import * as fs from 'fs';
 
-import chalk from 'chalk'
+import chalk from 'chalk';
 
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { executeWithSimplifiedContext } from '../../../lib/script-context'
-import { createCommand } from '../../lib/command-builder'
-import type { ExecuteOptions } from '../../types'
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { executeWithSimplifiedContext } from '../../../lib/script-context';
+import { createCommand } from '../../lib/command-builder';
+import type { ExecuteOptions } from '../../types';
 
 export const execCommand = createCommand<ExecuteOptions>({
   metadata: {
     name: 'exec',
     category: 'advanced',
     description: 'Execute JavaScript/TypeScript file in Playwright session',
-    aliases: [],
+    aliases: []
   },
 
   command: 'exec [file]',
@@ -30,47 +30,47 @@ export const execCommand = createCommand<ExecuteOptions>({
     return yargs
       .positional('file', {
         describe: 'JavaScript/TypeScript file to execute (or read from stdin)',
-        type: 'string',
+        type: 'string'
       })
       .option('inline', {
         describe: 'Execute inline JavaScript code directly',
-        type: 'string',
+        type: 'string'
       })
       .option('simple', {
         describe:
           'Use simplified API with helper functions (goto, click, type, etc.)',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('port', {
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p',
+        alias: 'p'
       })
       .option('json', {
         describe: 'Output result as JSON',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('timeout', {
         describe: 'Timeout in milliseconds',
         type: 'number',
-        default: 30000,
+        default: 30000
       })
       .option('quiet', {
         describe: 'Suppress console output, only show result',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab',
+        alias: 'tab'
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string',
+        type: 'string'
       })
       .conflicts('tab-index', 'tab-id')
       .example('$0 exec script.js', 'Execute a JavaScript file')
@@ -89,63 +89,63 @@ export const execCommand = createCommand<ExecuteOptions>({
       .example(
         '$0 exec --inline "await click(\'button\')" --simple',
         'Execute with simplified API'
-      )
+      );
   },
 
   handler: async cmdContext => {
     try {
-      const { argv, logger } = cmdContext
+      const { argv, logger } = cmdContext;
 
       // Get code from file, inline, or stdin
       // Priority: inline > file > stdin
-      let code: string
-      let codeSource: 'inline' | 'file' | 'stdin'
-      const isQuiet = argv.quiet as boolean
+      let code: string;
+      let codeSource: 'inline' | 'file' | 'stdin';
+      const isQuiet = argv.quiet as boolean;
       if (argv.inline) {
         // Use inline code (highest priority)
-        code = argv.inline as string
-        codeSource = 'inline'
+        code = argv.inline as string;
+        codeSource = 'inline';
       } else if (argv.file) {
         // Read from file
         try {
-          code = await fs.promises.readFile(argv.file, 'utf-8')
-          codeSource = 'file'
+          code = await fs.promises.readFile(argv.file, 'utf-8');
+          codeSource = 'file';
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (fileError: any) {
           if (fileError.code === 'ENOENT') {
-            logger.error(`File not found: ${argv.file}`)
+            logger.error(`File not found: ${argv.file}`);
           } else {
-            logger.error(`Failed to read file: ${fileError.message}`)
+            logger.error(`Failed to read file: ${fileError.message}`);
           }
-          throw new Error('Command failed')
+          throw new Error('Command failed');
         }
       } else {
         // Read from stdin only if stdin is a pipe (not TTY)
         // If stdin is TTY, we'd hang waiting for user input
-        const isTTY = process.stdin.isTTY
+        const isTTY = process.stdin.isTTY;
 
         if (isTTY) {
           throw new Error(
             'No code provided. Use --inline <code> or provide a file path, or pipe code via stdin.'
-          )
+          );
         }
 
         // Read from stdin (stdin is a pipe, not interactive terminal)
         if (!isQuiet) {
           logger.info(
             chalk.gray('📝 Reading from stdin (press Ctrl+D when done)...')
-          )
+          );
         }
-        const chunks: Buffer[] = []
+        const chunks: Buffer[] = [];
         for await (const chunk of process.stdin) {
-          chunks.push(chunk)
+          chunks.push(chunk);
         }
-        code = Buffer.concat(chunks).toString('utf-8')
-        codeSource = 'stdin'
+        code = Buffer.concat(chunks).toString('utf-8');
+        codeSource = 'stdin';
       }
 
-      const tabIndex = argv['tab-index'] as number | undefined
-      const tabId = argv['tab-id'] as string | undefined
+      const tabIndex = argv['tab-index'] as number | undefined;
+      const tabId = argv['tab-id'] as string | undefined;
 
       await BrowserHelper.withTargetPage(
         argv.port,
@@ -155,23 +155,23 @@ export const execCommand = createCommand<ExecuteOptions>({
           // Log execution start after successful connection
           if (!isQuiet) {
             if (codeSource === 'inline') {
-              logger.info('⚡ Executing inline JavaScript...')
+              logger.info('⚡ Executing inline JavaScript...');
             } else if (codeSource === 'file') {
-              logger.info(`📄 Executing ${argv.file}...`)
+              logger.info(`📄 Executing ${argv.file}...`);
             }
           }
 
           // Create a function that has access to page and context
           const AsyncFunction = Object.getPrototypeOf(
             async function () {}
-          ).constructor
+          ).constructor;
 
-          let executeCode
+          let executeCode;
           try {
-            const trimmedCode = code.trim()
+            const trimmedCode = code.trim();
             // Debug: Log the code if verbose
             if (argv.verbose) {
-              console.log('Executing code:', trimmedCode)
+              console.log('Executing code:', trimmedCode);
             }
             executeCode = new AsyncFunction(
               'page',
@@ -179,74 +179,74 @@ export const execCommand = createCommand<ExecuteOptions>({
               'browser',
               'console',
               trimmedCode
-            )
+            );
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (syntaxError: any) {
             // Handle syntax errors in the script
-            const errorMessage = syntaxError.message || String(syntaxError)
+            const errorMessage = syntaxError.message || String(syntaxError);
             if (argv.json) {
               console.log(
                 JSON.stringify(
                   {
                     error: `Syntax error in script: ${errorMessage}`,
-                    console: [],
+                    console: []
                   },
                   null,
                   2
                 )
-              )
+              );
             } else {
-              console.error(`❌ Syntax error in script: ${errorMessage}`)
+              console.error(`❌ Syntax error in script: ${errorMessage}`);
             }
-            throw syntaxError
+            throw syntaxError;
           }
 
           // Create a console wrapper that captures output
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const consoleOutput: any[] = []
+          const consoleOutput: any[] = [];
           const consoleWrapper = {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             log: (...args: any[]): void => {
-              consoleOutput.push({ type: 'log', args })
+              consoleOutput.push({ type: 'log', args });
               if (!isQuiet) {
-                logger.info(args.map(String).join(' '))
+                logger.info(args.map(String).join(' '));
               }
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             error: (...args: any[]): void => {
-              consoleOutput.push({ type: 'error', args })
+              consoleOutput.push({ type: 'error', args });
               if (!isQuiet) {
-                logger.error(args.map(String).join(' '))
+                logger.error(args.map(String).join(' '));
               }
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             warn: (...args: any[]): void => {
-              consoleOutput.push({ type: 'warn', args })
+              consoleOutput.push({ type: 'warn', args });
               if (!isQuiet) {
-                logger.warn(args.map(String).join(' '))
+                logger.warn(args.map(String).join(' '));
               }
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             info: (...args: any[]): void => {
-              consoleOutput.push({ type: 'info', args })
+              consoleOutput.push({ type: 'info', args });
               if (!isQuiet) {
-                console.info(...args)
+                console.info(...args);
               }
-            },
-          }
+            }
+          };
 
           // Get browser context for advanced operations
-          const browserContext = page.context()
-          const browser = browserContext.browser()
+          const browserContext = page.context();
+          const browser = browserContext.browser();
 
           // Create alias for compatibility - tests expect 'context' but we pass 'browserContext'
-          const context = browserContext
+          const context = browserContext;
 
           // Set a reasonable default timeout for page operations
-          page.setDefaultTimeout(5000) // 5 seconds default timeout
+          page.setDefaultTimeout(5000); // 5 seconds default timeout
 
           // Execute the code with appropriate context
-          let result
+          let result;
           try {
             // Add timeout to execution to prevent hanging
             const executePromise = argv.simple
@@ -257,10 +257,10 @@ export const execCommand = createCommand<ExecuteOptions>({
                   browser,
                   consoleWrapper
                 )
-              : executeCode(page, context, browser, consoleWrapper)
+              : executeCode(page, context, browser, consoleWrapper);
 
             // Set a reasonable timeout for script execution (30 seconds)
-            let timeoutHandle: NodeJS.Timeout
+            let timeoutHandle: NodeJS.Timeout;
             const timeoutPromise = new Promise((_, reject) => {
               timeoutHandle = setTimeout(
                 () =>
@@ -268,35 +268,35 @@ export const execCommand = createCommand<ExecuteOptions>({
                     new Error('Script execution timed out after 30 seconds')
                   ),
                 30000
-              )
-            })
+              );
+            });
 
             try {
-              result = await Promise.race([executePromise, timeoutPromise])
+              result = await Promise.race([executePromise, timeoutPromise]);
             } finally {
               // Always clear the timeout to prevent hanging
-              clearTimeout(timeoutHandle!)
+              clearTimeout(timeoutHandle!);
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (execError: any) {
             // Handle execution errors gracefully
-            const errorMessage = execError.message || String(execError)
+            const errorMessage = execError.message || String(execError);
             if (argv.json) {
               console.log(
                 JSON.stringify(
                   {
                     error: errorMessage,
-                    console: consoleOutput,
+                    console: consoleOutput
                   },
                   null,
                   2
                 )
-              )
+              );
             } else {
-              console.error(`❌ Execution error: ${errorMessage}`)
+              console.error(`❌ Execution error: ${errorMessage}`);
             }
             // Throw to propagate error up, will be caught by outer handler
-            throw execError
+            throw execError;
           }
 
           if (argv.json) {
@@ -305,38 +305,38 @@ export const execCommand = createCommand<ExecuteOptions>({
               JSON.stringify(
                 {
                   result,
-                  console: consoleOutput,
+                  console: consoleOutput
                 },
                 null,
                 2
               )
-            )
+            );
           } else if (result !== undefined) {
             // Handle different result types appropriately
-            let resultString: string
+            let resultString: string;
             if (typeof result === 'object' && result !== null) {
-              resultString = JSON.stringify(result, null, 2)
+              resultString = JSON.stringify(result, null, 2);
             } else {
-              resultString = String(result)
+              resultString = String(result);
             }
             if (isQuiet) {
               // In quiet mode, only output the result
-              console.log(resultString)
+              console.log(resultString);
             } else {
-              logger.info(chalk.green('✅ Result:') + ' ' + resultString)
+              logger.info(chalk.green('✅ Result:') + ' ' + resultString);
             }
           } else if (!isQuiet) {
-            logger.success('Code executed successfully')
+            logger.success('Code executed successfully');
           }
         }
-      )
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log the error if not already logged
       if (error.message && !error.message.includes('Command failed')) {
-        cmdContext.logger.error(error.message)
+        cmdContext.logger.error(error.message);
       }
-      throw new Error('Command failed')
+      throw new Error('Command failed');
     }
-  },
-})
+  }
+});

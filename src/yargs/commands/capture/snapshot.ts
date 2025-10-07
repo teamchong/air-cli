@@ -1,24 +1,24 @@
-import chalk from 'chalk'
-import { CommandModule, Arguments } from 'yargs'
+import chalk from 'chalk';
+import { CommandModule, Arguments } from 'yargs';
 
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { logger } from '../../../lib/logger'
-import { refManager } from '../../../lib/ref-manager'
-import { extractInteractiveElements } from '../../../lib/ref-utils'
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { logger } from '../../../lib/logger';
+import { refManager } from '../../../lib/ref-manager';
+import { extractInteractiveElements } from '../../../lib/ref-utils';
 import {
   injectVisualLabelsScript,
-  injectHelperFunctionsScript,
-} from '../../../lib/visual-labels'
+  injectHelperFunctionsScript
+} from '../../../lib/visual-labels';
 
 interface SnapshotArgs extends Arguments {
-  'port': number
-  'timeout': number
-  'json'?: boolean
-  'full'?: boolean
-  'detailed'?: boolean
-  'visual'?: boolean
-  'tab-index'?: number
-  'tab-id'?: string
+  'port': number;
+  'timeout': number;
+  'json'?: boolean;
+  'full'?: boolean;
+  'detailed'?: boolean;
+  'visual'?: boolean;
+  'tab-index'?: number;
+  'tab-id'?: string;
 }
 
 /**
@@ -43,125 +43,125 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
         alias: 'p',
         describe: 'Chrome debugging port',
         type: 'number',
-        default: 9222,
+        default: 9222
       })
       .option('timeout', {
         alias: 't',
         describe: 'Timeout in milliseconds',
         type: 'number',
-        default: 30000,
+        default: 30000
       })
       .option('json', {
         describe: 'Output as JSON format',
-        type: 'boolean',
+        type: 'boolean'
       })
       .option('full', {
         describe: 'Show full accessibility tree (not just interactive)',
-        type: 'boolean',
+        type: 'boolean'
       })
       .option('detailed', {
         describe: 'Show detailed form field information',
-        type: 'boolean',
+        type: 'boolean'
       })
       .option('visual', {
         describe: 'Inject visual A-Z labels onto the page elements',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab',
+        alias: 'tab'
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string',
+        type: 'string'
       })
-      .conflicts('tab-index', 'tab-id')
+      .conflicts('tab-index', 'tab-id');
   },
 
   handler: async argv => {
-    const tabIndex = argv['tab-index'] as number | undefined
-    const tabId = argv['tab-id'] as string | undefined
+    const tabIndex = argv['tab-index'] as number | undefined;
+    const tabId = argv['tab-id'] as string | undefined;
 
     try {
       // Wrap the entire operation with the command timeout (defaults to 30s for capture commands)
-      const { withTimeout } = await import('../../../lib/timeout-utils')
+      const { withTimeout } = await import('../../../lib/timeout-utils');
       await withTimeout(
         BrowserHelper.withTargetPage(argv.port, tabIndex, tabId, async page => {
           // Inject visual labels if requested
           if (argv.visual) {
             // First inject helper functions
-            await page.evaluate(injectHelperFunctionsScript)
+            await page.evaluate(injectHelperFunctionsScript);
 
             // Then inject the visual labels
-            const labelCount = await page.evaluate(injectVisualLabelsScript)
+            const labelCount = await page.evaluate(injectVisualLabelsScript);
             logger.info(
               chalk.green(
                 `✨ Injected ${labelCount} visual labels (A-Z style) onto page elements`
               )
-            )
+            );
             logger.info(
               chalk.gray(
                 'Labels will remain visible until page is reloaded or labels are removed'
               )
-            )
+            );
           }
 
-          const snapshot = await page.accessibility.snapshot()
+          const snapshot = await page.accessibility.snapshot();
 
           if (argv.full) {
             // Show full tree (old behavior)
             if (argv.json) {
-              logger.info(JSON.stringify(snapshot, null, 2))
+              logger.info(JSON.stringify(snapshot, null, 2));
             } else {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const printNode = (node: any, indent = ''): void => {
-                const role = node.role || 'unknown'
-                const name = node.name ? ` "${node.name}"` : ''
-                logger.info(`${indent}${role}${name}`)
+                const role = node.role || 'unknown';
+                const name = node.name ? ` "${node.name}"` : '';
+                logger.info(`${indent}${role}${name}`);
 
                 if (node.children) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   node.children.forEach((child: any) => {
-                    printNode(child, indent + '  ')
-                  })
+                    printNode(child, indent + '  ');
+                  });
                 }
-              }
+              };
 
-              logger.info('Full Accessibility Tree:')
+              logger.info('Full Accessibility Tree:');
               if (snapshot) {
-                printNode(snapshot)
+                printNode(snapshot);
               }
             }
           } else {
             // Show only interactive elements with refs (new default)
-            const interactiveElements = extractInteractiveElements(snapshot)
+            const interactiveElements = extractInteractiveElements(snapshot);
 
             // Store refs in RefManager for later use
-            await refManager.storeSnapshot(interactiveElements, tabId)
+            await refManager.storeSnapshot(interactiveElements, tabId);
 
             // Get detailed form information if --detailed flag is used
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let detailedFormInfo: any = null
+            let detailedFormInfo: any = null;
             if (argv.detailed) {
               detailedFormInfo = await page.evaluate(() => {
                 const forms = Array.from(
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (globalThis as any).document.querySelectorAll('form')
-                )
+                );
                 const inputs = Array.from(
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (globalThis as any).document.querySelectorAll(
                     'input, textarea, select'
                   )
-                )
+                );
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formDetails = forms.map((form: any, index) => {
                   const formInputs = Array.from(
                     form.querySelectorAll('input, textarea, select')
-                  )
+                  );
                   return {
                     index,
                     id: form.id || null,
@@ -176,10 +176,10 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                       placeholder: input.placeholder || null,
                       value: input.value || null,
                       required: input.required || false,
-                      disabled: input.disabled || false,
-                    })),
-                  }
-                })
+                      disabled: input.disabled || false
+                    }))
+                  };
+                });
 
                 const standaloneInputs = inputs
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -192,27 +192,27 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                     placeholder: input.placeholder || null,
                     value: input.value || null,
                     required: input.required || false,
-                    disabled: input.disabled || false,
-                  }))
+                    disabled: input.disabled || false
+                  }));
 
                 return {
                   forms: formDetails,
-                  standaloneInputs,
-                }
-              })
+                  standaloneInputs
+                };
+              });
             }
 
             if (argv.json) {
               const output = argv.detailed
                 ? { interactiveElements, detailedFormInfo }
-                : interactiveElements
-              logger.info(JSON.stringify(output, null, 2))
+                : interactiveElements;
+              logger.info(JSON.stringify(output, null, 2));
             } else {
-              logger.info('Interactive Elements:')
-              logger.info(chalk.gray('─'.repeat(40)))
+              logger.info('Interactive Elements:');
+              logger.info(chalk.gray('─'.repeat(40)));
 
               if (interactiveElements.length === 0) {
-                logger.warn('No interactive elements found')
+                logger.warn('No interactive elements found');
               } else {
                 interactiveElements.forEach(elem => {
                   const roleColor =
@@ -222,9 +222,9 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                         ? chalk.blue
                         : elem.role === 'textbox'
                           ? chalk.yellow
-                          : chalk.white
+                          : chalk.white;
 
-                  const name = elem.name || '(no text)'
+                  const name = elem.name || '(no text)';
 
                   if (argv.detailed && elem.role === 'textbox') {
                     // Find matching detailed info for this input
@@ -245,38 +245,38 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                             input.placeholder === elem.name ||
                             input.name === elem.name ||
                             input.id === elem.name
-                        )
+                        );
 
-                    let details = ''
+                    let details = '';
                     if (matchingInput) {
-                      const parts = []
+                      const parts = [];
                       if (matchingInput.type && matchingInput.type !== 'text')
-                        parts.push(`type=${matchingInput.type}`)
+                        parts.push(`type=${matchingInput.type}`);
                       if (matchingInput.name)
-                        parts.push(`name=${matchingInput.name}`)
-                      if (matchingInput.required) parts.push('required')
+                        parts.push(`name=${matchingInput.name}`);
+                      if (matchingInput.required) parts.push('required');
                       if (matchingInput.value)
-                        parts.push(`value="${matchingInput.value}"`)
+                        parts.push(`value="${matchingInput.value}"`);
                       if (parts.length > 0)
-                        details = chalk.gray(` (${parts.join(', ')})`)
+                        details = chalk.gray(` (${parts.join(', ')})`);
                     }
 
                     logger.info(
                       `${roleColor(elem.role)} "${name}" ${chalk.cyan(`[${elem.ref}]`)}${details}`
-                    )
+                    );
                   } else {
                     logger.info(
                       `${roleColor(elem.role)} "${name}" ${chalk.cyan(`[${elem.ref}]`)}`
-                    )
+                    );
                   }
-                })
+                });
               }
 
               // Show detailed form information if requested
               if (argv.detailed && detailedFormInfo) {
-                logger.info('')
-                logger.info(chalk.blue('📋 Detailed Form Information:'))
-                logger.info(chalk.gray('─'.repeat(40)))
+                logger.info('');
+                logger.info(chalk.blue('📋 Detailed Form Information:'));
+                logger.info(chalk.gray('─'.repeat(40)));
 
                 if (
                   detailedFormInfo.forms &&
@@ -284,91 +284,95 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                 ) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   detailedFormInfo.forms.forEach((form: any, index: number) => {
-                    logger.info(chalk.cyan(`Form ${index + 1}:`))
-                    if (form.id) logger.info(`  ID: ${form.id}`)
-                    if (form.action) logger.info(`  Action: ${form.action}`)
-                    logger.info(`  Method: ${form.method}`)
-                    logger.info(`  ${form.inputCount} input field(s):`)
+                    logger.info(chalk.cyan(`Form ${index + 1}:`));
+                    if (form.id) logger.info(`  ID: ${form.id}`);
+                    if (form.action) logger.info(`  Action: ${form.action}`);
+                    logger.info(`  Method: ${form.method}`);
+                    logger.info(`  ${form.inputCount} input field(s):`);
 
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     form.inputs.forEach((input: any) => {
-                      const statusIcon = input.value ? '✓' : '○'
-                      const requiredFlag = input.required ? chalk.red(' *') : ''
+                      const statusIcon = input.value ? '✓' : '○';
+                      const requiredFlag = input.required
+                        ? chalk.red(' *')
+                        : '';
                       const disabledFlag = input.disabled
                         ? chalk.gray(' (disabled)')
-                        : ''
+                        : '';
 
                       logger.info(
                         `    ${statusIcon} ${input.type} "${input.placeholder || input.name || input.id || 'unnamed'}"${requiredFlag}${disabledFlag}`
-                      )
+                      );
                       if (input.value) {
-                        logger.info(`      Current value: "${input.value}"`)
+                        logger.info(`      Current value: "${input.value}"`);
                       }
-                    })
-                    logger.info('')
-                  })
+                    });
+                    logger.info('');
+                  });
                 }
 
                 if (
                   detailedFormInfo.standaloneInputs &&
                   detailedFormInfo.standaloneInputs.length > 0
                 ) {
-                  logger.info(chalk.cyan('Standalone Inputs (not in forms):'))
+                  logger.info(chalk.cyan('Standalone Inputs (not in forms):'));
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   detailedFormInfo.standaloneInputs.forEach((input: any) => {
-                    const statusIcon = input.value ? '✓' : '○'
-                    const requiredFlag = input.required ? chalk.red(' *') : ''
+                    const statusIcon = input.value ? '✓' : '○';
+                    const requiredFlag = input.required ? chalk.red(' *') : '';
                     const disabledFlag = input.disabled
                       ? chalk.gray(' (disabled)')
-                      : ''
+                      : '';
 
                     logger.info(
                       `  ${statusIcon} ${input.type} "${input.placeholder || input.name || input.id || 'unnamed'}"${requiredFlag}${disabledFlag}`
-                    )
+                    );
                     if (input.value) {
-                      logger.info(`    Current value: "${input.value}"`)
+                      logger.info(`    Current value: "${input.value}"`);
                     }
-                  })
+                  });
                 }
               }
 
-              logger.info(chalk.gray('─'.repeat(40)))
+              logger.info(chalk.gray('─'.repeat(40)));
               logger.info(
                 chalk.gray(
                   `Found ${interactiveElements.length} interactive elements`
                 )
-              )
+              );
 
               if (argv.detailed) {
-                const totalForms = detailedFormInfo?.forms?.length || 0
+                const totalForms = detailedFormInfo?.forms?.length || 0;
                 const totalInputs =
                   (detailedFormInfo?.forms?.reduce(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sum: number, form: any) => sum + form.inputCount,
                     0
-                  ) || 0) + (detailedFormInfo?.standaloneInputs?.length || 0)
+                  ) || 0) + (detailedFormInfo?.standaloneInputs?.length || 0);
                 logger.info(
                   chalk.gray(
                     `${totalForms} form(s), ${totalInputs} input field(s)`
                   )
-                )
+                );
               }
             }
           }
         }),
         argv.timeout,
         'Snapshot command operation'
-      )
+      );
 
       // Flush ref manager to ensure it's persisted before command exits
-      await refManager.flush()
+      await refManager.flush();
 
       // Exit cleanly
-      return
+      return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      logger.error(chalk.red(`❌ Failed to capture snapshot: ${error.message}`))
-      throw new Error('Command failed')
+      logger.error(
+        chalk.red(`❌ Failed to capture snapshot: ${error.message}`)
+      );
+      throw new Error('Command failed');
     }
-  },
-}
+  }
+};

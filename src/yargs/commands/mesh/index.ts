@@ -2,11 +2,11 @@
  * Mesh networking commands
  */
 
-import { CommandModule } from 'yargs'
+import { CommandModule } from 'yargs';
 
-import { connectMeshCommand } from './connect'
-import { listMeshCommand } from './list'
-import { startMeshCommand } from './start'
+import { connectMeshCommand } from './connect';
+import { listMeshCommand } from './list';
+import { startMeshCommand } from './start';
 
 export const meshCommand: CommandModule = {
   command: 'mesh <command>',
@@ -20,10 +20,10 @@ export const meshCommand: CommandModule = {
       .demandCommand(1, 'You must specify a mesh command')
       .example('$0 mesh start --name my-laptop', 'Start a mesh node')
       .example('$0 mesh list', 'List available nodes')
-      .example('$0 mesh connect laptop-1', 'Connect to remote node')
+      .example('$0 mesh connect laptop-1', 'Connect to remote node');
   },
 
   handler: () => {
     // Parent command, subcommands handle execution
-  },
-}
+  }
+};

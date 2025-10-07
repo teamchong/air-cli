@@ -11,16 +11,16 @@
  * @returns Excel-style column string
  */
 export function numberToExcelColumn(num: number): string {
-  let column = ''
-  let n = num
+  let column = '';
+  let n = num;
 
   while (n >= 0) {
-    column = String.fromCharCode(65 + (n % 26)) + column
-    n = Math.floor(n / 26) - 1
-    if (n < 0) break
+    column = String.fromCharCode(65 + (n % 26)) + column;
+    n = Math.floor(n / 26) - 1;
+    if (n < 0) break;
   }
 
-  return column
+  return column;
 }
 
 /**
@@ -29,11 +29,11 @@ export function numberToExcelColumn(num: number): string {
  * @returns Zero-based index
  */
 export function excelColumnToNumber(column: string): number {
-  let result = 0
+  let result = 0;
   for (let i = 0; i < column.length; i++) {
-    result = result * 26 + (column.charCodeAt(i) - 64)
+    result = result * 26 + (column.charCodeAt(i) - 64);
   }
-  return result - 1
+  return result - 1;
 }
 
 /**
@@ -174,7 +174,7 @@ export const injectVisualLabelsScript = `
   // Return the number of labels created
   return visibleElements.length;
 })();
-`
+`;
 
 /**
  * Script to remove visual labels from the page
@@ -193,7 +193,7 @@ export const removeVisualLabelsScript = `
 
   return true;
 })();
-`
+`;
 
 /**
  * Script to get element by label
@@ -223,7 +223,7 @@ export const getElementByLabelScript = (label: string) => `
     }
   };
 })();
-`
+`;
 
 /**
  * Make the Excel column functions available in browser context
@@ -231,4 +231,4 @@ export const getElementByLabelScript = (label: string) => `
 export const injectHelperFunctionsScript = `
 window.numberToExcelColumn = ${numberToExcelColumn.toString()};
 window.excelColumnToNumber = ${excelColumnToNumber.toString()};
-`
+`;

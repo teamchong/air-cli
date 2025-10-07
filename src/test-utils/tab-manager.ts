@@ -8,19 +8,19 @@
  * 4. When tab ID not found, no tabs should close
  */
 
-import { execSync } from 'child_process'
+import { execSync } from 'child_process';
 
-import { TEST_PORT, CLI } from './test-constants'
+import { TEST_PORT, CLI } from './test-constants';
 
 export interface TabInfo {
-  id: string
-  index: number
-  title: string
-  url: string
+  id: string;
+  index: number;
+  title: string;
+  url: string;
 }
 
 export class TabManager {
-  private static createdTabs: Set<string> = new Set()
+  private static createdTabs: Set<string> = new Set();
 
   /**
    * Run command and check it doesn't hang
@@ -32,37 +32,37 @@ export class TabManager {
     try {
       // Clean environment to avoid inheriting test-specific flags from test runner
       // But preserve flags explicitly set in the command
-      const cleanEnv = { ...process.env }
+      const cleanEnv = { ...process.env };
 
       // Remove NODE_ENV=test so subprocesses don't activate test-mode behavior
       // The CLI's .fail() handler behaves differently in test mode (throws instead of exit)
-      delete cleanEnv.NODE_ENV
+      delete cleanEnv.NODE_ENV;
 
       // Always remove verbose flags to avoid conflicts
       // This prevents inherited PLAYWRIGHT_VERBOSE from conflicting with --quiet
-      delete cleanEnv.PLAYWRIGHT_VERBOSE
-      delete cleanEnv.PLAYWRIGHT_DEBUG
-      delete cleanEnv.PLAYWRIGHT_QUIET
-      delete cleanEnv.DEBUG
+      delete cleanEnv.PLAYWRIGHT_VERBOSE;
+      delete cleanEnv.PLAYWRIGHT_DEBUG;
+      delete cleanEnv.PLAYWRIGHT_QUIET;
+      delete cleanEnv.DEBUG;
 
       const output = execSync(cmd, {
         encoding: 'utf8',
         timeout,
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: cleanEnv,
-      })
-      return { output, exitCode: 0 }
+        env: cleanEnv
+      });
+      return { output, exitCode: 0 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.code === 'ETIMEDOUT') {
-        throw new Error(`Command timed out (hanging): ${cmd}`)
+        throw new Error(`Command timed out (hanging): ${cmd}`);
       }
       // Combine stdout and stderr for full error output
-      const output = (error.stdout || '') + (error.stderr || '')
+      const output = (error.stdout || '') + (error.stderr || '');
       return {
         output,
-        exitCode: error.status || 1,
-      }
+        exitCode: error.status || 1
+      };
     }
   }
 
@@ -71,56 +71,56 @@ export class TabManager {
    * Use this when tests create tabs directly via CLI
    */
   static registerTab(tabId: string): void {
-    this.createdTabs.add(tabId)
+    this.createdTabs.add(tabId);
   }
 
   /**
    * Unregister a tab ID (when manually closed)
    */
   static unregisterTab(tabId: string): void {
-    this.createdTabs.delete(tabId)
+    this.createdTabs.delete(tabId);
   }
 
   /**
    * Extract tab ID from CLI output and register it
    */
   static extractAndRegisterTabId(output: string): string {
-    const tabIdMatch = output.match(/Tab ID: ([a-fA-F0-9]+)/)
+    const tabIdMatch = output.match(/Tab ID: ([a-fA-F0-9]+)/);
     if (!tabIdMatch) {
       // Provide more context in error message
       const truncated =
-        output.length > 200 ? output.substring(0, 200) + '...' : output
+        output.length > 200 ? output.substring(0, 200) + '...' : output;
       throw new Error(
         `Could not extract tab ID from output. Output was: "${truncated}"`
-      )
+      );
     }
-    const tabId = tabIdMatch[1]
-    this.registerTab(tabId)
-    return tabId
+    const tabId = tabIdMatch[1];
+    this.registerTab(tabId);
+    return tabId;
   }
 
   /**
    * Create a new tab and return its ID for use in tests
    */
   static createTab(url?: string): string {
-    const urlArg = url ? `--url ${url}` : ''
+    const urlArg = url ? `--url ${url}` : '';
     const { output, exitCode } = this.runCommand(
       `${CLI} tabs new ${urlArg} --port ${TEST_PORT}`
-    )
+    );
 
     if (exitCode !== 0) {
-      throw new Error(`Failed to create tab: ${output}`)
+      throw new Error(`Failed to create tab: ${output}`);
     }
 
     // Extract tab ID from output
-    const tabIdMatch = output.match(/Tab ID: ([a-fA-F0-9]+)/)
+    const tabIdMatch = output.match(/Tab ID: ([a-fA-F0-9]+)/);
     if (!tabIdMatch) {
-      throw new Error(`Could not extract tab ID from output: ${output}`)
+      throw new Error(`Could not extract tab ID from output: ${output}`);
     }
 
-    const tabId = tabIdMatch[1]
-    this.createdTabs.add(tabId)
-    return tabId
+    const tabId = tabIdMatch[1];
+    this.createdTabs.add(tabId);
+    return tabId;
   }
 
   /**
@@ -129,25 +129,25 @@ export class TabManager {
   static getTabs(): TabInfo[] {
     const { output, exitCode } = this.runCommand(
       `${CLI} tabs list --port ${TEST_PORT}`
-    )
+    );
 
     if (exitCode !== 0) {
-      throw new Error(`Failed to list tabs: ${output}`)
+      throw new Error(`Failed to list tabs: ${output}`);
     }
 
-    const tabs: TabInfo[] = []
-    const lines = output.split('\n')
+    const tabs: TabInfo[] = [];
+    const lines = output.split('\n');
 
-    let currentTab: Partial<TabInfo> = {}
+    let currentTab: Partial<TabInfo> = {};
     for (const line of lines) {
-      const trimmed = line.trim()
+      const trimmed = line.trim();
 
       // Match tab index and title: "  0: Example Title"
-      const indexMatch = trimmed.match(/^(\d+): (.+)$/)
+      const indexMatch = trimmed.match(/^(\d+): (.+)$/);
       if (indexMatch) {
-        currentTab.index = parseInt(indexMatch[1])
-        currentTab.title = indexMatch[2]
-        continue
+        currentTab.index = parseInt(indexMatch[1]);
+        currentTab.title = indexMatch[2];
+        continue;
       }
 
       // Match URL: "     https://example.com"
@@ -156,14 +156,14 @@ export class TabManager {
         trimmed.startsWith('about:') ||
         trimmed.startsWith('chrome:')
       ) {
-        currentTab.url = trimmed
-        continue
+        currentTab.url = trimmed;
+        continue;
       }
 
       // Match ID: "     ID: ABC123"
-      const idMatch = trimmed.match(/^ID: ([a-fA-F0-9]+)$/)
+      const idMatch = trimmed.match(/^ID: ([a-fA-F0-9]+)$/);
       if (idMatch) {
-        currentTab.id = idMatch[1]
+        currentTab.id = idMatch[1];
 
         // Complete tab info, add to list
         if (
@@ -176,14 +176,14 @@ export class TabManager {
             index: currentTab.index,
             title: currentTab.title,
             url: currentTab.url,
-            id: currentTab.id,
-          })
+            id: currentTab.id
+          });
         }
-        currentTab = {}
+        currentTab = {};
       }
     }
 
-    return tabs
+    return tabs;
   }
 
   /**
@@ -191,53 +191,53 @@ export class TabManager {
    * If tab ID not found, no tabs should close
    */
   static closeTabById(tabId: string): boolean {
-    const tabs = this.getTabs()
-    const tab = tabs.find(t => t.id === tabId)
+    const tabs = this.getTabs();
+    const tab = tabs.find(t => t.id === tabId);
 
     if (!tab) {
       // Tab ID not found, no tabs should close
-      return false
+      return false;
     }
 
     const { exitCode } = this.runCommand(
       `${CLI} tabs close --index ${tab.index} --port ${TEST_PORT}`
-    )
-    this.createdTabs.delete(tabId)
+    );
+    this.createdTabs.delete(tabId);
 
-    return exitCode === 0
+    return exitCode === 0;
   }
 
   /**
    * Close all tabs created during tests
    */
   static cleanupAllCreatedTabs(): void {
-    const tabsToClose = Array.from(this.createdTabs)
+    const tabsToClose = Array.from(this.createdTabs);
 
     for (const tabId of tabsToClose) {
       try {
-        this.closeTabById(tabId)
+        this.closeTabById(tabId);
       } catch (_error) {
         // Continue cleanup even if individual tab close fails
-        console.warn(`Failed to close tab ${tabId}:`, _error)
+        console.warn(`Failed to close tab ${tabId}:`, _error);
       }
     }
 
-    this.createdTabs.clear()
+    this.createdTabs.clear();
   }
 
   /**
    * Get a tab by specific ID
    */
   static getTabById(tabId: string): TabInfo | null {
-    const tabs = this.getTabs()
-    return tabs.find(t => t.id === tabId) || null
+    const tabs = this.getTabs();
+    return tabs.find(t => t.id === tabId) || null;
   }
 
   /**
    * Verify a tab exists before using it in commands
    */
   static verifyTabExists(tabId: string): boolean {
-    return this.getTabById(tabId) !== null
+    return this.getTabById(tabId) !== null;
   }
 
   /**
@@ -245,18 +245,18 @@ export class TabManager {
    * Uses --tab-id if available, falls back to --tab-index
    */
   static buildCommandWithTab(baseCommand: string, tabId: string): string {
-    const tab = this.getTabById(tabId)
+    const tab = this.getTabById(tabId);
     if (!tab) {
-      throw new Error(`Tab ${tabId} not found`)
+      throw new Error(`Tab ${tabId} not found`);
     }
 
     // Prefer tab ID if command supports it
     if (baseCommand.includes('--tab-id') || baseCommand.includes('tabId')) {
-      return `${baseCommand} --tab-id ${tabId}`
+      return `${baseCommand} --tab-id ${tabId}`;
     }
 
     // Fall back to tab index
-    return `${baseCommand} --tab-index ${tab.index}`
+    return `${baseCommand} --tab-index ${tab.index}`;
   }
 
   /**
@@ -267,15 +267,15 @@ export class TabManager {
     tabId: string,
     timeout = 5000
   ): { output: string; exitCode: number } {
-    const fullCommand = this.buildCommandWithTab(baseCommand, tabId)
-    return this.runCommand(fullCommand, timeout)
+    const fullCommand = this.buildCommandWithTab(baseCommand, tabId);
+    return this.runCommand(fullCommand, timeout);
   }
 
   /**
    * Clear created tabs set (for test isolation)
    */
   static clearTracking(): void {
-    this.createdTabs.clear()
+    this.createdTabs.clear();
   }
 
   /**
@@ -283,10 +283,10 @@ export class TabManager {
    */
   static getTabCount(): number {
     try {
-      const tabs = this.getTabs()
-      return tabs.length
+      const tabs = this.getTabs();
+      return tabs.length;
     } catch {
-      return 0
+      return 0;
     }
   }
 
@@ -296,17 +296,17 @@ export class TabManager {
    */
   static enforceTabLimit(): void {
     try {
-      const currentCount = this.getTabCount()
-      const MAX_TABS = 10
+      const currentCount = this.getTabCount();
+      const MAX_TABS = 10;
 
       if (currentCount > MAX_TABS) {
         console.log(
           `⚠️  Tab count (${currentCount}) exceeds limit (${MAX_TABS}), performing cleanup...`
-        )
-        this.cleanupTestTabs()
+        );
+        this.cleanupTestTabs();
       }
     } catch (_error) {
-      console.warn('Failed to enforce tab limit:', _error)
+      console.warn('Failed to enforce tab limit:', _error);
     }
   }
 
@@ -316,7 +316,7 @@ export class TabManager {
    */
   static cleanupTestTabs(): void {
     try {
-      const tabs = this.getTabs()
+      const tabs = this.getTabs();
 
       // Identify test tabs by URL patterns
       const testTabs = tabs.filter(
@@ -327,11 +327,11 @@ export class TabManager {
           tab.url.includes('example.com') ||
           tab.title.includes('Test Page') ||
           tab.title.includes('Test')
-      )
+      );
 
       console.log(
         `Found ${testTabs.length} potential test tabs out of ${tabs.length} total tabs`
-      )
+      );
 
       if (testTabs.length > 0) {
         for (const tab of testTabs) {
@@ -339,45 +339,45 @@ export class TabManager {
             const { exitCode } = this.runCommand(
               `${CLI} tabs close --tab-id ${tab.id} --port ${TEST_PORT}`,
               3000 // Short timeout for cleanup
-            )
+            );
             if (exitCode === 0) {
-              console.log(`Closed test tab: ${tab.title.substring(0, 30)}...`)
+              console.log(`Closed test tab: ${tab.title.substring(0, 30)}...`);
             }
           } catch (_error) {
             // Continue cleanup even if individual tab close fails
-            console.warn(`Failed to close test tab ${tab.id}:`, _error)
+            console.warn(`Failed to close test tab ${tab.id}:`, _error);
           }
         }
       }
 
       // Enforce a reasonable tab limit (close oldest tabs if too many)
-      const remainingTabs = this.getTabs()
-      const MAX_TABS = 10 // Lower limit to prevent browser crashes
+      const remainingTabs = this.getTabs();
+      const MAX_TABS = 10; // Lower limit to prevent browser crashes
 
       if (remainingTabs.length > MAX_TABS) {
         const excessTabs = remainingTabs
           .filter(
             tab => !tab.url.includes('chrome://') && !tab.url.includes('about:')
           )
-          .slice(0, remainingTabs.length - MAX_TABS)
+          .slice(0, remainingTabs.length - MAX_TABS);
 
         console.log(
           `Closing ${excessTabs.length} excess tabs to enforce limit of ${MAX_TABS}`
-        )
+        );
 
         for (const tab of excessTabs) {
           try {
             this.runCommand(
               `${CLI} tabs close --tab-id ${tab.id} --port ${TEST_PORT}`,
               2000
-            )
+            );
           } catch (_error) {
-            console.warn(`Failed to close excess tab ${tab.id}:`, _error)
+            console.warn(`Failed to close excess tab ${tab.id}:`, _error);
           }
         }
       }
     } catch (_error) {
-      console.warn('Could not perform test tab cleanup:', _error)
+      console.warn('Could not perform test tab cleanup:', _error);
     }
   }
 }
