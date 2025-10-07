@@ -188,6 +188,19 @@ export function nodeToSelector(node: any): string {
     }
     return 'input[type="text"]'
   }
+  if (node.role === 'combobox') {
+    // Combobox can be select, input with autocomplete, or textarea with role
+    if (node.name) {
+      return `[role="combobox"][aria-label="${node.name}"], select[aria-label="${node.name}"], textarea[aria-label="${node.name}"], input[aria-label="${node.name}"][role="combobox"]`
+    }
+    return '[role="combobox"]'
+  }
+  if (node.role === 'searchbox') {
+    if (node.name) {
+      return `input[type="search"][aria-label="${node.name}"], input[type="search"][placeholder="${node.name}"]`
+    }
+    return 'input[type="search"]'
+  }
   if (node.role === 'checkbox') {
     return node.name
       ? `input[type="checkbox"][aria-label="${node.name}"]`
@@ -199,7 +212,12 @@ export function nodeToSelector(node: any): string {
       : 'input[type="radio"]'
   }
 
-  // Fallback to text content
+  // Fallback to role-based selector first
+  if (node.role && node.name) {
+    return `[role="${node.role}"][aria-label="${node.name}"]`
+  }
+
+  // Last resort: text content (can be ambiguous)
   if (node.name) {
     return `:has-text("${node.name}")`
   }
