@@ -53,7 +53,6 @@
     "chalk": "^4.1.2",
     "ora": "^5.4.1",
     "playwright": "^1.48.0",
-    "why-is-node-running": "^3.2.2",
     "yargs": "^17.7.2"
   },
   "lint-staged": {
