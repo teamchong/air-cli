@@ -1,8 +1,9 @@
-import chalk from 'chalk'
-import ora from 'ora'
-import { CommandModule, Arguments } from 'yargs'
-import { logger } from '../../../lib/logger'
-import { SessionManager } from '../../../lib/session-manager'
+import chalk from 'chalk';
+import ora from 'ora';
+import { CommandModule, Arguments } from 'yargs';
+
+import { logger } from '../../../lib/logger';
+import { SessionManager } from '../../../lib/session-manager';
 
 interface SessionSaveArgs extends Arguments {
   name: string
@@ -38,23 +39,23 @@ export const sessionCommand: CommandModule = {
             .positional('name', {
               describe: 'Session name',
               type: 'string',
-              demandOption: true,
+              demandOption: true
             })
             .option('port', {
               alias: 'p',
               describe: 'Browser debugging port',
               type: 'number',
-              default: 9222,
+              default: 9222
             })
             .option('description', {
               alias: 'd',
               describe: 'Session description',
-              type: 'string',
-            })
+              type: 'string'
+            });
         },
         handler: async argv => {
-          const isTTY = process.stdout.isTTY && process.stderr.isTTY
-          const spinner = isTTY ? ora('Saving session...').start() : null
+          const isTTY = process.stdout.isTTY && process.stderr.isTTY;
+          const spinner = isTTY ? ora('Saving session...').start() : null;
 
           try {
             // Validate session name
@@ -65,18 +66,18 @@ export const sessionCommand: CommandModule = {
             ) {
               throw new Error(
                 'Invalid session name. Use alphanumeric characters, hyphens, and underscores only.'
-              )
+              );
             }
 
             // Check if session already exists
             if (await SessionManager.sessionExists(argv.name)) {
               const msg = chalk.yellow(
                 `⚠️  Session '${argv.name}' already exists, updating...`
-              )
+              );
               if (spinner) {
-                spinner.info(msg)
+                spinner.info(msg);
               } else {
-                console.log(msg)
+                console.log(msg);
               }
             }
 
@@ -84,39 +85,39 @@ export const sessionCommand: CommandModule = {
               argv.name,
               argv.port,
               argv.description
-            )
+            );
 
-            const successMsg = chalk.green(`✅ Session '${argv.name}' saved successfully`)
+            const successMsg = chalk.green(`✅ Session '${argv.name}' saved successfully`);
             if (spinner) {
-              spinner.succeed(successMsg)
+              spinner.succeed(successMsg);
             } else {
-              console.log(successMsg)
+              console.log(successMsg);
             }
 
             if (argv.description) {
-              logger.info(`   Description: ${argv.description}`)
+              logger.info(`   Description: ${argv.description}`);
             }
           } catch (error: any) {
-            const errorMsg = chalk.red(`❌ Failed to save session: ${error.message}`)
+            const errorMsg = chalk.red(`❌ Failed to save session: ${error.message}`);
             if (spinner) {
-              spinner.fail(errorMsg)
+              spinner.fail(errorMsg);
             } else {
-              console.error(errorMsg)
+              console.error(errorMsg);
             }
 
             if (error.message.includes('No browser context found')) {
-              logger.info('\n💡 Make sure browser is running and connected:')
-              logger.info('   playwright open')
+              logger.info('\n💡 Make sure browser is running and connected:');
+              logger.info('   playwright open');
             } else if (error.message.includes('ECONNREFUSED')) {
               logger.info(
                 `\n💡 No browser found on port ${argv.port}. Start browser first:`
-              )
-              logger.info(`   playwright open --port ${argv.port}`)
+              );
+              logger.info(`   playwright open --port ${argv.port}`);
             }
 
-            throw new Error('Command failed')
+            throw new Error('Command failed');
           }
-        },
+        }
       })
       .command<SessionLoadArgs>({
         command: 'load <name>',
@@ -126,42 +127,42 @@ export const sessionCommand: CommandModule = {
             .positional('name', {
               describe: 'Session name',
               type: 'string',
-              demandOption: true,
+              demandOption: true
             })
             .option('port', {
               alias: 'p',
               describe: 'Browser debugging port',
               type: 'number',
-              default: 9222,
-            })
+              default: 9222
+            });
         },
         handler: async argv => {
-          const isTTY = process.stdout.isTTY && process.stderr.isTTY
-          const spinner = isTTY ? ora('Loading session...').start() : null
+          const isTTY = process.stdout.isTTY && process.stderr.isTTY;
+          const spinner = isTTY ? ora('Loading session...').start() : null;
 
           try {
-            await SessionManager.loadSession(argv.name, argv.port)
+            await SessionManager.loadSession(argv.name, argv.port);
 
-            const successMsg = chalk.green(`✅ Session '${argv.name}' loaded successfully`)
+            const successMsg = chalk.green(`✅ Session '${argv.name}' loaded successfully`);
             if (spinner) {
-              spinner.succeed(successMsg)
+              spinner.succeed(successMsg);
             } else {
-              console.log(successMsg)
+              console.log(successMsg);
             }
           } catch (error: any) {
-            const errorMsg = chalk.red(`❌ Failed to load session: ${error.message}`)
+            const errorMsg = chalk.red(`❌ Failed to load session: ${error.message}`);
             if (spinner) {
-              spinner.fail(errorMsg)
+              spinner.fail(errorMsg);
             } else {
-              console.error(errorMsg)
+              console.error(errorMsg);
             }
 
             if (error.message.includes('not found')) {
-              logger.info('\n💡 Available sessions:')
-              const sessions = await SessionManager.listSessions()
+              logger.info('\n💡 Available sessions:');
+              const sessions = await SessionManager.listSessions();
               if (sessions.length === 0) {
-                logger.info('   No saved sessions')
-                logger.info('   playwright session save <name>')
+                logger.info('   No saved sessions');
+                logger.info('   playwright session save <name>');
               } else {
                 sessions.slice(0, 5).forEach(session => {
                   logger.info(
@@ -169,19 +170,19 @@ export const sessionCommand: CommandModule = {
                       chalk.gray(
                         ` (${new Date(session.updatedAt).toLocaleDateString()})`
                       )
-                  )
-                })
+                  );
+                });
               }
             } else if (error.message.includes('ECONNREFUSED')) {
               logger.info(
                 `\n💡 No browser found on port ${argv.port}. Start browser first:`
-              )
-              logger.info(`   playwright open --port ${argv.port}`)
+              );
+              logger.info(`   playwright open --port ${argv.port}`);
             }
 
-            throw new Error('Command failed')
+            throw new Error('Command failed');
           }
-        },
+        }
       })
       .command<SessionListArgs>({
         command: 'list',
@@ -190,61 +191,61 @@ export const sessionCommand: CommandModule = {
           return yargs.option('json', {
             describe: 'Output as JSON',
             type: 'boolean',
-            default: false,
-          })
+            default: false
+          });
         },
         handler: async argv => {
           try {
-            const sessions = await SessionManager.listSessions()
+            const sessions = await SessionManager.listSessions();
 
             if (argv.json) {
-              logger.info(JSON.stringify(sessions, null, 2))
-              return
+              logger.info(JSON.stringify(sessions, null, 2));
+              return;
             }
 
             if (sessions.length === 0) {
-              logger.info('No saved sessions found.')
-              logger.info('\n💡 Create a session:')
-              logger.info('   playwright session save <name>')
-              return
+              logger.info('No saved sessions found.');
+              logger.info('\n💡 Create a session:');
+              logger.info('   playwright session save <name>');
+              return;
             }
 
             logger.info(
               chalk.bold(`\n📋 Saved Sessions (${sessions.length})\n`)
-            )
+            );
 
             sessions.forEach((session, index) => {
-              const updatedDate = new Date(session.updatedAt)
-              const createdDate = new Date(session.createdAt)
+              const updatedDate = new Date(session.updatedAt);
+              const createdDate = new Date(session.createdAt);
               const isRecent =
-                Date.now() - updatedDate.getTime() < 24 * 60 * 60 * 1000 // Within 24 hours
+                Date.now() - updatedDate.getTime() < 24 * 60 * 60 * 1000; // Within 24 hours
 
               logger.info(
                 chalk.bold(session.name) +
                   (isRecent ? chalk.green(' (recent)') : '')
-              )
-              logger.info(`   URL: ${session.url}`)
-              logger.info(`   Updated: ${updatedDate.toLocaleString()}`)
+              );
+              logger.info(`   URL: ${session.url}`);
+              logger.info(`   Updated: ${updatedDate.toLocaleString()}`);
               if (session.metadata?.description) {
-                logger.info(`   Description: ${session.metadata.description}`)
+                logger.info(`   Description: ${session.metadata.description}`);
               }
               logger.info(
                 `   Cookies: ${session.cookies.length}, Storage keys: ${Object.keys(session.localStorage).length + Object.keys(session.sessionStorage).length}`
-              )
+              );
 
               if (index < sessions.length - 1) {
-                console.log() // Add spacing between sessions
+                console.log(); // Add spacing between sessions
               }
-            })
+            });
 
-            logger.info('\n💡 Usage:')
-            logger.info('   playwright session load <name>')
-            logger.info('   playwright session delete <name>')
+            logger.info('\n💡 Usage:');
+            logger.info('   playwright session load <name>');
+            logger.info('   playwright session delete <name>');
           } catch (error: any) {
-            logger.commandError(`Failed to list sessions: ${error.message}`)
-            throw new Error('Command failed')
+            logger.commandError(`Failed to list sessions: ${error.message}`);
+            throw new Error('Command failed');
           }
-        },
+        }
       })
       .command<SessionDeleteArgs>({
         command: 'delete <name>',
@@ -255,53 +256,53 @@ export const sessionCommand: CommandModule = {
             .positional('name', {
               describe: 'Session name',
               type: 'string',
-              demandOption: true,
+              demandOption: true
             })
             .option('force', {
               alias: 'f',
               describe: 'Skip confirmation prompt',
               type: 'boolean',
-              default: false,
-            })
+              default: false
+            });
         },
         handler: async argv => {
           try {
             if (!(await SessionManager.sessionExists(argv.name))) {
-              logger.info(chalk.red(`❌ Session '${argv.name}' not found`))
-              throw new Error('Command failed')
+              logger.info(chalk.red(`❌ Session '${argv.name}' not found`));
+              throw new Error('Command failed');
             }
 
             if (!argv.force) {
               // Simple confirmation without external dependency
               logger.warn(
                 `⚠️  Are you sure you want to delete session '${argv.name}'?`
-              )
-              logger.info('   This action cannot be undone.')
+              );
+              logger.info('   This action cannot be undone.');
               logger.info(
                 '   Press Ctrl+C to cancel or run with --force to skip this prompt.'
-              )
+              );
 
               // Wait for user input
-              process.stdout.write(chalk.cyan('Delete session? (y/N): '))
+              process.stdout.write(chalk.cyan('Delete session? (y/N): '));
               const answer = await new Promise<string>(resolve => {
                 process.stdin.once('data', data => {
-                  resolve(data.toString().trim().toLowerCase())
-                })
-              })
+                  resolve(data.toString().trim().toLowerCase());
+                });
+              });
 
               if (answer !== 'y' && answer !== 'yes') {
-                logger.info('Operation cancelled.')
-                return
+                logger.info('Operation cancelled.');
+                return;
               }
             }
 
-            await SessionManager.deleteSession(argv.name)
-            logger.success(`Session '${argv.name}' deleted successfully`)
+            await SessionManager.deleteSession(argv.name);
+            logger.success(`Session '${argv.name}' deleted successfully`);
           } catch (error: any) {
-            logger.commandError(`Failed to delete session: ${error.message}`)
-            throw new Error('Command failed')
+            logger.commandError(`Failed to delete session: ${error.message}`);
+            throw new Error('Command failed');
           }
-        },
+        }
       })
       .demandCommand(
         1,
@@ -314,10 +315,10 @@ Examples:
   playwright session load login-state
   playwright session list
   playwright session delete old-session --force
-      `)
+      `);
   },
 
   handler: async argv => {
     // This will be handled by the subcommands
-  },
-}
+  }
+};

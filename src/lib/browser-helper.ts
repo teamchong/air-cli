@@ -1,16 +1,17 @@
-import { spawn } from 'child_process'
-import * as fs from 'fs'
-import os from 'os'
+import { spawn } from 'child_process';
+import * as fs from 'fs';
+import os from 'os';
 
 import {
   chromium,
   type Browser,
   type Page,
-  type BrowserContext,
-} from 'playwright'
-import { withTimeout, TimeoutError, retryWithBackoff } from './timeout-utils'
-import { BrowserTabRegistry } from './browser-tab-registry'
-import { CDPConnectionPool } from './cdp-connection-pool'
+  type BrowserContext
+} from 'playwright';
+
+import { BrowserTabRegistry } from './browser-tab-registry';
+import { CDPConnectionPool } from './cdp-connection-pool';
+import { withTimeout, TimeoutError, retryWithBackoff } from './timeout-utils';
 
 /**
  * Helper class for managing Chrome browser connections and operations.
@@ -44,20 +45,20 @@ export class BrowserHelper {
     try {
       return await withTimeout(
         (async () => {
-          const pool = CDPConnectionPool.getInstance()
-          return await pool.getConnection(port)
+          const pool = CDPConnectionPool.getInstance();
+          return await pool.getConnection(port);
         })(),
         10000,
         `Getting browser connection on port ${port}`
-      )
+      );
     } catch (error) {
       if (error instanceof TimeoutError) {
         throw new Error(
           `Failed to get browser connection on port ${port}. ` +
-            `The browser may be unresponsive or not running.`
-        )
+            'The browser may be unresponsive or not running.'
+        );
       }
-      throw error
+      throw error;
     }
   }
 
@@ -80,8 +81,8 @@ export class BrowserHelper {
     port: number,
     action: (browser: Browser) => Promise<T>
   ): Promise<T> {
-    const pool = CDPConnectionPool.getInstance()
-    return await pool.withConnection(port, action)
+    const pool = CDPConnectionPool.getInstance();
+    return await pool.withConnection(port, action);
   }
 
   /**
@@ -99,14 +100,14 @@ export class BrowserHelper {
    */
   static async getPages(port: number = 9222): Promise<Page[]> {
     return this.withBrowser(port, async browser => {
-      const allPages: Page[] = []
+      const allPages: Page[] = [];
 
       for (const context of browser.contexts()) {
-        allPages.push(...context.pages())
+        allPages.push(...context.pages());
       }
 
-      return allPages
-    })
+      return allPages;
+    });
   }
 
   /**
@@ -127,8 +128,8 @@ export class BrowserHelper {
     index: number = 0,
     port: number = 9222
   ): Promise<Page | null> {
-    const pages = await this.getPages(port)
-    return pages[index] || null
+    const pages = await this.getPages(port);
+    return pages[index] || null;
   }
 
   /**
@@ -151,26 +152,26 @@ export class BrowserHelper {
    * ```
    */
   static async getActivePage(port: number = 9222): Promise<Page> {
-    const browser = await this.getBrowser(port)
+    const browser = await this.getBrowser(port);
 
     // Find first non-internal page
     for (const context of browser.contexts()) {
       for (const page of context.pages()) {
-        const url = page.url()
+        const url = page.url();
         if (!url.startsWith('chrome://') && !url.startsWith('about:')) {
-          return page
+          return page;
         }
       }
     }
 
     // If no active page, create one
-    const contexts = browser.contexts()
+    const contexts = browser.contexts();
     if (contexts.length > 0) {
-      return await contexts[0].newPage()
+      return await contexts[0].newPage();
     }
 
-    const context = await browser.newContext()
-    return await context.newPage()
+    const context = await browser.newContext();
+    return await context.newPage();
   }
 
   /**
@@ -199,44 +200,44 @@ export class BrowserHelper {
         // Find first non-internal page
         for (const context of browser.contexts()) {
           for (const page of context.pages()) {
-            const url = page.url()
+            const url = page.url();
             if (!url.startsWith('chrome://') && !url.startsWith('about:')) {
               return await withTimeout(
                 action(page),
                 30000,
                 'Executing action on active page'
-              )
+              );
             }
           }
         }
 
         // If no active page, create one
-        const contexts = browser.contexts()
-        let page: Page
+        const contexts = browser.contexts();
+        let page: Page;
         if (contexts.length > 0) {
           page = await withTimeout(
             contexts[0].newPage(),
             5000,
             'Creating new page in existing context'
-          )
+          );
         } else {
           const context = await withTimeout(
             browser.newContext(),
             5000,
             'Creating new browser context'
-          )
-          context.setDefaultTimeout(5000) // Set 5s timeout for new context
-          page = await withTimeout(context.newPage(), 5000, 'Creating new page')
+          );
+          context.setDefaultTimeout(5000); // Set 5s timeout for new context
+          page = await withTimeout(context.newPage(), 5000, 'Creating new page');
         }
         return await withTimeout(
           action(page),
           30000,
           'Executing action on new page'
-        )
+        );
       }),
       35000,
       'Active page operation'
-    )
+    );
   }
 
   /**
@@ -255,59 +256,59 @@ export class BrowserHelper {
    */
   static async getPageId(page: Page): Promise<string> {
     // Add timeout protection for CDP operations with proper cleanup
-    let timeoutId: NodeJS.Timeout | undefined
+    let timeoutId: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error('CDP operation timed out')), 2000)
-    })
+      timeoutId = setTimeout(() => reject(new Error('CDP operation timed out')), 2000);
+    });
 
-    let cdpSession = null
+    let cdpSession = null;
     try {
       cdpSession = await Promise.race([
         page.context().newCDPSession(page),
-        timeoutPromise,
-      ])
+        timeoutPromise
+      ]);
 
-      clearTimeout(timeoutId) // Clear timeout on success
-      timeoutId = undefined
+      clearTimeout(timeoutId); // Clear timeout on success
+      timeoutId = undefined;
 
       try {
-        let innerTimeoutId: NodeJS.Timeout | undefined
+        let innerTimeoutId: NodeJS.Timeout | undefined;
         const innerTimeoutPromise = new Promise<never>((_, reject) => {
-          innerTimeoutId = setTimeout(() => reject(new Error('CDP operation timed out')), 2000)
-        })
+          innerTimeoutId = setTimeout(() => reject(new Error('CDP operation timed out')), 2000);
+        });
 
         const targetInfo = await Promise.race([
           cdpSession.send('Target.getTargetInfo'),
-          innerTimeoutPromise,
-        ])
+          innerTimeoutPromise
+        ]);
 
-        clearTimeout(innerTimeoutId) // Clear timeout on success
-        return targetInfo.targetInfo.targetId
+        clearTimeout(innerTimeoutId); // Clear timeout on success
+        return targetInfo.targetInfo.targetId;
       } finally {
         // Ensure CDP session is properly detached
         if (cdpSession) {
-          await cdpSession.detach().catch(() => {}) // Ignore detach errors
+          await cdpSession.detach().catch(() => {}); // Ignore detach errors
         }
       }
     } catch (error) {
       // Clear timeout if still active
       if (timeoutId !== undefined) {
-        clearTimeout(timeoutId)
+        clearTimeout(timeoutId);
       }
 
       // Cleanup CDP session if it was created before the error
       if (cdpSession) {
         try {
-          await cdpSession.detach().catch(() => {})
+          await cdpSession.detach().catch(() => {});
         } catch {}
       }
 
       // If CDP fails, fallback to page URL as ID (less reliable but won't hang)
-      console.warn('CDP getPageId failed, using URL hash as fallback:', error)
-      const url = page.url()
+      console.warn('CDP getPageId failed, using URL hash as fallback:', error);
+      const url = page.url();
       // Generate a pseudo-ID from URL
-      const crypto = require('crypto')
-      return crypto.createHash('md5').update(url).digest('hex').toUpperCase()
+      const crypto = require('crypto');
+      return crypto.createHash('md5').update(url).digest('hex').toUpperCase();
     }
   }
 
@@ -331,30 +332,30 @@ export class BrowserHelper {
     // Quick validation: CDP tab IDs are uppercase hex strings (32 chars)
     // If the format is clearly wrong, fail fast
     if (!/^[0-9A-F]{32}$/i.test(tabId)) {
-      console.debug(`Tab ID "${tabId}" doesn't match CDP format, skipping search`)
-      return null
+      console.debug(`Tab ID "${tabId}" doesn't match CDP format, skipping search`);
+      return null;
     }
 
     return this.withBrowser(port, async browser => {
       // Try fast lookup using browser registry first
       try {
-        const page = await BrowserTabRegistry.findPageById(browser, tabId)
+        const page = await BrowserTabRegistry.findPageById(browser, tabId);
         if (page) {
-          return page
+          return page;
         }
       } catch (error) {
-        console.debug('Browser registry lookup failed, falling back to CDP scan:', error)
+        console.debug('Browser registry lookup failed, falling back to CDP scan:', error);
       }
 
       // Fallback to original CDP scanning method
-      const allPages: Page[] = []
+      const allPages: Page[] = [];
       for (const context of browser.contexts()) {
-        allPages.push(...context.pages())
+        allPages.push(...context.pages());
       }
 
       // Check recent pages only - most lookups are for recent tabs
-      const maxPagesToCheck = 10 // Reduced from 30 for faster failure
-      const recentPages = allPages.slice(-maxPagesToCheck) // Get last N pages
+      const maxPagesToCheck = 10; // Reduced from 30 for faster failure
+      const recentPages = allPages.slice(-maxPagesToCheck); // Get last N pages
 
       // Check pages in parallel for much faster lookup
       const checkPromises = recentPages.map(async (page, index) => {
@@ -363,24 +364,24 @@ export class BrowserHelper {
             this.getPageId(page),
             100, // 100ms per page should be enough
             `Getting page ID for page ${index}`
-          )
-          return { page, pageId }
+          );
+          return { page, pageId };
         } catch (error) {
-          return { page: null, pageId: null }
+          return { page: null, pageId: null };
         }
-      })
+      });
 
-      const results = await Promise.all(checkPromises)
+      const results = await Promise.all(checkPromises);
 
       // Find matching page
       for (const result of results) {
         if (result.pageId === tabId && result.page) {
-          return result.page
+          return result.page;
         }
       }
 
-      return null
-    })
+      return null;
+    });
   }
 
   /**
@@ -422,30 +423,30 @@ export class BrowserHelper {
    * @throws Error if page is closed or unresponsive
    */
   private static async ensureTabHealthy(page: Page, tabId?: string): Promise<void> {
-    const tabIdentifier = tabId || 'target'
+    const tabIdentifier = tabId || 'target';
 
     // Check if page is closed
     if (page.isClosed()) {
-      throw new Error(`Tab ${tabIdentifier} is closed`)
+      throw new Error(`Tab ${tabIdentifier} is closed`);
     }
 
     // Verify page is responsive by executing a simple JS expression
     // Use 3-second timeout to be more forgiving under heavy load
     try {
-      await page.evaluate('1', { timeout: 3000 })
+      await page.evaluate('1', { timeout: 3000 });
     } catch (error) {
       // Gather diagnostic info
-      let url = 'unknown'
-      let contextPages = 0
+      let url = 'unknown';
+      let contextPages = 0;
       try {
-        url = page.url()
-        contextPages = page.context().pages().length
+        url = page.url();
+        contextPages = page.context().pages().length;
       } catch {}
 
       throw new Error(
         `Tab ${tabIdentifier} is unresponsive (url: ${url}, context has ${contextPages} pages). ` +
         `Error: ${error instanceof Error ? error.message : String(error)}`
-      )
+      );
     }
   }
 
@@ -459,18 +460,18 @@ export class BrowserHelper {
     if (tabIndex !== undefined && tabId !== undefined) {
       throw new Error(
         'Cannot specify both tabIndex and tabId. Use one or the other.'
-      )
+      );
     }
 
     // If neither specified, use active page
     if (tabIndex === undefined && tabId === undefined) {
-      return this.withActivePage(port, action)
+      return this.withActivePage(port, action);
     }
 
     // Wrap the entire operation with timeout protection
     const operation = async () => {
       return this.withBrowser(port, async (browser) => {
-        let targetPage: Page | null = null
+        let targetPage: Page | null = null;
 
         if (tabId !== undefined) {
           // Find by unique ID with timeout
@@ -479,18 +480,18 @@ export class BrowserHelper {
               this.findPageById(port, tabId),
               5000,
               `Finding tab with ID ${tabId}`
-            )
+            );
             if (!targetPage) {
               // This is not a timeout but a legitimate "not found"
-              throw new Error(`Tab with ID "${tabId}" not found`)
+              throw new Error(`Tab with ID "${tabId}" not found`);
             }
           } catch (error) {
             if (error instanceof TimeoutError) {
               throw new Error(
                 `Timeout finding tab with ID "${tabId}". The tab may not exist or the browser is unresponsive.`
-              )
+              );
             }
-            throw error
+            throw error;
           }
         } else if (tabIndex !== undefined) {
           // Find by index with timeout
@@ -498,17 +499,17 @@ export class BrowserHelper {
             this.getPages(port),
             3000,
             'Getting page list'
-          )
+          );
           if (tabIndex < 0 || tabIndex >= pages.length) {
             throw new Error(
               `Tab index ${tabIndex} is out of bounds. Available tabs: 0-${pages.length - 1}`
-            )
+            );
           }
-          targetPage = pages[tabIndex]
+          targetPage = pages[tabIndex];
         }
 
         if (!targetPage) {
-          throw new Error('Unable to find target page')
+          throw new Error('Unable to find target page');
         }
 
         // Execute the action with timeout protection
@@ -517,31 +518,31 @@ export class BrowserHelper {
             action(targetPage),
             30000, // 30 second timeout for the actual action
             'Executing page action'
-          )
-          return result
+          );
+          return result;
         } catch (error) {
           // ENHANCEMENT: Provide better diagnostics on failure
-          let url = 'unknown'
-          let isClosed = false
+          let url = 'unknown';
+          let isClosed = false;
           try {
-            url = targetPage.url()
-            isClosed = targetPage.isClosed()
+            url = targetPage.url();
+            isClosed = targetPage.isClosed();
           } catch {}
 
           throw new Error(
             `Action failed on tab ${tabId || tabIndex} (url: ${url}, closed: ${isClosed}): ` +
             `${error instanceof Error ? error.message : String(error)}`
-          )
+          );
         }
-      })
-    }
+      });
+    };
 
     // Add overall timeout protection for the entire operation
     return withTimeout(
       operation(),
       35000, // 35 seconds total (slightly more than inner timeout)
       'Page operation'
-    )
+    );
   }
 
   /**
@@ -559,8 +560,8 @@ export class BrowserHelper {
    */
   static async getContexts(port: number = 9222): Promise<BrowserContext[]> {
     return this.withBrowser(port, async browser => {
-      return browser.contexts()
-    })
+      return browser.contexts();
+    });
   }
 
   /**
@@ -579,22 +580,22 @@ export class BrowserHelper {
    * ```
    */
   static async isPortOpen(port: number): Promise<boolean> {
-    const net = require('net')
+    const net = require('net');
     return new Promise(resolve => {
-      const socket = net.createConnection(port, 'localhost')
+      const socket = net.createConnection(port, 'localhost');
       socket.on('connect', () => {
-        socket.end()
-        resolve(true)
-      })
+        socket.end();
+        resolve(true);
+      });
       socket.on('error', () => {
-        resolve(false)
-      })
-      socket.setTimeout(1000)
+        resolve(false);
+      });
+      socket.setTimeout(1000);
       socket.on('timeout', () => {
-        socket.destroy()
-        resolve(false)
-      })
-    })
+        socket.destroy();
+        resolve(false);
+      });
+    });
   }
 
   /**
@@ -625,29 +626,29 @@ export class BrowserHelper {
     url?: string
   ): Promise<void> {
     // Determine browser path
-    let browserPath: string
+    let browserPath: string;
 
     if (browserPathOrType && browserPathOrType.includes('/')) {
       // It's a full path
-      browserPath = browserPathOrType
+      browserPath = browserPathOrType;
     } else {
       // It's a browser type name, use default paths
       const browserPaths: Record<string, string> = {
         chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         brave: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
         edge: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-        chromium: '/Applications/Chromium.app/Contents/MacOS/Chromium',
-      }
+        chromium: '/Applications/Chromium.app/Contents/MacOS/Chromium'
+      };
 
       browserPath =
-        browserPaths[browserPathOrType || 'chrome'] || browserPaths.chrome
+        browserPaths[browserPathOrType || 'chrome'] || browserPaths.chrome;
     }
 
     // Check if browser exists
     try {
-      await fs.promises.access(browserPath)
+      await fs.promises.access(browserPath);
     } catch {
-      throw new Error(`Browser not found at: ${browserPath}`)
+      throw new Error(`Browser not found at: ${browserPath}`);
     }
 
     const args = [
@@ -661,46 +662,46 @@ export class BrowserHelper {
       '--disk-cache-size=1', // Minimal disk cache (1 byte effectively disables it)
       '--media-cache-size=1', // Minimal media cache
       '--aggressive-cache-discard', // More aggressive memory cleanup
-      '--disable-gpu-shader-disk-cache', // Don't cache GPU shaders
-    ]
+      '--disable-gpu-shader-disk-cache' // Don't cache GPU shaders
+    ];
 
     // Add headless mode for tests
     if (process.env.AIR_CLI_HEADLESS === 'true') {
-      args.push('--headless=new')
+      args.push('--headless=new');
     }
 
     if (url) {
-      args.push(url)
+      args.push(url);
     }
 
     const child = spawn(browserPath, args, {
       detached: true,
-      stdio: 'ignore',
-    })
+      stdio: 'ignore'
+    });
 
     // Unref the child process so the parent can exit
-    child.unref()
+    child.unref();
 
     // Wait for CDP server to be ready (with retries)
-    const maxRetries = 20 // 20 retries = 10 seconds max
-    const retryDelay = 500 // 500ms between retries
+    const maxRetries = 20; // 20 retries = 10 seconds max
+    const retryDelay = 500; // 500ms between retries
 
     for (let i = 0; i < maxRetries; i++) {
-      await new Promise(resolve => setTimeout(resolve, retryDelay))
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
 
       // Check if CDP is ready by testing the port
-      const isReady = await this.isPortOpen(port)
+      const isReady = await this.isPortOpen(port);
       if (isReady) {
         // Port is open, but give CDP server a moment to fully initialize
-        await new Promise(resolve => setTimeout(resolve, 300))
-        return
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return;
       }
     }
 
     // If we get here, browser didn't start in time
     throw new Error(
       `Browser launched but CDP server not ready on port ${port} after ${maxRetries * retryDelay}ms`
-    )
+    );
   }
 
   /**
@@ -722,24 +723,24 @@ export class BrowserHelper {
       for (const context of browser.contexts()) {
         for (const page of context.pages()) {
           try {
-            const cdpSession = await context.newCDPSession(page)
+            const cdpSession = await context.newCDPSession(page);
 
             // Build data types to clear
-            const dataTypes: string[] = []
-            if (options.cache) dataTypes.push('cacheStorage', 'cache')
-            if (options.cookies) dataTypes.push('cookies')
-            if (options.history) dataTypes.push('cache') // Page cache includes history
+            const dataTypes: string[] = [];
+            if (options.cache) dataTypes.push('cacheStorage', 'cache');
+            if (options.cookies) dataTypes.push('cookies');
+            if (options.history) dataTypes.push('cache'); // Page cache includes history
 
-            await cdpSession.send('Network.clearBrowserCache' as any)
+            await cdpSession.send('Network.clearBrowserCache' as any);
 
-            await cdpSession.detach()
+            await cdpSession.detach();
           } catch (error) {
             // Some pages might not support clearing data, that's ok
-            console.debug(`Could not clear browsing data for page ${page.url()}:`, error)
+            console.debug(`Could not clear browsing data for page ${page.url()}:`, error);
           }
         }
       }
-    })
+    });
   }
 
   /**
@@ -763,12 +764,12 @@ export class BrowserHelper {
       const response = await fetch(
         `http://localhost:${port}/json/new?${encodeURIComponent(url)}`,
         {
-          method: 'PUT',
+          method: 'PUT'
         }
-      )
-      return response.ok
+      );
+      return response.ok;
     } catch {
-      return false
+      return false;
     }
   }
 }

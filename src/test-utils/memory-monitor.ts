@@ -4,7 +4,7 @@
  * Monitors memory usage during tests to detect leaks
  */
 
-import { execSync } from 'child_process'
+import { execSync } from 'child_process';
 
 interface MemorySnapshot {
   timestamp: number
@@ -17,34 +17,34 @@ interface MemorySnapshot {
 }
 
 class MemoryMonitor {
-  private snapshots: MemorySnapshot[] = []
-  private startTime: number = Date.now()
+  private snapshots: MemorySnapshot[] = [];
+  private startTime: number = Date.now();
 
   /**
    * Take a snapshot of current memory usage
    */
   snapshot(message?: string): MemorySnapshot {
-    const mem = process.memoryUsage()
+    const mem = process.memoryUsage();
 
     // Get Chrome process memory
-    let chromeProcessCount = 0
-    let chromeRssMB = 0
+    let chromeProcessCount = 0;
+    let chromeRssMB = 0;
     try {
       // Find Chrome processes
       const psOutput = execSync('ps aux | grep -i "chrome\\|chromium" | grep -v grep', {
         encoding: 'utf8',
         timeout: 2000
-      })
+      });
 
-      const lines = psOutput.trim().split('\n').filter(l => l.trim())
-      chromeProcessCount = lines.length
+      const lines = psOutput.trim().split('\n').filter(l => l.trim());
+      chromeProcessCount = lines.length;
 
       // Sum RSS (column 6 in ps aux, in KB)
       chromeRssMB = lines.reduce((sum, line) => {
-        const parts = line.trim().split(/\s+/)
-        const rssKB = parseInt(parts[5], 10)
-        return sum + (isNaN(rssKB) ? 0 : rssKB)
-      }, 0) / 1024
+        const parts = line.trim().split(/\s+/);
+        const rssKB = parseInt(parts[5], 10);
+        return sum + (isNaN(rssKB) ? 0 : rssKB);
+      }, 0) / 1024;
     } catch (error) {
       // Chrome might not be running or ps failed
     }
@@ -56,18 +56,18 @@ class MemoryMonitor {
       nodeExternalMB: Math.round(mem.external / 1024 / 1024 * 100) / 100,
       chromeProcessCount,
       chromeRssMB: Math.round(chromeRssMB * 100) / 100,
-      message,
-    }
+      message
+    };
 
-    this.snapshots.push(snapshot)
-    return snapshot
+    this.snapshots.push(snapshot);
+    return snapshot;
   }
 
   /**
    * Get all snapshots
    */
   getSnapshots(): MemorySnapshot[] {
-    return this.snapshots
+    return this.snapshots;
   }
 
   /**
@@ -78,29 +78,29 @@ class MemoryMonitor {
     nodeHeapGrowthMB: number
     chromeMemGrowthMB: number
     report: string
-  } {
+    } {
     if (this.snapshots.length < 2) {
       return {
         hasLeak: false,
         nodeHeapGrowthMB: 0,
         chromeMemGrowthMB: 0,
         report: 'Not enough snapshots to analyze'
-      }
+      };
     }
 
-    const first = this.snapshots[0]
-    const last = this.snapshots[this.snapshots.length - 1]
+    const first = this.snapshots[0];
+    const last = this.snapshots[this.snapshots.length - 1];
 
-    const nodeHeapGrowthMB = last.nodeHeapUsedMB - first.nodeHeapUsedMB
-    const chromeMemGrowthMB = last.chromeRssMB - first.chromeRssMB
+    const nodeHeapGrowthMB = last.nodeHeapUsedMB - first.nodeHeapUsedMB;
+    const chromeMemGrowthMB = last.chromeRssMB - first.chromeRssMB;
 
     // Calculate growth rate
-    const durationSeconds = (last.timestamp - first.timestamp) / 1000
-    const nodeGrowthPerMinute = (nodeHeapGrowthMB / durationSeconds) * 60
-    const chromeGrowthPerMinute = (chromeMemGrowthMB / durationSeconds) * 60
+    const durationSeconds = (last.timestamp - first.timestamp) / 1000;
+    const nodeGrowthPerMinute = (nodeHeapGrowthMB / durationSeconds) * 60;
+    const chromeGrowthPerMinute = (chromeMemGrowthMB / durationSeconds) * 60;
 
     // Leak heuristics: growing > 10MB/minute continuously
-    const hasLeak = nodeGrowthPerMinute > 10 || chromeGrowthPerMinute > 50
+    const hasLeak = nodeGrowthPerMinute > 10 || chromeGrowthPerMinute > 50;
 
     const report = `
 Memory Analysis
@@ -120,36 +120,36 @@ Chrome Memory:
   Rate: ${chromeGrowthPerMinute >= 0 ? '+' : ''}${Math.round(chromeGrowthPerMinute * 100) / 100}MB/min
 
 Leak Detection: ${hasLeak ? '⚠️  POSSIBLE LEAK' : '✓ No leak detected'}
-`
+`;
 
     return {
       hasLeak,
       nodeHeapGrowthMB,
       chromeMemGrowthMB,
       report: report.trim()
-    }
+    };
   }
 
   /**
    * Print current snapshot
    */
   printSnapshot(snapshot: MemorySnapshot): void {
-    const elapsed = Math.round(snapshot.timestamp / 1000)
+    const elapsed = Math.round(snapshot.timestamp / 1000);
     console.log(
       `[${elapsed}s] Node: ${snapshot.nodeHeapUsedMB}MB | ` +
       `Chrome: ${snapshot.chromeRssMB}MB (${snapshot.chromeProcessCount} procs)` +
       (snapshot.message ? ` | ${snapshot.message}` : '')
-    )
+    );
   }
 
   /**
    * Reset monitor
    */
   reset(): void {
-    this.snapshots = []
-    this.startTime = Date.now()
+    this.snapshots = [];
+    this.startTime = Date.now();
   }
 }
 
 // Singleton instance
-export const memoryMonitor = new MemoryMonitor()
+export const memoryMonitor = new MemoryMonitor();

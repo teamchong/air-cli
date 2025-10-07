@@ -5,8 +5,9 @@
  * and ensure test isolation
  */
 
-import { CDPConnectionPool } from '../lib/cdp-connection-pool'
-import { TEST_PORT } from './test-constants'
+import { CDPConnectionPool } from '../lib/cdp-connection-pool';
+
+import { TEST_PORT } from './test-constants';
 
 /**
  * Clean up CDP connections after a test file completes
@@ -16,26 +17,26 @@ import { TEST_PORT } from './test-constants'
  */
 export async function cleanupCDPConnections(): Promise<void> {
   try {
-    const pool = CDPConnectionPool.getInstance()
+    const pool = CDPConnectionPool.getInstance();
 
     // Release all connections back to pool (mark as not in use)
     // This allows the cleanup interval to remove stale connections
-    const connections = (pool as any).connections
+    const connections = (pool as any).connections;
     if (connections) {
       for (const [key, conn] of connections) {
-        conn.inUse = false
-        conn.lastUsed = Date.now() - 70000 // Force immediate cleanup (older than 60s timeout)
+        conn.inUse = false;
+        conn.lastUsed = Date.now() - 70000; // Force immediate cleanup (older than 60s timeout)
       }
     }
 
     // Trigger immediate cleanup of stale connections
-    const cleanupMethod = (pool as any).cleanupStaleConnections
+    const cleanupMethod = (pool as any).cleanupStaleConnections;
     if (typeof cleanupMethod === 'function') {
-      cleanupMethod.call(pool)
+      cleanupMethod.call(pool);
     }
   } catch (error) {
     // Don't fail tests if cleanup fails
-    console.warn('CDP connection cleanup warning:', error)
+    console.warn('CDP connection cleanup warning:', error);
   }
 }
 
@@ -45,15 +46,15 @@ export async function cleanupCDPConnections(): Promise<void> {
  */
 export async function resetConnectionPool(): Promise<void> {
   try {
-    const pool = CDPConnectionPool.getInstance()
+    const pool = CDPConnectionPool.getInstance();
 
     // Clear all connections
-    const clearMethod = (pool as any).clearAll
+    const clearMethod = (pool as any).clearAll;
     if (typeof clearMethod === 'function') {
-      clearMethod.call(pool)
+      clearMethod.call(pool);
     }
   } catch (error) {
-    console.warn('Connection pool reset warning:', error)
+    console.warn('Connection pool reset warning:', error);
   }
 }
 
@@ -66,14 +67,14 @@ export async function resetConnectionPool(): Promise<void> {
  */
 export async function releaseChromeMemory(): Promise<void> {
   try {
-    const { BrowserHelper } = await import('../lib/browser-helper')
+    const { BrowserHelper } = await import('../lib/browser-helper');
     await BrowserHelper.clearBrowsingData(TEST_PORT, {
       cache: true,
       history: true,
-      cookies: false, // Keep cookies for session continuity
-    })
+      cookies: false // Keep cookies for session continuity
+    });
   } catch (error) {
     // Don't fail tests if cleanup fails
-    console.warn('Chrome memory release warning:', error)
+    console.warn('Chrome memory release warning:', error);
   }
 }

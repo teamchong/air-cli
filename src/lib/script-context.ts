@@ -15,7 +15,7 @@ export function createScriptContext(
   consoleWrapper?: any
 ) {
   // Use provided console wrapper or default to console
-  const logger = consoleWrapper || console
+  const logger = consoleWrapper || console;
 
   return {
     // Core Playwright objects
@@ -79,9 +79,9 @@ export function createScriptContext(
 
     // Multiple tab helpers
     newTab: async (url?: string) => {
-      const newPage = await browserContext.newPage()
-      if (url) await newPage.goto(url)
-      return createScriptContext(newPage, browserContext, browser)
+      const newPage = await browserContext.newPage();
+      if (url) await newPage.goto(url);
+      return createScriptContext(newPage, browserContext, browser);
     },
 
     closeTab: async () => await page.close(),
@@ -96,7 +96,7 @@ export function createScriptContext(
     // Cookie helpers
     setCookie: async (name: string, value: string, options?: any) =>
       await browserContext.addCookies([
-        { name, value, url: page.url(), ...options },
+        { name, value, url: page.url(), ...options }
       ]),
     getCookies: async () => await browserContext.cookies(),
     clearCookies: async () => await browserContext.clearCookies(),
@@ -108,13 +108,13 @@ export function createScriptContext(
     // Advanced helpers for common patterns
     fillForm: async (fields: Record<string, string>) => {
       for (const [selector, value] of Object.entries(fields)) {
-        await page.fill(selector, value)
+        await page.fill(selector, value);
       }
     },
 
     clickAndWait: async (selector: string, waitFor: string) => {
-      await page.click(selector)
-      await page.waitForSelector(waitFor)
+      await page.click(selector);
+      await page.waitForSelector(waitFor);
     },
 
     typeAndSubmit: async (
@@ -122,49 +122,49 @@ export function createScriptContext(
       text: string,
       submitSelector?: string
     ) => {
-      await page.fill(inputSelector, text)
+      await page.fill(inputSelector, text);
       if (submitSelector) {
-        await page.click(submitSelector)
+        await page.click(submitSelector);
       } else {
-        await page.press(inputSelector, 'Enter')
+        await page.press(inputSelector, 'Enter');
       }
     },
 
     scrollTo: async (selector: string) => {
-      await page.locator(selector).scrollIntoViewIfNeeded()
+      await page.locator(selector).scrollIntoViewIfNeeded();
     },
 
     // Extract data helpers
     extractText: async (selector: string) => {
-      const elements = await page.locator(selector).all()
-      const texts = []
+      const elements = await page.locator(selector).all();
+      const texts = [];
       for (const elem of elements) {
-        texts.push(await elem.textContent())
+        texts.push(await elem.textContent());
       }
-      return texts
+      return texts;
     },
 
     extractLinks: async (selector?: string) => {
-      const linkSelector = selector || 'a[href]'
+      const linkSelector = selector || 'a[href]';
       return await page.$$eval(linkSelector, (links: any[]) =>
         links.map((link: any) => ({
           text: link.textContent?.trim(),
           href: link.getAttribute('href'),
-          title: link.getAttribute('title'),
+          title: link.getAttribute('title')
         }))
-      )
+      );
     },
 
     extractTable: async (selector: string) => {
       return await page.$eval(selector, (table: any) => {
-        const rows = Array.from(table.querySelectorAll('tr'))
+        const rows = Array.from(table.querySelectorAll('tr'));
         return rows.map((row: any) => {
-          const cells = Array.from(row.querySelectorAll('td, th'))
-          return cells.map((cell: any) => cell.textContent?.trim())
-        })
-      })
-    },
-  }
+          const cells = Array.from(row.querySelectorAll('td, th'));
+          return cells.map((cell: any) => cell.textContent?.trim());
+        });
+      });
+    }
+  };
 }
 
 /**
@@ -178,10 +178,10 @@ export async function executeWithSimplifiedContext(
   consoleWrapper: any
 ) {
   // Create simplified context with console wrapper
-  const ctx = createScriptContext(page, browserContext, browser, consoleWrapper)
+  const ctx = createScriptContext(page, browserContext, browser, consoleWrapper);
 
   // Create execution function with all helper methods available
-  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
   const executeCode = new AsyncFunction(
     // Core Playwright objects
     'page',
@@ -238,7 +238,7 @@ export async function executeWithSimplifiedContext(
     'extractTable',
     // The actual code to execute
     code
-  )
+  );
 
   // Execute with all helpers available as individual variables
   return await executeCode(
@@ -295,5 +295,5 @@ export async function executeWithSimplifiedContext(
     ctx.extractText,
     ctx.extractLinks,
     ctx.extractTable
-  )
+  );
 }

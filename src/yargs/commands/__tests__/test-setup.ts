@@ -5,20 +5,21 @@
  * Prevents hanging on stdin, process.exit, and other blocking operations.
  */
 
-import { beforeEach, afterEach, mock, spyOn } from 'bun:test'
-import { Readable } from 'stream'
+import { Readable } from 'stream';
+
+import { beforeEach, afterEach, mock, spyOn } from 'bun:test';
 
 // Store original values
-let originalStdin: NodeJS.ReadStream
-let originalExit: typeof process.exit
-let originalStdinResume: typeof process.stdin.resume
-const originalSetTimeout = global.setTimeout
+let originalStdin: NodeJS.ReadStream;
+let originalExit: typeof process.exit;
+let originalStdinResume: typeof process.stdin.resume;
+const originalSetTimeout = global.setTimeout;
 
 // Create mock functions to be reused
-const mockStdinResume = mock().mockReturnValue(process.stdin)
+const mockStdinResume = mock().mockReturnValue(process.stdin);
 const mockProcessExit = mock((code?: number) => {
-  throw new Error(`process.exit called with code ${code}`)
-})
+  throw new Error(`process.exit called with code ${code}`);
+});
 
 /**
  * Setup test environment before each test
@@ -26,67 +27,67 @@ const mockProcessExit = mock((code?: number) => {
 export function setupTestEnvironment() {
   beforeEach(() => {
     // Clear mock call history
-    mockStdinResume.mockClear()
-    mockProcessExit.mockClear()
+    mockStdinResume.mockClear();
+    mockProcessExit.mockClear();
 
     // Save originals
-    originalStdin = process.stdin
-    originalExit = process.exit
-    originalStdinResume = process.stdin.resume
+    originalStdin = process.stdin;
+    originalExit = process.exit;
+    originalStdinResume = process.stdin.resume;
 
     // Mock stdin to prevent hanging
-    const mockStdin = new Readable()
-    mockStdin.push(null) // EOF immediately
+    const mockStdin = new Readable();
+    mockStdin.push(null); // EOF immediately
     Object.defineProperty(process, 'stdin', {
       value: mockStdin,
       writable: true,
-      configurable: true,
-    })
+      configurable: true
+    });
 
     // Mock process.stdin.resume to prevent hanging
-    process.stdin.resume = mockStdinResume as any
+    process.stdin.resume = mockStdinResume as any;
 
     // Mock process.exit to prevent test process from exiting
-    process.exit = mockProcessExit as any
+    process.exit = mockProcessExit as any;
 
     // Mock setTimeout for continuous monitoring commands
     spyOn(global, 'setTimeout').mockImplementation(
       ((fn: any, ms?: number) => {
         if (ms && ms > 5000) {
           // Don't actually wait for long timeouts
-          return {} as any
+          return {} as any;
         }
-        return originalSetTimeout(fn, ms)
+        return originalSetTimeout(fn, ms);
       }) as typeof setTimeout
-    )
-  })
+    );
+  });
 
   afterEach(() => {
     // Restore originals
     Object.defineProperty(process, 'stdin', {
       value: originalStdin,
       writable: true,
-      configurable: true,
-    })
+      configurable: true
+    });
 
-    process.exit = originalExit
-    process.stdin.resume = originalStdinResume
+    process.exit = originalExit;
+    process.stdin.resume = originalStdinResume;
 
     // Note: Bun doesn't have restoreAllMocks, spies are automatically cleaned up
-  })
+  });
 }
 
 /**
  * Mock fs module for file operations
  */
 export function mockFileSystem() {
-  const mockReadFile = mock().mockResolvedValue('// mock file content')
-  const mockWriteFile = mock().mockResolvedValue(undefined)
-  const mockAccess = mock().mockResolvedValue(undefined)
-  const mockMkdir = mock().mockResolvedValue(undefined)
-  const mockReaddir = mock().mockResolvedValue([])
-  const mockExistsSync = mock().mockReturnValue(true)
-  const mockReadFileSync = mock().mockReturnValue('// mock file content')
+  const mockReadFile = mock().mockResolvedValue('// mock file content');
+  const mockWriteFile = mock().mockResolvedValue(undefined);
+  const mockAccess = mock().mockResolvedValue(undefined);
+  const mockMkdir = mock().mockResolvedValue(undefined);
+  const mockReaddir = mock().mockResolvedValue([]);
+  const mockExistsSync = mock().mockReturnValue(true);
+  const mockReadFileSync = mock().mockReturnValue('// mock file content');
 
   mock.module('fs', () => ({
     promises: {
@@ -94,28 +95,28 @@ export function mockFileSystem() {
       writeFile: mockWriteFile,
       access: mockAccess,
       mkdir: mockMkdir,
-      readdir: mockReaddir,
+      readdir: mockReaddir
     },
     existsSync: mockExistsSync,
-    readFileSync: mockReadFileSync,
-  }))
+    readFileSync: mockReadFileSync
+  }));
 }
 
 /**
  * Mock child_process for spawn operations
  */
 export function mockChildProcess() {
-  const mockUnref = mock()
+  const mockUnref = mock();
   const mockOn = mock((event, callback) => {
     if (event === 'close') {
-      setTimeout(() => callback(0), 100)
+      setTimeout(() => callback(0), 100);
     }
-  })
-  const mockKill = mock()
-  const mockStdoutOn = mock()
-  const mockStdoutPipe = mock()
-  const mockStderrOn = mock()
-  const mockStderrPipe = mock()
+  });
+  const mockKill = mock();
+  const mockStdoutOn = mock();
+  const mockStdoutPipe = mock();
+  const mockStderrOn = mock();
+  const mockStderrPipe = mock();
 
   const mockSpawn = mock(() => ({
     unref: mockUnref,
@@ -124,17 +125,17 @@ export function mockChildProcess() {
     pid: 12345,
     stdout: {
       on: mockStdoutOn,
-      pipe: mockStdoutPipe,
+      pipe: mockStdoutPipe
     },
     stderr: {
       on: mockStderrOn,
-      pipe: mockStderrPipe,
-    },
-  }))
+      pipe: mockStderrPipe
+    }
+  }));
 
   mock.module('child_process', () => ({
-    spawn: mockSpawn,
-  }))
+    spawn: mockSpawn
+  }));
 }
 
 /**
@@ -164,37 +165,37 @@ export function mockBrowserHelper() {
       click: mock().mockResolvedValue(undefined),
       fill: mock().mockResolvedValue(undefined),
       hover: mock().mockResolvedValue(undefined),
-      press: mock().mockResolvedValue(undefined),
+      press: mock().mockResolvedValue(undefined)
     }),
     goBack: mock().mockResolvedValue(undefined),
     reload: mock().mockResolvedValue(undefined),
     setViewportSize: mock().mockResolvedValue(undefined),
     accessibility: {
-      snapshot: mock().mockResolvedValue({ role: 'WebArea', children: [] }),
+      snapshot: mock().mockResolvedValue({ role: 'WebArea', children: [] })
     },
     context: mock().mockReturnValue({
-      browser: mock().mockReturnValue({}),
-    }),
-  }
+      browser: mock().mockReturnValue({})
+    })
+  };
 
   const mockContexts = mock().mockReturnValue([
     {
       pages: mock().mockReturnValue([mockPage]),
       newPage: mock().mockResolvedValue(mockPage),
-      setDefaultTimeout: mock(),
-    },
-  ])
+      setDefaultTimeout: mock()
+    }
+  ]);
 
   const mockGetBrowser = mock().mockResolvedValue({
     contexts: mockContexts,
-    close: mock().mockResolvedValue(undefined),
-  })
+    close: mock().mockResolvedValue(undefined)
+  });
 
-  const mockGetActivePage = mock().mockResolvedValue(mockPage)
+  const mockGetActivePage = mock().mockResolvedValue(mockPage);
 
   const mockWithActivePage = mock().mockImplementation(async (_port, callback) => {
-    return callback(mockPage)
-  })
+    return callback(mockPage);
+  });
 
   const mockWithBrowser = mock().mockImplementation(async (_port, callback) => {
     const mockBrowser = {
@@ -202,16 +203,16 @@ export function mockBrowserHelper() {
         {
           pages: mock().mockReturnValue([mockPage]),
           newPage: mock().mockResolvedValue(mockPage),
-          setDefaultTimeout: mock(),
-        },
+          setDefaultTimeout: mock()
+        }
       ]),
-      close: mock().mockResolvedValue(undefined),
-    }
-    return callback(mockBrowser)
-  })
+      close: mock().mockResolvedValue(undefined)
+    };
+    return callback(mockBrowser);
+  });
 
-  const mockLaunchChrome = mock().mockResolvedValue(undefined)
-  const mockIsPortOpen = mock().mockResolvedValue(false)
+  const mockLaunchChrome = mock().mockResolvedValue(undefined);
+  const mockIsPortOpen = mock().mockResolvedValue(false);
 
   mock.module('../../../../lib/browser-helper', () => ({
     BrowserHelper: {
@@ -220,9 +221,9 @@ export function mockBrowserHelper() {
       withActivePage: mockWithActivePage,
       withBrowser: mockWithBrowser,
       launchChrome: mockLaunchChrome,
-      isPortOpen: mockIsPortOpen,
-    },
-  }))
+      isPortOpen: mockIsPortOpen
+    }
+  }));
 
-  return mockPage
+  return mockPage;
 }

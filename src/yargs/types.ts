@@ -5,8 +5,8 @@
  * the Yargs implementation to ensure type safety and consistency.
  */
 
-import type { ArgumentsCamelCase, CommandModule } from 'yargs'
-import type { Page } from 'playwright'
+import type { Page } from 'playwright';
+import type { ArgumentsCamelCase, CommandModule } from 'yargs';
 
 /**
  * Base options that all commands inherit
@@ -163,7 +163,7 @@ export type CommandHandler<T extends BaseCommandOptions> = (
  */
 export interface CommandMetadata {
   name: string
-  category: 'navigation' | 'interaction' | 'capture' | 'advanced' | 'utility'
+  category: 'navigation' | 'interaction' | 'capture' | 'advanced' | 'utility' | 'mesh' | 'native'
   description: string
   aliases?: string[]
 }
@@ -743,4 +743,4 @@ export interface CLIPlugin {
 /**
  * Export all types for external use
  */
-export type { ArgumentsCamelCase, CommandModule, Page }
+export type { ArgumentsCamelCase, CommandModule, Page };

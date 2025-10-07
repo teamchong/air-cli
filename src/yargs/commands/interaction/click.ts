@@ -5,20 +5,20 @@
  * Supports various click types including single, double, and modifier-based clicks.
  */
 
-import { createCommand } from '../../lib/command-builder'
-import { BrowserHelper } from '../../../lib/browser-helper'
-import { findElementByRef, nodeToSelector } from '../../../lib/ref-utils'
-import { refManager } from '../../../lib/ref-manager'
-import { findBestSelector } from '../../../lib/selector-resolver'
-import { actionHistory } from '../../../lib/action-history'
-import type { ClickOptions } from '../../types'
+import { actionHistory } from '../../../lib/action-history';
+import { BrowserHelper } from '../../../lib/browser-helper';
+import { refManager } from '../../../lib/ref-manager';
+import { findElementByRef, nodeToSelector } from '../../../lib/ref-utils';
+import { findBestSelector } from '../../../lib/selector-resolver';
+import { createCommand } from '../../lib/command-builder';
+import type { ClickOptions } from '../../types';
 
 export const clickCommand = createCommand<ClickOptions>({
   metadata: {
     name: 'click',
     category: 'interaction',
     description: 'Click on an element',
-    aliases: [],
+    aliases: []
   },
 
   command: 'click [selector]',
@@ -29,166 +29,166 @@ export const clickCommand = createCommand<ClickOptions>({
       .positional('selector', {
         describe: 'Element selector or text to find',
         type: 'string',
-        demandOption: false,
+        demandOption: false
       })
       .option('ref', {
         describe: 'Use a ref from snapshot command',
-        type: 'string',
+        type: 'string'
       })
       .option('port', {
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p',
+        alias: 'p'
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab',
+        alias: 'tab'
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string',
+        type: 'string'
       })
       .option('timeout', {
         describe: 'Timeout in milliseconds',
         type: 'number',
-        default: 5000,
+        default: 5000
       })
       .option('force', {
         describe: 'Force click even if element is not visible',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('double', {
         describe: 'Perform a double-click instead of single click',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('button', {
         describe: 'Mouse button to use',
         type: 'string',
         choices: ['left', 'right', 'middle'],
-        default: 'left',
+        default: 'left'
       })
       .option('shift', {
         describe: 'Hold Shift key while clicking',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('ctrl', {
         describe: 'Hold Ctrl key while clicking',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('alt', {
         describe: 'Hold Alt key while clicking',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('meta', {
         describe: 'Hold Meta key while clicking',
         type: 'boolean',
-        default: false,
+        default: false
       })
       .option('ctrl-or-meta', {
         describe:
           'Hold Ctrl (Windows/Linux) or Meta (macOS) key while clicking',
         type: 'boolean',
-        default: false,
+        default: false
       })
-      .conflicts('tab-index', 'tab-id') // Cannot use both
+      .conflicts('tab-index', 'tab-id'); // Cannot use both
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { port, timeout, force, double, button } = argv
-    const tabIndex = argv['tab-index'] as number | undefined
-    const tabId = argv['tab-id'] as string | undefined
-    const ref = argv.ref as string | undefined
-    const selector = argv.selector as string | undefined
+    const { port, timeout, force, double, button } = argv;
+    const tabIndex = argv['tab-index'] as number | undefined;
+    const tabId = argv['tab-id'] as string | undefined;
+    const ref = argv.ref as string | undefined;
+    const selector = argv.selector as string | undefined;
 
     // Determine what to click
     if (!selector && !ref) {
-      throw new Error('Either selector or --ref must be provided')
+      throw new Error('Either selector or --ref must be provided');
     }
 
     // Build modifiers array from options
     const modifiers: Array<
       'Shift' | 'Control' | 'Alt' | 'Meta' | 'ControlOrMeta'
-    > = []
-    if (argv.shift) modifiers.push('Shift')
-    if (argv.ctrl) modifiers.push('Control')
-    if (argv.alt) modifiers.push('Alt')
-    if (argv.meta) modifiers.push('Meta')
-    if (argv['ctrl-or-meta']) modifiers.push('ControlOrMeta')
+    > = [];
+    if (argv.shift) modifiers.push('Shift');
+    if (argv.ctrl) modifiers.push('Control');
+    if (argv.alt) modifiers.push('Alt');
+    if (argv.meta) modifiers.push('Meta');
+    if (argv['ctrl-or-meta']) modifiers.push('ControlOrMeta');
 
-    const clickType = double ? 'Double-clicking' : 'Clicking'
-    const modifierText = modifiers.length > 0 ? ` (${modifiers.join('+')})` : ''
+    const clickType = double ? 'Double-clicking' : 'Clicking';
+    const modifierText = modifiers.length > 0 ? ` (${modifiers.join('+')})` : '';
     const tabTarget =
       tabIndex !== undefined
         ? ` in tab ${tabIndex}`
         : tabId !== undefined
           ? ` in tab ${tabId.slice(0, 8)}...`
-          : ''
+          : '';
 
-    const targetDesc = ref ? `[${ref}]` : selector
+    const targetDesc = ref ? `[${ref}]` : selector;
     if (spinner) {
-      spinner.text = `${clickType}${modifierText} ${targetDesc}${tabTarget}...`
+      spinner.text = `${clickType}${modifierText} ${targetDesc}${tabTarget}...`;
     }
 
     await BrowserHelper.withTargetPage(port, tabIndex, tabId, async page => {
-      let actualSelector: string
+      let actualSelector: string;
 
       // Handle --ref flag
       if (ref) {
         // Try to get selector from RefManager first
-        const storedSelector = await refManager.getSelector(ref, tabId)
+        const storedSelector = await refManager.getSelector(ref, tabId);
         if (storedSelector) {
-          actualSelector = storedSelector
+          actualSelector = storedSelector;
           if (spinner) {
-            spinner.text = `Using stored ref=${ref}...`
+            spinner.text = `Using stored ref=${ref}...`;
           }
         } else {
           // Fallback to accessibility tree search
           if (spinner) {
-            spinner.text = `Finding element with ref=${ref}...`
+            spinner.text = `Finding element with ref=${ref}...`;
           }
-          const snapshot = await page.accessibility.snapshot()
-          const element = findElementByRef(snapshot, ref)
+          const snapshot = await page.accessibility.snapshot();
+          const element = findElementByRef(snapshot, ref);
           if (!element) {
-            throw new Error(`ref not found: Element with ref=${ref} not found`)
+            throw new Error(`ref not found: Element with ref=${ref} not found`);
           }
-          actualSelector = nodeToSelector(element)
+          actualSelector = nodeToSelector(element);
         }
       } else if (selector) {
         // Try text-based selector resolution first
         if (spinner) {
-          spinner.text = `Finding element: "${selector}"...`
+          spinner.text = `Finding element: "${selector}"...`;
         }
 
-        const textSelectorResult = await findBestSelector(page, selector)
+        const textSelectorResult = await findBestSelector(page, selector);
         if (textSelectorResult) {
-          actualSelector = textSelectorResult.selector
+          actualSelector = textSelectorResult.selector;
           if (spinner) {
-            spinner.text = `Found via ${textSelectorResult.strategy}: ${selector}...`
+            spinner.text = `Found via ${textSelectorResult.strategy}: ${selector}...`;
           }
         } else {
           // If not a CSS selector and no element found by text, throw clear error
           const isCss =
             /^[#.]/.test(selector) ||
             /[.\[\]\>\+\~:]/.test(selector) ||
-            /^[a-z]+$/i.test(selector)
+            /^[a-z]+$/i.test(selector);
           if (!isCss) {
             throw new Error(
               `Element not found by text: "${selector}". Try using a CSS selector or check the page content with 'snapshot'.`
-            )
+            );
           }
           // Fallback to using selector as-is (CSS selector)
-          actualSelector = selector
+          actualSelector = selector;
         }
       } else {
         // This shouldn't happen due to validation above
-        throw new Error('No selector or ref provided')
+        throw new Error('No selector or ref provided');
       }
 
       // Click using Playwright
@@ -196,42 +196,42 @@ export const clickCommand = createCommand<ClickOptions>({
         timeout,
         force,
         button: button as 'left' | 'right' | 'middle',
-        modifiers: modifiers.length > 0 ? modifiers : undefined,
-      }
+        modifiers: modifiers.length > 0 ? modifiers : undefined
+      };
 
       if (double) {
-        await page.dblclick(actualSelector, clickOptions)
+        await page.dblclick(actualSelector, clickOptions);
       } else {
         // Wait for element to exist first (fail fast if not found)
         // Use a shorter timeout than the test timeout to ensure proper error reporting
-        const waitTimeout = Math.min(timeout || 5000, 1500)
+        const waitTimeout = Math.min(timeout || 5000, 1500);
 
         try {
           await page.waitForSelector(actualSelector, {
-            timeout: waitTimeout,
-          })
+            timeout: waitTimeout
+          });
         } catch (error: any) {
           if (error.message?.includes('Timeout')) {
-            throw new Error(`Element not found: ${actualSelector}`)
+            throw new Error(`Element not found: ${actualSelector}`);
           }
-          throw error
+          throw error;
         }
 
-        await page.click(actualSelector, clickOptions)
+        await page.click(actualSelector, clickOptions);
 
         // Track the click action
         await actionHistory.addAction({
           type: 'click',
           target: actualSelector,
-          tabId: tabId,
-        })
+          tabId: tabId
+        });
       }
-    })
+    });
 
-    const successMessage = double ? 'Double-clicked' : 'Clicked'
-    logger.success(`${successMessage}${modifierText} on ${targetDesc}`)
+    const successMessage = double ? 'Double-clicked' : 'Clicked';
+    logger.success(`${successMessage}${modifierText} on ${targetDesc}`);
 
     // Flush action history to ensure it's persisted before command exits
-    await actionHistory.flush()
-  },
-})
+    await actionHistory.flush();
+  }
+});

@@ -20,12 +20,12 @@ export interface ValidatorOptions {
 
 // Validation error for better error handling
 export class ValidationError extends Error {
-  public readonly errors: string[]
+  public readonly errors: string[];
 
   constructor(errors: string[]) {
-    super(`Validation failed: ${errors.join(', ')}`)
-    this.name = 'ValidationError'
-    this.errors = errors
+    super(`Validation failed: ${errors.join(', ')}`);
+    this.name = 'ValidationError';
+    this.errors = errors;
   }
 }
 
@@ -38,33 +38,33 @@ export class Validators {
    */
   static url(options: ValidatorOptions = {}): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!value && options.required) {
-        errors.push(options.message || `${fieldName} is required`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} is required`);
+        return { isValid: false, errors };
       }
 
       if (!value) {
-        return { isValid: true, errors: [], sanitizedValue: value }
+        return { isValid: true, errors: [], sanitizedValue: value };
       }
 
-      let urlToValidate = String(value).trim()
-      let normalized = false
+      let urlToValidate = String(value).trim();
+      let normalized = false;
 
       // Try to normalize URL by adding https:// if no protocol
       if (!urlToValidate.match(/^[a-zA-Z]+:\/\//)) {
-        urlToValidate = `https://${urlToValidate}`
-        normalized = true
+        urlToValidate = `https://${urlToValidate}`;
+        normalized = true;
       }
 
       try {
-        const url = new URL(urlToValidate)
+        const url = new URL(urlToValidate);
         // Ensure it's a valid HTTP/HTTPS URL
         if (!['http:', 'https:'].includes(url.protocol)) {
           errors.push(
             options.message || `${fieldName} must be a valid HTTP or HTTPS URL`
-          )
+          );
         }
 
         // Additional validation for normalized URLs to catch invalid domains
@@ -75,20 +75,20 @@ export class Validators {
             url.hostname.startsWith('.') ||
             url.hostname.endsWith('.')
           ) {
-            errors.push(options.message || `${fieldName} must be a valid URL`)
+            errors.push(options.message || `${fieldName} must be a valid URL`);
           }
         }
 
         return {
           isValid: errors.length === 0,
           errors,
-          sanitizedValue: url.toString(),
-        }
+          sanitizedValue: url.toString()
+        };
       } catch {
-        errors.push(options.message || `${fieldName} must be a valid URL`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} must be a valid URL`);
+        return { isValid: false, errors };
       }
-    }
+    };
   }
 
   /**
@@ -96,33 +96,33 @@ export class Validators {
    */
   static port(options: ValidatorOptions = {}): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!value && options.required) {
-        errors.push(options.message || `${fieldName} is required`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} is required`);
+        return { isValid: false, errors };
       }
 
       if (!value) {
-        return { isValid: true, errors: [], sanitizedValue: value }
+        return { isValid: true, errors: [], sanitizedValue: value };
       }
 
-      const portNum = parseInt(String(value), 10)
+      const portNum = parseInt(String(value), 10);
 
       if (isNaN(portNum)) {
-        errors.push(options.message || `${fieldName} must be a valid number`)
+        errors.push(options.message || `${fieldName} must be a valid number`);
       } else if (portNum < 1 || portNum > 65535) {
         errors.push(
           options.message || `${fieldName} must be between 1 and 65535`
-        )
+        );
       }
 
       return {
         isValid: errors.length === 0,
         errors,
-        sanitizedValue: portNum,
-      }
-    }
+        sanitizedValue: portNum
+      };
+    };
   }
 
   /**
@@ -130,31 +130,31 @@ export class Validators {
    */
   static timeout(options: ValidatorOptions = {}): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!value && options.required) {
-        errors.push(options.message || `${fieldName} is required`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} is required`);
+        return { isValid: false, errors };
       }
 
       if (!value) {
-        return { isValid: true, errors: [], sanitizedValue: value }
+        return { isValid: true, errors: [], sanitizedValue: value };
       }
 
-      const timeoutNum = parseInt(String(value), 10)
+      const timeoutNum = parseInt(String(value), 10);
 
       if (isNaN(timeoutNum)) {
-        errors.push(options.message || `${fieldName} must be a valid number`)
+        errors.push(options.message || `${fieldName} must be a valid number`);
       } else if (timeoutNum < 0) {
-        errors.push(options.message || `${fieldName} must be a positive number`)
+        errors.push(options.message || `${fieldName} must be a positive number`);
       }
 
       return {
         isValid: errors.length === 0,
         errors,
-        sanitizedValue: timeoutNum,
-      }
-    }
+        sanitizedValue: timeoutNum
+      };
+    };
   }
 
   /**
@@ -162,22 +162,22 @@ export class Validators {
    */
   static selector(options: ValidatorOptions = {}): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!value && options.required) {
-        errors.push(options.message || `${fieldName} is required`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} is required`);
+        return { isValid: false, errors };
       }
 
       if (!value) {
-        return { isValid: true, errors: [], sanitizedValue: value }
+        return { isValid: true, errors: [], sanitizedValue: value };
       }
 
-      const selector = String(value).trim()
+      const selector = String(value).trim();
 
       if (!selector) {
-        errors.push(options.message || `${fieldName} cannot be empty`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} cannot be empty`);
+        return { isValid: false, errors };
       }
 
       // Basic CSS selector validation
@@ -185,8 +185,8 @@ export class Validators {
       // Since we're in Node.js environment, we can't validate CSS selectors
       // using the DOM API. We'll do basic validation and let the browser
       // handle the actual selector validation at runtime.
-      return { isValid: true, errors: [], sanitizedValue: selector }
-    }
+      return { isValid: true, errors: [], sanitizedValue: selector };
+    };
   }
 
   /**
@@ -197,30 +197,30 @@ export class Validators {
     options: ValidatorOptions = {}
   ): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!value && options.required) {
-        errors.push(options.message || `${fieldName} is required`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} is required`);
+        return { isValid: false, errors };
       }
 
       if (!value) {
-        return { isValid: true, errors: [], sanitizedValue: value }
+        return { isValid: true, errors: [], sanitizedValue: value };
       }
 
       if (!allowedValues.includes(value)) {
         errors.push(
           options.message ||
             `${fieldName} must be one of: ${allowedValues.join(', ')}`
-        )
+        );
       }
 
       return {
         isValid: errors.length === 0,
         errors,
-        sanitizedValue: value,
-      }
-    }
+        sanitizedValue: value
+      };
+    };
   }
 
   /**
@@ -232,39 +232,39 @@ export class Validators {
     options: ValidatorOptions = {}
   ): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const errors: string[] = []
+      const errors: string[] = [];
 
       if (!value && options.required) {
-        errors.push(options.message || `${fieldName} is required`)
-        return { isValid: false, errors }
+        errors.push(options.message || `${fieldName} is required`);
+        return { isValid: false, errors };
       }
 
       if (!value) {
-        return { isValid: true, errors: [], sanitizedValue: value }
+        return { isValid: true, errors: [], sanitizedValue: value };
       }
 
-      const str = String(value)
+      const str = String(value);
 
       if (str.length < minLength) {
         errors.push(
           options.message ||
             `${fieldName} must be at least ${minLength} characters`
-        )
+        );
       }
 
       if (str.length > maxLength) {
         errors.push(
           options.message ||
             `${fieldName} must be no more than ${maxLength} characters`
-        )
+        );
       }
 
       return {
         isValid: errors.length === 0,
         errors,
-        sanitizedValue: str,
-      }
-    }
+        sanitizedValue: str
+      };
+    };
   }
 
   /**
@@ -275,13 +275,13 @@ export class Validators {
     errorMessage: string
   ): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {
-      const isValid = validatorFn(value)
+      const isValid = validatorFn(value);
       return {
         isValid,
         errors: isValid ? [] : [errorMessage.replace('{field}', fieldName)],
-        sanitizedValue: value,
-      }
-    }
+        sanitizedValue: value
+      };
+    };
   }
 }
 
@@ -297,24 +297,24 @@ export class ValidationUtils {
     fieldName: string,
     validators: ValidatorFunction[]
   ): ValidationResult {
-    const allErrors: string[] = []
-    let sanitizedValue = value
+    const allErrors: string[] = [];
+    let sanitizedValue = value;
 
     for (const validator of validators) {
-      const result = validator(sanitizedValue, fieldName)
+      const result = validator(sanitizedValue, fieldName);
       if (!result.isValid) {
-        allErrors.push(...result.errors)
+        allErrors.push(...result.errors);
       }
       if (result.sanitizedValue !== undefined) {
-        sanitizedValue = result.sanitizedValue
+        sanitizedValue = result.sanitizedValue;
       }
     }
 
     return {
       isValid: allErrors.length === 0,
       errors: allErrors,
-      sanitizedValue,
-    }
+      sanitizedValue
+    };
   }
 
   /**
@@ -328,30 +328,30 @@ export class ValidationUtils {
     errors: Record<string, string[]>
     sanitizedData: Partial<T>
   } {
-    const errors: Record<string, string[]> = {}
-    const sanitizedData: Partial<T> = {}
+    const errors: Record<string, string[]> = {};
+    const sanitizedData: Partial<T> = {};
 
     for (const [fieldName, validators] of Object.entries(schema)) {
-      const value = obj[fieldName]
+      const value = obj[fieldName];
       const result = this.validateValue(
         value,
         fieldName,
         validators as ValidatorFunction[]
-      )
+      );
 
       if (!result.isValid) {
-        errors[fieldName] = result.errors
+        errors[fieldName] = result.errors;
       }
 
       if (result.sanitizedValue !== undefined) {
-        ;(sanitizedData as any)[fieldName] = result.sanitizedValue
+        ;(sanitizedData as any)[fieldName] = result.sanitizedValue;
       }
     }
 
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
-      sanitizedData,
-    }
+      sanitizedData
+    };
   }
 }
