@@ -40,6 +40,8 @@ coverage/
 
 # Temporary files
 .tmp/
+.tmp-upload/
+test-upload-files/
 tmp/
 temp/
 test-*.js

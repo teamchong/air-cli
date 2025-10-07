@@ -70,18 +70,23 @@ export class CDPConnectionPool {
   async getConnection(port: number = 9222): Promise<Browser> {
     const key = `port-${port}`
 
-    // Check for existing available connection
+    // Check for existing connection (even if in use, validate it)
     const existing = this.connections.get(key)
-    if (existing && !existing.inUse) {
-      // Verify connection is still alive
+    if (existing) {
+      // Verify connection is still alive before reusing
       try {
         // Quick health check - get contexts
         existing.browser.contexts()
-        existing.inUse = true
-        existing.lastUsed = Date.now()
-        return existing.browser
+
+        if (!existing.inUse) {
+          // Available connection, reuse it
+          existing.inUse = true
+          existing.lastUsed = Date.now()
+          return existing.browser
+        }
+        // Connection exists and is alive but in use - will create new one below
       } catch {
-        // Connection is dead, remove it
+        // Connection is dead, remove it and create new
         this.connections.delete(key)
       }
     }
@@ -105,16 +110,20 @@ export class CDPConnectionPool {
 
     // Create new connection
     try {
+      // Use require() to get fresh Playwright instance - fixes module corruption after many tests
+      const playwright = require('playwright')
+      const chromeInstance = playwright.chromium
+
       // Add timeout to CDP connection to prevent hanging
-      const connectionPromise = chromium.connectOverCDP(`http://localhost:${port}`)
+      const connectionPromise = chromeInstance.connectOverCDP(`http://localhost:${port}`)
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('CDP connection timeout')), 5000)
+        setTimeout(() => reject(new Error('CDP connection timeout')), 10000)
       })
 
       const browser = await Promise.race([connectionPromise, timeoutPromise])
 
       // Set default timeout for all contexts
-      browser.contexts().forEach(context => {
+      browser.contexts().forEach((context: BrowserContext) => {
         context.setDefaultTimeout(5000)
       })
 
@@ -128,8 +137,10 @@ export class CDPConnectionPool {
       this.connections.set(key, connection)
       return browser
     } catch (error: any) {
+      // More detailed error message for debugging
+      const errorMsg = error.message || String(error)
       throw new Error(
-        `No browser running on port ${port}. Use "air open" first`
+        `Failed to connect to browser on port ${port}: ${errorMsg}\nEnsure Chrome is running with --remote-debugging-port=${port}`
       )
     }
   }

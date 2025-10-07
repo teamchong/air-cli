@@ -72,9 +72,46 @@ export const uploadCommand = createCommand<UploadOptions>({
         path.isAbsolute(file) ? file : path.resolve(process.cwd(), file)
       )
 
-      await page.setInputFiles(selector, absolutePaths, {
-        timeout: timeout || 5000,
-      })
+      // Verify files exist
+      for (const filePath of absolutePaths) {
+        const file = Bun.file(filePath)
+        if (!await file.exists()) {
+          throw new Error(`File not found: ${filePath}`)
+        }
+      }
+
+      // Use CDP DOM.setFileInputFiles for better compatibility with long-running browser sessions
+      // This bypasses Chrome's sandbox file access restrictions
+      try {
+        const client = await (page.context() as any).newCDPSession(page)
+
+        // Get the backend node ID using CDP
+        await client.send('DOM.enable')
+        const { root } = await client.send('DOM.getDocument')
+        const { nodeId } = await client.send('DOM.querySelector', {
+          nodeId: root.nodeId,
+          selector
+        })
+
+        if (!nodeId) {
+          throw new Error(`Element not found: ${selector}`)
+        }
+
+        const { node } = await client.send('DOM.describeNode', { nodeId })
+
+        // Set files using CDP (bypasses Chrome sandbox restrictions)
+        await client.send('DOM.setFileInputFiles', {
+          files: absolutePaths,
+          backendNodeId: node.backendNodeId
+        })
+
+        await client.detach()
+      } catch (error: any) {
+        if (error.code === 'ENOENT' || error.message?.includes('File not found')) {
+          throw new Error(`File access error: ${error.message}\nNote: Ensure files exist and are accessible`)
+        }
+        throw error
+      }
     })
 
     logger.success(`Uploaded ${files.length} file(s) to ${selector}`)

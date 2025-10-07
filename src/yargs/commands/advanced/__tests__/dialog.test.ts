@@ -52,7 +52,8 @@ describe('dialog command - REAL TESTS', () => {
         3000
       )
       expect(exitCode).toBe(1)
-      expect(output).toMatch(/No browser running|browser running/i)
+      // Updated error message format from CDP connection pool
+      expect(output).toMatch(/Failed to connect to browser|No browser running|browser running/i)
     })
   })
 })
