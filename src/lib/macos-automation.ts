@@ -98,25 +98,37 @@ export class MacOSAutomation {
       const events = await run(() => {
         const Calendar = Application('Calendar')
         const today = new Date()
+        today.setHours(0, 0, 0, 0)
         const tomorrow = new Date(today)
         tomorrow.setDate(tomorrow.getDate() + 1)
 
-        // Get default calendar's events for today
-        const todayEvents = Calendar.defaultCalendar.events.whose({
-          _and: [
-            { startDate: { _greaterThan: today } },
-            { startDate: { _lessThan: tomorrow } },
-          ],
-        })
+        // Get all calendars' events for today
+        const allEvents: any[] = []
+        const calendars = Calendar.calendars()
 
-        return todayEvents().map((evt: any) => ({
-          id: evt.id(),
-          title: evt.summary(),
-          startDate: evt.startDate(),
-          endDate: evt.endDate(),
-          location: evt.location(),
-          notes: evt.description(),
-        }))
+        for (let i = 0; i < calendars.length; i++) {
+          const cal = calendars[i]
+          const events = cal.events()
+
+          for (let j = 0; j < events.length; j++) {
+            const evt = events[j]
+            const startDate = evt.startDate()
+
+            // Check if event is today
+            if (startDate >= today && startDate < tomorrow) {
+              allEvents.push({
+                id: evt.id(),
+                title: evt.summary(),
+                startDate: evt.startDate(),
+                endDate: evt.endDate(),
+                location: evt.location ? evt.location() : '',
+                notes: evt.description ? evt.description() : '',
+              })
+            }
+          }
+        }
+
+        return allEvents
       })
 
       return events
