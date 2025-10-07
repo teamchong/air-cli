@@ -60,6 +60,9 @@ import { installCommand } from './commands/utility/install'
 import { claudeCommand } from './commands/utility/claude'
 import { contextCommand } from './commands/utility/context'
 
+// Native app commands (macOS only)
+import { appCommand } from './commands/native/app'
+
 /**
  * Global CLI options interface
  * These options are available to all commands
@@ -158,6 +161,9 @@ export function createCli(argv?: string[]) {
     .command(installCommand)
     .command(claudeCommand)
     .command(contextCommand)
+
+    // Native app commands (macOS only)
+    .command(appCommand)
 
     // CLI configuration
     // Only demand command in production

@@ -49,8 +49,10 @@
     ]
   },
   "dependencies": {
+    "@jxa/run": "^1.4.0",
     "@types/yargs": "^17.0.33",
     "chalk": "^4.1.2",
+    "node-mac-permissions": "^2.5.0",
     "ora": "^5.4.1",
     "playwright": "^1.48.0",
     "yargs": "^17.7.2"
