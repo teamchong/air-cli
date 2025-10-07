@@ -5,16 +5,16 @@
  * Supports single and multiple value selection.
  */
 
-import { BrowserHelper } from '../../../lib/browser-helper';
-import { createCommand } from '../../lib/command-builder';
-import type { SelectOptions } from '../../types';
+import { BrowserHelper } from '../../../lib/browser-helper'
+import { createCommand } from '../../lib/command-builder'
+import type { SelectOptions } from '../../types'
 
 export const selectCommand = createCommand<SelectOptions>({
   metadata: {
     name: 'select',
     category: 'interaction',
     description: 'Select option(s) in a dropdown',
-    aliases: []
+    aliases: [],
   },
 
   command: 'select <selector> <values...>',
@@ -25,68 +25,68 @@ export const selectCommand = createCommand<SelectOptions>({
       .positional('selector', {
         describe: 'Dropdown selector',
         type: 'string',
-        demandOption: true
+        demandOption: true,
       })
       .positional('values', {
         describe: 'Value(s) to select',
         type: 'string',
         array: true,
-        demandOption: true
+        demandOption: true,
       })
       .option('port', {
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p'
+        alias: 'p',
       })
       .option('timeout', {
         describe: 'Timeout in milliseconds',
         type: 'number',
-        default: 5000
+        default: 5000,
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab'
+        alias: 'tab',
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string'
+        type: 'string',
       })
-      .conflicts('tab-index', 'tab-id');
+      .conflicts('tab-index', 'tab-id')
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { selector, values, port, timeout } = argv;
-    const tabIndex = argv['tab-index'] as number | undefined;
-    const tabId = argv['tab-id'] as string | undefined;
+    const { selector, values, port, timeout } = argv
+    const tabIndex = argv['tab-index'] as number | undefined
+    const tabId = argv['tab-id'] as string | undefined
 
     if (spinner) {
-      spinner.start(`Selecting ${values.join(', ')} in ${selector}...`);
+      spinner.start(`Selecting ${values.join(', ')} in ${selector}...`)
     }
 
     try {
       await BrowserHelper.withTargetPage(port, tabIndex, tabId, async page => {
-        await page.selectOption(selector, values, { timeout: timeout || 5000 });
-      });
+        await page.selectOption(selector, values, { timeout: timeout || 5000 })
+      })
 
       if (spinner) {
-        spinner.succeed(`Selected ${values.join(', ')} in ${selector}`);
+        spinner.succeed(`Selected ${values.join(', ')} in ${selector}`)
       }
 
-      logger.success(`Selected ${values.join(', ')} in ${selector}`);
+      logger.success(`Selected ${values.join(', ')} in ${selector}`)
 
       if (argv.json) {
         logger.json({
           success: true,
           action: 'select',
           selector,
-          values: values
-        });
+          values: values,
+        })
       }
     } catch (error: any) {
       if (spinner) {
-        spinner.fail(`Failed to select ${values.join(', ')} in ${selector}`);
+        spinner.fail(`Failed to select ${values.join(', ')} in ${selector}`)
       }
 
       if (
@@ -95,17 +95,17 @@ export const selectCommand = createCommand<SelectOptions>({
       ) {
         throw new Error(
           `Timeout waiting for selector "${selector}" (${timeout || 5000}ms)`
-        );
+        )
       } else if (
         error.message.includes('not found') ||
         error.message.includes('No node found')
       ) {
-        throw new Error(`Element not found: ${selector}`);
+        throw new Error(`Element not found: ${selector}`)
       } else {
-        throw new Error(`Selection failed: ${error.message}`);
+        throw new Error(`Selection failed: ${error.message}`)
       }
     }
   },
 
-  supportsJson: true
-});
+  supportsJson: true,
+})

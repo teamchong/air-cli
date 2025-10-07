@@ -3,10 +3,10 @@
  * Provides consistent timeout protection across the entire CLI
  */
 
-import { Argv } from 'yargs';
+import { Argv } from 'yargs'
 
-import { CDPConnectionPool } from '../../lib/cdp-connection-pool';
-import { withTimeout, TimeoutError } from '../../lib/timeout-utils';
+import { CDPConnectionPool } from '../../lib/cdp-connection-pool'
+import { withTimeout, TimeoutError } from '../../lib/timeout-utils'
 
 // Default timeout for different operation types
 const TIMEOUT_DEFAULTS = {
@@ -15,8 +15,8 @@ const TIMEOUT_DEFAULTS = {
   interaction: 10000, // User interactions (click, type, etc)
   capture: 20000, // Screenshots, PDFs
   evaluation: 15000, // JavaScript execution
-  default: 10000 // Fallback timeout
-};
+  default: 10000, // Fallback timeout
+}
 
 export interface TimeoutOptions {
   timeout?: number
@@ -35,7 +35,7 @@ export function withTimeoutProtection<T extends Record<string, any>>(
     const timeout =
       argv.timeout ||
       options.timeout ||
-      TIMEOUT_DEFAULTS[options.operationType || 'default'];
+      TIMEOUT_DEFAULTS[options.operationType || 'default']
 
     // Wrap the entire command execution in a timeout
     try {
@@ -43,23 +43,23 @@ export function withTimeoutProtection<T extends Record<string, any>>(
         handler(argv),
         timeout,
         `Command '${argv.$0} ${argv._?.join(' ')}'`
-      );
+      )
     } catch (error) {
       if (error instanceof TimeoutError) {
         // Cleanup any hanging connections
-        const pool = CDPConnectionPool.getInstance();
-        pool.shutdown();
+        const pool = CDPConnectionPool.getInstance()
+        pool.shutdown()
 
-        console.error(`❌ ${error.message}`);
+        console.error(`❌ ${error.message}`)
         if (argv.verbose) {
-          console.error('💡 Try increasing timeout with --timeout flag');
-          console.error('💡 Or check if the browser is responsive');
+          console.error('💡 Try increasing timeout with --timeout flag')
+          console.error('💡 Or check if the browser is responsive')
         }
-        process.exit(1);
+        process.exit(1)
       }
-      throw error;
+      throw error
     }
-  };
+  }
 }
 
 /**
@@ -68,10 +68,10 @@ export function withTimeoutProtection<T extends Record<string, any>>(
 export const timeoutMiddleware = (argv: any) => {
   // Add global timeout option if not present
   if (!('timeout' in argv)) {
-    argv.timeout = undefined;
+    argv.timeout = undefined
   }
-  return argv;
-};
+  return argv
+}
 
 /**
  * Add timeout option to command builder
@@ -80,8 +80,8 @@ export function addTimeoutOption(yargs: Argv): Argv {
   return yargs.option('timeout', {
     describe: 'Command timeout in milliseconds',
     type: 'number',
-    group: 'Timeout Options:'
-  });
+    group: 'Timeout Options:',
+  })
 }
 
 /**
@@ -92,39 +92,39 @@ export async function withBrowserTimeout<T>(
   operationType: keyof typeof TIMEOUT_DEFAULTS = 'default',
   customTimeout?: number
 ): Promise<T> {
-  const timeout = customTimeout || TIMEOUT_DEFAULTS[operationType];
+  const timeout = customTimeout || TIMEOUT_DEFAULTS[operationType]
 
   try {
-    return await withTimeout(operation(), timeout, operationType);
+    return await withTimeout(operation(), timeout, operationType)
   } catch (error) {
     if (error instanceof TimeoutError) {
       // Log specific guidance based on operation type
       switch (operationType) {
-      case 'cdp':
-        console.error(
-          '💡 CDP operation timed out. The browser may be unresponsive.'
-        );
-        break;
-      case 'navigation':
-        console.error(
-          '💡 Navigation timed out. The page may be slow to load.'
-        );
-        break;
-      case 'interaction':
-        console.error(
-          '💡 Interaction timed out. The element may not be available.'
-        );
-        break;
-      case 'capture':
-        console.error('💡 Capture timed out. The page may be too complex.');
-        break;
-      case 'evaluation':
-        console.error(
-          '💡 Script execution timed out. The script may be stuck.'
-        );
-        break;
+        case 'cdp':
+          console.error(
+            '💡 CDP operation timed out. The browser may be unresponsive.'
+          )
+          break
+        case 'navigation':
+          console.error(
+            '💡 Navigation timed out. The page may be slow to load.'
+          )
+          break
+        case 'interaction':
+          console.error(
+            '💡 Interaction timed out. The element may not be available.'
+          )
+          break
+        case 'capture':
+          console.error('💡 Capture timed out. The page may be too complex.')
+          break
+        case 'evaluation':
+          console.error(
+            '💡 Script execution timed out. The script may be stuck.'
+          )
+          break
       }
     }
-    throw error;
+    throw error
   }
 }

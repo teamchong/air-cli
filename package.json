@@ -18,6 +18,7 @@
     "air": "./dist/index.js"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "bun run src/index.ts",
     "build:bun": "mkdir -p bin && bun build src/index.ts --compile --outfile bin/air-bun --external electron --external chromium-bidi",
     "build:ts": "tsc -p tsconfig.build.json",
@@ -78,6 +79,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "eslint-plugin-import": "^2.32.0",
+    "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
     "pkg": "^5.8.1",
     "prettier": "^3.6.2",

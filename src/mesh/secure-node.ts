@@ -10,19 +10,19 @@
  * Node A (client) → HTTPS + mTLS → Node B (server)
  */
 
-import { readFileSync } from 'fs';
-import { IncomingMessage, ServerResponse } from 'http';
-import { createServer, Server as HTTPSServer } from 'https';
+import { readFileSync } from 'fs'
+import { IncomingMessage, ServerResponse } from 'http'
+import { createServer, Server as HTTPSServer } from 'https'
 
-import { certificateManager } from './security/certificate-manager';
+import { certificateManager } from './security/certificate-manager'
 
 export interface ServiceHandler {
   (req: IncomingMessage, res: ServerResponse, params: any): Promise<void>
 }
 
 export interface AuthorizationRule {
-  allowedNodes: string[]  // Which nodes can call this service
-  allowedMethods?: string[]  // GET, POST, etc.
+  allowedNodes: string[] // Which nodes can call this service
+  allowedMethods?: string[] // GET, POST, etc.
 }
 
 export interface NodeInfo {
@@ -34,13 +34,13 @@ export interface NodeInfo {
 }
 
 export class SecureNode {
-  private server?: HTTPSServer;
-  private nodeName: string;
-  private routes = new Map<string, ServiceHandler>();
-  private authRules = new Map<string, AuthorizationRule>();
+  private server?: HTTPSServer
+  private nodeName: string
+  private routes = new Map<string, ServiceHandler>()
+  private authRules = new Map<string, AuthorizationRule>()
 
   constructor(nodeName: string) {
-    this.nodeName = nodeName;
+    this.nodeName = nodeName
   }
 
   /**
@@ -51,10 +51,10 @@ export class SecureNode {
     handler: ServiceHandler,
     authRule?: AuthorizationRule
   ): void {
-    this.routes.set(path, handler);
+    this.routes.set(path, handler)
 
     if (authRule) {
-      this.authRules.set(path, authRule);
+      this.authRules.set(path, authRule)
     }
   }
 
@@ -66,10 +66,10 @@ export class SecureNode {
     if (!certificateManager.hasNodeCertificate(this.nodeName)) {
       throw new Error(
         `Node ${this.nodeName} does not have certificates. Run: air mesh generate-cert ${this.nodeName}`
-      );
+      )
     }
 
-    const paths = certificateManager.getNodePaths(this.nodeName);
+    const paths = certificateManager.getNodePaths(this.nodeName)
 
     // Create HTTPS server with mTLS
     this.server = createServer(
@@ -86,20 +86,20 @@ export class SecureNode {
         ca: readFileSync(paths.ca),
 
         // Use modern TLS only
-        minVersion: 'TLSv1.2'
+        minVersion: 'TLSv1.2',
       },
       (req, res) => this.handleRequest(req, res)
-    );
+    )
 
     return new Promise((resolve, reject) => {
       this.server!.listen(port, () => {
-        console.log(`🔒 Secure node '${this.nodeName}' started on port ${port}`);
-        console.log('🔐 mTLS enabled - client certificates required');
-        resolve();
-      });
+        console.log(`🔒 Secure node '${this.nodeName}' started on port ${port}`)
+        console.log('🔐 mTLS enabled - client certificates required')
+        resolve()
+      })
 
-      this.server!.on('error', reject);
-    });
+      this.server!.on('error', reject)
+    })
   }
 
   /**
@@ -107,12 +107,12 @@ export class SecureNode {
    */
   async stop(): Promise<void> {
     if (this.server) {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         this.server!.close(() => {
-          console.log(`✅ Node '${this.nodeName}' stopped`);
-          resolve();
-        });
-      });
+          console.log(`✅ Node '${this.nodeName}' stopped`)
+          resolve()
+        })
+      })
     }
   }
 
@@ -125,47 +125,50 @@ export class SecureNode {
   ): Promise<void> {
     try {
       // Extract client identity from certificate
-      const socket = req.socket as any;
-      const clientCert = socket.getPeerCertificate();
-      const clientName = clientCert.subject?.CN || 'unknown';
+      const socket = req.socket as any
+      const clientCert = socket.getPeerCertificate()
+      const clientName = clientCert.subject?.CN || 'unknown'
 
-      console.log(`📨 Request from: ${clientName} → ${req.method} ${req.url}`);
+      console.log(`📨 Request from: ${clientName} → ${req.method} ${req.url}`)
 
       // Parse URL
-      const url = new URL(req.url || '/', 'https://localhost');
-      const path = url.pathname;
+      const url = new URL(req.url || '/', 'https://localhost')
+      const path = url.pathname
 
       // Check if route exists
-      const handler = this.routes.get(path);
+      const handler = this.routes.get(path)
       if (!handler) {
-        this.sendError(res, 404, 'Service not found');
-        return;
+        this.sendError(res, 404, 'Service not found')
+        return
       }
 
       // Check authorization
-      const authRule = this.authRules.get(path);
-      if (authRule && !this.isAuthorized(clientName, path, req.method || 'GET', authRule)) {
-        console.log(`❌ Unauthorized: ${clientName} → ${path}`);
-        this.sendError(res, 403, 'Forbidden: insufficient permissions');
-        return;
+      const authRule = this.authRules.get(path)
+      if (
+        authRule &&
+        !this.isAuthorized(clientName, path, req.method || 'GET', authRule)
+      ) {
+        console.log(`❌ Unauthorized: ${clientName} → ${path}`)
+        this.sendError(res, 403, 'Forbidden: insufficient permissions')
+        return
       }
 
       // Parse query parameters
-      const params: any = {};
+      const params: any = {}
       url.searchParams.forEach((value, key) => {
-        params[key] = value;
-      });
+        params[key] = value
+      })
 
       // Parse body if POST/PUT
       if (req.method === 'POST' || req.method === 'PUT') {
-        params.body = await this.parseBody(req);
+        params.body = await this.parseBody(req)
       }
 
       // Call handler
-      await handler(req, res, params);
+      await handler(req, res, params)
     } catch (error: any) {
-      console.error('❌ Request error:', error.message);
-      this.sendError(res, 500, error.message);
+      console.error('❌ Request error:', error.message)
+      this.sendError(res, 500, error.message)
     }
   }
 
@@ -179,16 +182,19 @@ export class SecureNode {
     rule: AuthorizationRule
   ): boolean {
     // Check if client is in allowed list
-    if (!rule.allowedNodes.includes(clientName) && !rule.allowedNodes.includes('*')) {
-      return false;
+    if (
+      !rule.allowedNodes.includes(clientName) &&
+      !rule.allowedNodes.includes('*')
+    ) {
+      return false
     }
 
     // Check if method is allowed
     if (rule.allowedMethods && !rule.allowedMethods.includes(method)) {
-      return false;
+      return false
     }
 
-    return true;
+    return true
   }
 
   /**
@@ -196,32 +202,32 @@ export class SecureNode {
    */
   private parseBody(req: IncomingMessage): Promise<any> {
     return new Promise((resolve, reject) => {
-      let body = '';
-      req.on('data', (chunk) => (body += chunk));
+      let body = ''
+      req.on('data', chunk => (body += chunk))
       req.on('end', () => {
         try {
-          resolve(JSON.parse(body));
+          resolve(JSON.parse(body))
         } catch {
-          resolve(body);
+          resolve(body)
         }
-      });
-      req.on('error', reject);
-    });
+      })
+      req.on('error', reject)
+    })
   }
 
   /**
    * Send JSON response
    */
   sendJSON(res: ServerResponse, data: any, statusCode = 200): void {
-    res.writeHead(statusCode, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(data, null, 2));
+    res.writeHead(statusCode, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify(data, null, 2))
   }
 
   /**
    * Send error response
    */
   private sendError(res: ServerResponse, code: number, message: string): void {
-    this.sendJSON(res, { success: false, error: message }, code);
+    this.sendJSON(res, { success: false, error: message }, code)
   }
 }
 
@@ -229,10 +235,10 @@ export class SecureNode {
  * Secure Client - Make requests to other nodes with mTLS
  */
 export class SecureClient {
-  private nodeName: string;
+  private nodeName: string
 
   constructor(nodeName: string) {
-    this.nodeName = nodeName;
+    this.nodeName = nodeName
   }
 
   /**
@@ -245,16 +251,16 @@ export class SecureClient {
     method: 'GET' | 'POST' = 'GET',
     body?: any
   ): Promise<any> {
-    const https = require('https');
+    const https = require('https')
 
     // Get this node's certificates
     if (!certificateManager.hasNodeCertificate(this.nodeName)) {
       throw new Error(
         `Node ${this.nodeName} does not have certificates. Run: air mesh generate-cert ${this.nodeName}`
-      );
+      )
     }
 
-    const paths = certificateManager.getNodePaths(this.nodeName);
+    const paths = certificateManager.getNodePaths(this.nodeName)
 
     const options = {
       hostname: targetHost,
@@ -268,39 +274,39 @@ export class SecureClient {
 
       // Verify server's certificate
       ca: readFileSync(paths.ca),
-      rejectUnauthorized: true
-    };
+      rejectUnauthorized: true,
+    }
 
     return new Promise((resolve, reject) => {
       const req = https.request(options, (res: IncomingMessage) => {
-        let data = '';
+        let data = ''
 
         res.on('data', (chunk: Buffer) => {
-          data += chunk.toString();
-        });
+          data += chunk.toString()
+        })
 
         res.on('end', () => {
           try {
-            const parsed = JSON.parse(data);
+            const parsed = JSON.parse(data)
 
             if (res.statusCode && res.statusCode >= 400) {
-              reject(new Error(parsed.error || `HTTP ${res.statusCode}`));
+              reject(new Error(parsed.error || `HTTP ${res.statusCode}`))
             } else {
-              resolve(parsed);
+              resolve(parsed)
             }
           } catch {
-            resolve(data);
+            resolve(data)
           }
-        });
-      });
+        })
+      })
 
-      req.on('error', reject);
+      req.on('error', reject)
 
       if (body) {
-        req.write(JSON.stringify(body));
+        req.write(JSON.stringify(body))
       }
 
-      req.end();
-    });
+      req.end()
+    })
   }
 }

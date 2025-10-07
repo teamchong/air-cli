@@ -5,18 +5,18 @@
  * Returns tab ID and network activity for reference.
  */
 
-import chalk from 'chalk';
+import chalk from 'chalk'
 
-import { BrowserHelper } from '../../../lib/browser-helper';
-import { createCommand } from '../../lib/command-builder';
-import type { NetworkOptions } from '../../types';
+import { BrowserHelper } from '../../../lib/browser-helper'
+import { createCommand } from '../../lib/command-builder'
+import type { NetworkOptions } from '../../types'
 
 export const networkCommand = createCommand<NetworkOptions>({
   metadata: {
     name: 'network',
     category: 'advanced',
     description: 'Monitor network requests',
-    aliases: []
+    aliases: [],
   },
 
   command: 'network',
@@ -28,58 +28,58 @@ export const networkCommand = createCommand<NetworkOptions>({
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p'
+        alias: 'p',
       })
       .option('filter', {
         describe: 'Filter URLs by pattern',
         type: 'string',
-        alias: 'f'
+        alias: 'f',
       })
       .option('method', {
         describe: 'Filter by HTTP method',
         type: 'string',
         choices: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
-        alias: 'm'
+        alias: 'm',
       })
       .option('status', {
         describe: 'Filter by status code',
         type: 'number',
-        alias: 's'
+        alias: 's',
       })
       .option('json', {
         describe: 'Output as JSON',
         type: 'boolean',
-        default: false
+        default: false,
       })
       .example('$0 network', 'Monitor all network requests')
       .example('$0 network --filter api', 'Monitor requests containing "api"')
       .example('$0 network --method POST', 'Monitor only POST requests')
-      .example('$0 network --status 404', 'Monitor only 404 responses');
+      .example('$0 network --status 404', 'Monitor only 404 responses')
   },
 
   handler: async cmdContext => {
     try {
-      const { argv, logger } = cmdContext;
+      const { argv, logger } = cmdContext
 
-      const page = await BrowserHelper.getActivePage(argv.port);
+      const page = await BrowserHelper.getActivePage(argv.port)
       if (!page) {
-        throw new Error('No active page. Use "air open" first');
+        throw new Error('No active page. Use "air open" first')
       }
 
-      const requests: any[] = [];
-      const requestMap = new Map<string, any>();
+      const requests: any[] = []
+      const requestMap = new Map<string, any>()
 
       // Create handler functions for proper cleanup
       const requestHandler = (request: any) => {
-        const url = request.url();
-        const method = request.method();
+        const url = request.url()
+        const method = request.method()
 
         // Apply filters
         if (argv.filter && !url.includes(argv.filter)) {
-          return;
+          return
         }
         if (argv.method && method !== argv.method) {
-          return;
+          return
         }
 
         const requestInfo = {
@@ -87,35 +87,35 @@ export const networkCommand = createCommand<NetworkOptions>({
           method,
           resourceType: request.resourceType(),
           timestamp: new Date().toISOString(),
-          headers: request.headers()
-        };
+          headers: request.headers(),
+        }
 
         // Store request for matching with response
-        requestMap.set(request.url() + request.method(), requestInfo);
-        requests.push(requestInfo);
+        requestMap.set(request.url() + request.method(), requestInfo)
+        requests.push(requestInfo)
 
         if (!argv.json) {
           logger.info(
             `${chalk.cyan(`→ ${method} ${requestInfo.resourceType}`)} ${url}`
-          );
+          )
         }
-      };
+      }
 
       const responseHandler = (response: any) => {
-        const url = response.url();
-        const status = response.status();
-        const request = response.request();
-        const method = request.method();
+        const url = response.url()
+        const status = response.status()
+        const request = response.request()
+        const method = request.method()
 
         // Apply filters
         if (argv.filter && !url.includes(argv.filter)) {
-          return;
+          return
         }
         if (argv.method && method !== argv.method) {
-          return;
+          return
         }
         if (argv.status && status !== argv.status) {
-          return;
+          return
         }
 
         const responseInfo = {
@@ -124,14 +124,14 @@ export const networkCommand = createCommand<NetworkOptions>({
           method,
           statusText: response.statusText(),
           headers: response.headers(),
-          timestamp: new Date().toISOString()
-        };
+          timestamp: new Date().toISOString(),
+        }
 
         // Update request with response data
-        const requestKey = url + method;
-        const requestData = requestMap.get(requestKey);
+        const requestKey = url + method
+        const requestData = requestMap.get(requestKey)
         if (requestData) {
-          requestData.response = responseInfo;
+          requestData.response = responseInfo
         }
 
         if (!argv.json) {
@@ -140,51 +140,51 @@ export const networkCommand = createCommand<NetworkOptions>({
               ? chalk.red
               : status >= 300
                 ? chalk.yellow
-                : chalk.green;
-          logger.info(`${statusColor(`← ${status}`)} ${url}`);
+                : chalk.green
+          logger.info(`${statusColor(`← ${status}`)} ${url}`)
         }
-      };
+      }
 
       const requestFailedHandler = (request: any) => {
-        const url = request.url();
-        const method = request.method();
+        const url = request.url()
+        const method = request.method()
 
         // Apply filters
         if (argv.filter && !url.includes(argv.filter)) {
-          return;
+          return
         }
         if (argv.method && method !== argv.method) {
-          return;
+          return
         }
 
         const failureInfo = {
           url,
           method,
           failure: request.failure()?.errorText || 'Unknown error',
-          timestamp: new Date().toISOString()
-        };
+          timestamp: new Date().toISOString(),
+        }
 
         if (!argv.json) {
           logger.info(
             `${chalk.red(`✗ ${method}`)} ${url} - ${failureInfo.failure}`
-          );
+          )
         }
 
-        requests.push(failureInfo);
-      };
+        requests.push(failureInfo)
+      }
 
       try {
         // Set up event listeners
-        page.on('request', requestHandler);
-        page.on('response', responseHandler);
-        page.on('requestfailed', requestFailedHandler);
+        page.on('request', requestHandler)
+        page.on('response', responseHandler)
+        page.on('requestfailed', requestFailedHandler)
 
         // Get tab ID for reference
-        const tabId = await BrowserHelper.getPageId(page);
+        const tabId = await BrowserHelper.getPageId(page)
 
         // Capture current network state and exit immediately
         // Wait briefly to capture any active requests (500ms)
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 500))
 
         if (argv.json) {
           logger.json({
@@ -192,41 +192,41 @@ export const networkCommand = createCommand<NetworkOptions>({
             tabId,
             requests,
             count: requests.length,
-            timestamp: new Date().toISOString()
-          });
+            timestamp: new Date().toISOString(),
+          })
         } else {
-          logger.success(`✅ Network snapshot for tab: ${tabId}`);
+          logger.success(`✅ Network snapshot for tab: ${tabId}`)
           if (requests.length === 0) {
-            logger.info('📡 No active network requests');
+            logger.info('📡 No active network requests')
           } else {
-            logger.info(`📡 ${requests.length} request(s) captured:`);
+            logger.info(`📡 ${requests.length} request(s) captured:`)
             requests.slice(0, 10).forEach(req => {
-              const method = req.request?.method || 'GET';
-              const status = req.response?.status;
+              const method = req.request?.method || 'GET'
+              const status = req.response?.status
               const statusColor =
                 status >= 400
                   ? chalk.red
                   : status >= 300
                     ? chalk.yellow
-                    : chalk.green;
+                    : chalk.green
               logger.info(
                 `  ${method} ${req.url} ${status ? statusColor(status) : ''}`
-              );
-            });
+              )
+            })
             if (requests.length > 10) {
-              logger.info(`  ... and ${requests.length - 10} more`);
+              logger.info(`  ... and ${requests.length - 10} more`)
             }
           }
         }
       } finally {
         // CRITICAL: Remove event listeners to prevent memory leaks
-        page.off('request', requestHandler);
-        page.off('response', responseHandler);
-        page.off('requestfailed', requestFailedHandler);
+        page.off('request', requestHandler)
+        page.off('response', responseHandler)
+        page.off('requestfailed', requestFailedHandler)
       }
     } catch (error: any) {
-      cmdContext.logger.error(`Failed to monitor network: ${error.message}`);
-      throw new Error('Command failed');
+      cmdContext.logger.error(`Failed to monitor network: ${error.message}`)
+      throw new Error('Command failed')
     }
-  }
-});
+  },
+})

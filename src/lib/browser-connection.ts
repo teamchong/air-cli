@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import chalk from 'chalk'
 
 export interface BrowserPage {
   id: string
@@ -9,7 +9,7 @@ export interface BrowserPage {
 
 export class BrowserConnection {
   static async checkConnection(port: number = 9222): Promise<boolean> {
-    const { spawnSync } = require('child_process');
+    const { spawnSync } = require('child_process')
 
     const result = spawnSync(
       'curl',
@@ -19,38 +19,38 @@ export class BrowserConnection {
         '/dev/null',
         '-w',
         '%{http_code}',
-        `http://localhost:${port}/json/version`
+        `http://localhost:${port}/json/version`,
       ],
       {
         timeout: 3000,
-        encoding: 'utf8'
+        encoding: 'utf8',
       }
-    );
+    )
 
-    return result.stdout && result.stdout.trim() === '200';
+    return result.stdout && result.stdout.trim() === '200'
   }
 
   static async getPages(port: number = 9222): Promise<BrowserPage[]> {
-    const { spawnSync } = require('child_process');
+    const { spawnSync } = require('child_process')
 
     const result = spawnSync('curl', ['-s', `http://localhost:${port}/json`], {
       timeout: 3000,
-      encoding: 'utf8'
-    });
+      encoding: 'utf8',
+    })
 
     if (!result.stdout) {
-      throw new Error('No browser running on port ' + port);
+      throw new Error('No browser running on port ' + port)
     }
 
     try {
-      return JSON.parse(result.stdout);
+      return JSON.parse(result.stdout)
     } catch {
-      throw new Error('Failed to get page list');
+      throw new Error('Failed to get page list')
     }
   }
 
   static async getActivePage(port: number = 9222): Promise<BrowserPage | null> {
-    const pages = await this.getPages(port);
+    const pages = await this.getPages(port)
 
     // Find the first non-chrome page (actual web page)
     const activePage = pages.find(
@@ -58,9 +58,9 @@ export class BrowserConnection {
         p.type === 'page' &&
         !p.url.startsWith('chrome://') &&
         !p.url.startsWith('about:')
-    );
+    )
 
-    return activePage || null;
+    return activePage || null
   }
 
   static async executeInPage(
@@ -75,6 +75,6 @@ export class BrowserConnection {
     // Alternative: Use chrome.debugger API or extension
     throw new Error(
       'Direct execution requires WebSocket connection. Use "air open" with Playwright mode.'
-    );
+    )
   }
 }

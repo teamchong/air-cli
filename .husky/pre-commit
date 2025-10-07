@@ -1,1 +1,12 @@
+#!/usr/bin/env sh
+
+# Run typecheck first (fails fast if types are broken)
+echo "🔍 Running TypeScript typecheck..."
+bun run typecheck || {
+  echo "❌ TypeScript typecheck failed. Please fix type errors before committing."
+  exit 1
+}
+
+# Run lint-staged for formatting and linting
+echo "✨ Running lint-staged..."
 bun x lint-staged

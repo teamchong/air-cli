@@ -1,4 +1,4 @@
-import { Browser, Page, BrowserContext } from 'playwright';
+import { Browser, Page, BrowserContext } from 'playwright'
 
 /**
  * Interface for browser operations
@@ -70,8 +70,8 @@ export interface IBrowserService {
  * Mock browser service for testing
  */
 export class MockBrowserService implements IBrowserService {
-  private mockBrowser: any;
-  private mockPage: any;
+  private mockBrowser: any
+  private mockPage: any
 
   constructor(mockBrowser?: any, mockPage?: any) {
     this.mockBrowser = mockBrowser || {
@@ -81,57 +81,57 @@ export class MockBrowserService implements IBrowserService {
         Promise.resolve({
           newPage: () => Promise.resolve(this.mockPage),
           setDefaultTimeout: () => {},
-          pages: () => []
-        })
-    };
+          pages: () => [],
+        }),
+    }
 
     this.mockPage = mockPage || {
       url: () => 'https://example.com',
       accessibility: {
-        snapshot: () => Promise.resolve(null)
+        snapshot: () => Promise.resolve(null),
       },
       click: () => Promise.resolve(),
       type: () => Promise.resolve(),
-      goto: () => Promise.resolve()
-    };
+      goto: () => Promise.resolve(),
+    }
   }
 
   async getBrowser(port = 9222): Promise<Browser> {
-    return this.mockBrowser;
+    return this.mockBrowser
   }
 
   async withBrowser<T>(
     port: number,
     action: (browser: Browser) => Promise<T>
   ): Promise<T> {
-    return action(this.mockBrowser);
+    return action(this.mockBrowser)
   }
 
   async getPages(port = 9222): Promise<Page[]> {
-    return [this.mockPage];
+    return [this.mockPage]
   }
 
   async getPage(index = 0, port = 9222): Promise<Page | null> {
-    return index === 0 ? this.mockPage : null;
+    return index === 0 ? this.mockPage : null
   }
 
   async getActivePage(port = 9222): Promise<Page> {
-    return this.mockPage;
+    return this.mockPage
   }
 
   async withActivePage<T>(
     port: number,
     action: (page: Page) => Promise<T>
   ): Promise<T> {
-    return action(this.mockPage);
+    return action(this.mockPage)
   }
 
   async getContexts(port = 9222): Promise<BrowserContext[]> {
-    return [];
+    return []
   }
 
   async isPortOpen(port: number): Promise<boolean> {
-    return true;
+    return true
   }
 
   async launchChrome(
@@ -143,6 +143,6 @@ export class MockBrowserService implements IBrowserService {
   }
 
   async createTabHTTP(port: number, url: string): Promise<boolean> {
-    return true;
+    return true
   }
 }

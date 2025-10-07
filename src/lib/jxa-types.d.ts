@@ -8,4 +8,4 @@ declare global {
   function Application(name: string): any
 }
 
-export {};
+export {}

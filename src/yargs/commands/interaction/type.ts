@@ -5,19 +5,19 @@
  * Supports clearing fields before typing and controlling typing speed.
  */
 
-import { BrowserHelper } from '../../../lib/browser-helper';
-import { refManager } from '../../../lib/ref-manager';
-import { findElementByRef, nodeToSelector } from '../../../lib/ref-utils';
-import { findBestSelector } from '../../../lib/selector-resolver';
-import { createCommand } from '../../lib/command-builder';
-import type { TypeOptions } from '../../types';
+import { BrowserHelper } from '../../../lib/browser-helper'
+import { refManager } from '../../../lib/ref-manager'
+import { findElementByRef, nodeToSelector } from '../../../lib/ref-utils'
+import { findBestSelector } from '../../../lib/selector-resolver'
+import { createCommand } from '../../lib/command-builder'
+import type { TypeOptions } from '../../types'
 
 export const typeCommand = createCommand<TypeOptions>({
   metadata: {
     name: 'type',
     category: 'interaction',
     description: 'Type text into an element',
-    aliases: []
+    aliases: [],
   },
 
   command: 'type [selector] [text]',
@@ -29,59 +29,59 @@ export const typeCommand = createCommand<TypeOptions>({
         describe:
           'Element selector or text to find (use --ref for ref-based selection)',
         type: 'string',
-        demandOption: false
+        demandOption: false,
       })
       .positional('text', {
         describe: 'Text to type',
         type: 'string',
-        demandOption: false
+        demandOption: false,
       })
       .option('ref', {
         describe: 'Use a ref from snapshot command',
-        type: 'string'
+        type: 'string',
       })
       .option('port', {
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p'
+        alias: 'p',
       })
       .option('delay', {
         describe: 'Delay between keystrokes in milliseconds',
         type: 'number',
-        default: 0
+        default: 0,
       })
       .option('timeout', {
         describe: 'Timeout in milliseconds',
         type: 'number',
-        default: 5000
+        default: 5000,
       })
       .option('clear', {
         describe: 'Clear field before typing',
         type: 'boolean',
-        default: false
+        default: false,
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab'
+        alias: 'tab',
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string'
+        type: 'string',
       })
-      .conflicts('tab-index', 'tab-id');
+      .conflicts('tab-index', 'tab-id')
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { port, delay, timeout, clear } = argv;
-    const tabIndex = argv['tab-index'] as number | undefined;
-    const tabId = argv['tab-id'] as string | undefined;
-    const ref = argv.ref as string | undefined;
+    const { port, delay, timeout, clear } = argv
+    const tabIndex = argv['tab-index'] as number | undefined
+    const tabId = argv['tab-id'] as string | undefined
+    const ref = argv.ref as string | undefined
 
     // Smart argument resolution
-    let text: string;
-    let selector: string | undefined;
+    let text: string
+    let selector: string | undefined
 
     if (ref) {
       // When using --ref, we expect: type --ref <ref> <text>
@@ -91,39 +91,39 @@ export const typeCommand = createCommand<TypeOptions>({
 
       if (argv.text) {
         // Case: type <dummy> --ref <ref> <text>
-        selector = argv.selector as string;
-        text = argv.text as string;
+        selector = argv.selector as string
+        text = argv.text as string
         // If selector is a dummy value, ignore it
         if (
           selector === '-' ||
           selector === 'dummy' ||
           selector === 'placeholder'
         ) {
-          selector = undefined;
+          selector = undefined
         }
       } else if (argv.selector) {
         // Case: type --ref <ref> <text>
         // The <text> gets parsed as selector
-        text = argv.selector as string;
-        selector = undefined;
+        text = argv.selector as string
+        selector = undefined
       } else {
-        throw new Error('Text to type is required');
+        throw new Error('Text to type is required')
       }
     } else {
       // Normal case: type <selector> <text>
-      selector = argv.selector as string | undefined;
-      text = argv.text as string;
+      selector = argv.selector as string | undefined
+      text = argv.text as string
 
       if (!selector || !text) {
         throw new Error(
           'Both selector and text are required when not using --ref'
-        );
+        )
       }
     }
 
     // Validate that we have either selector or ref
     if (!selector && !ref) {
-      throw new Error('Either selector or --ref must be provided');
+      throw new Error('Either selector or --ref must be provided')
     }
 
     const tabTarget =
@@ -131,83 +131,83 @@ export const typeCommand = createCommand<TypeOptions>({
         ? ` in tab ${tabIndex}`
         : tabId !== undefined
           ? ` in tab ${tabId.slice(0, 8)}...`
-          : '';
+          : ''
 
-    const targetDesc = ref ? `[${ref}]` : selector;
+    const targetDesc = ref ? `[${ref}]` : selector
 
     if (spinner) {
-      spinner.text = `Typing into ${targetDesc}${tabTarget}...`;
+      spinner.text = `Typing into ${targetDesc}${tabTarget}...`
     }
 
     await BrowserHelper.withTargetPage(port, tabIndex, tabId, async page => {
-      let actualSelector: string;
+      let actualSelector: string
 
       // Handle --ref flag
       if (ref) {
         // Try to get selector from RefManager first
-        const storedSelector = await refManager.getSelector(ref, tabId);
+        const storedSelector = await refManager.getSelector(ref, tabId)
         if (storedSelector) {
-          actualSelector = storedSelector;
+          actualSelector = storedSelector
           if (spinner) {
-            spinner.text = `Using stored ref=${ref}...`;
+            spinner.text = `Using stored ref=${ref}...`
           }
         } else {
           // Fallback to accessibility tree search
           if (spinner) {
-            spinner.text = `Finding element with ref=${ref}...`;
+            spinner.text = `Finding element with ref=${ref}...`
           }
-          const snapshot = await page.accessibility.snapshot();
-          const element = findElementByRef(snapshot, ref);
+          const snapshot = await page.accessibility.snapshot()
+          const element = findElementByRef(snapshot, ref)
           if (!element) {
-            throw new Error(`ref not found: Element with ref=${ref} not found`);
+            throw new Error(`ref not found: Element with ref=${ref} not found`)
           }
-          actualSelector = nodeToSelector(element);
+          actualSelector = nodeToSelector(element)
         }
       } else if (selector) {
         // Try text-based selector resolution first
         if (spinner) {
-          spinner.text = `Finding element: "${selector}"...`;
+          spinner.text = `Finding element: "${selector}"...`
         }
 
-        const textSelectorResult = await findBestSelector(page, selector);
+        const textSelectorResult = await findBestSelector(page, selector)
         if (textSelectorResult) {
-          actualSelector = textSelectorResult.selector;
+          actualSelector = textSelectorResult.selector
           if (spinner) {
-            spinner.text = `Found via ${textSelectorResult.strategy}: ${selector}...`;
+            spinner.text = `Found via ${textSelectorResult.strategy}: ${selector}...`
           }
         } else {
           // If not a CSS selector and no element found by text, throw clear error
           const isCss =
             /^[#.]/.test(selector) ||
             /[.\[\]\>\+\~:]/.test(selector) ||
-            /^[a-z]+$/i.test(selector);
+            /^[a-z]+$/i.test(selector)
           if (!isCss) {
             throw new Error(
               `Element not found by text: "${selector}". Try using a CSS selector or check the page content with 'snapshot'.`
-            );
+            )
           }
           // Fallback to using selector as-is (CSS selector)
-          actualSelector = selector;
+          actualSelector = selector
         }
       } else {
-        throw new Error('No selector or ref provided');
+        throw new Error('No selector or ref provided')
       }
 
       // Wait for element to exist first (fail fast if not found)
       await page.waitForSelector(actualSelector, {
-        timeout: Math.min(timeout || 5000, 2000)
-      });
+        timeout: Math.min(timeout || 5000, 2000),
+      })
 
       if (clear) {
-        await page.fill(actualSelector, text, { timeout });
+        await page.fill(actualSelector, text, { timeout })
       } else {
         await page.type(actualSelector, text, {
           delay,
-          timeout
-        });
+          timeout,
+        })
       }
-    });
+    })
 
-    logger.success(`Typed text into ${targetDesc}${tabTarget}`);
-  }
-});
+    logger.success(`Typed text into ${targetDesc}${tabTarget}`)
+  },
+})

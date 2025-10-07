@@ -3,9 +3,9 @@
  * Provides a global solution for wrapping all command executions with timeout protection
  */
 
-import { Page } from 'playwright';
+import { Page } from 'playwright'
 
-import { withTimeout, TimeoutError } from './timeout-utils';
+import { withTimeout, TimeoutError } from './timeout-utils'
 
 // Global timeout configuration
 export const COMMAND_TIMEOUTS = {
@@ -24,8 +24,8 @@ export const COMMAND_TIMEOUTS = {
   fileOperation: 5000,
 
   // Default fallback
-  default: 10000
-};
+  default: 10000,
+}
 
 /**
  * Wrap any async operation with appropriate timeout
@@ -35,38 +35,38 @@ export async function withCommandTimeout<T>(
   operationType: keyof typeof COMMAND_TIMEOUTS = 'default',
   operationName?: string
 ): Promise<T> {
-  const timeout = COMMAND_TIMEOUTS[operationType];
-  const name = operationName || operationType;
+  const timeout = COMMAND_TIMEOUTS[operationType]
+  const name = operationName || operationType
 
   try {
-    return await withTimeout(operation, timeout, name);
+    return await withTimeout(operation, timeout, name)
   } catch (error) {
     if (error instanceof TimeoutError) {
       // Clean up and provide helpful error message
-      console.error(`❌ Operation timed out: ${name}`);
-      console.error('💡 This usually means:');
+      console.error(`❌ Operation timed out: ${name}`)
+      console.error('💡 This usually means:')
 
       switch (operationType) {
-      case 'cdp':
-        console.error('   - The browser is unresponsive');
-        console.error('   - The tab ID might be invalid');
-        break;
-      case 'navigation':
-        console.error('   - The page is taking too long to load');
-        console.error('   - Network issues or slow server');
-        break;
-      case 'interaction':
-        console.error('   - The element is not available');
-        console.error("   - The page hasn't finished loading");
-        break;
-      default:
-        console.error('   - The operation is taking longer than expected');
+        case 'cdp':
+          console.error('   - The browser is unresponsive')
+          console.error('   - The tab ID might be invalid')
+          break
+        case 'navigation':
+          console.error('   - The page is taking too long to load')
+          console.error('   - Network issues or slow server')
+          break
+        case 'interaction':
+          console.error('   - The element is not available')
+          console.error("   - The page hasn't finished loading")
+          break
+        default:
+          console.error('   - The operation is taking longer than expected')
       }
 
       // Re-throw with cleaner error
-      throw new Error(`${name} timed out after ${timeout}ms`);
+      throw new Error(`${name} timed out after ${timeout}ms`)
     }
-    throw error;
+    throw error
   }
 }
 
@@ -78,8 +78,8 @@ export function createTimeoutProtectedFunction<TArgs extends any[], TResult>(
   operationType: keyof typeof COMMAND_TIMEOUTS = 'default'
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs): Promise<TResult> => {
-    return withCommandTimeout(fn(...args), operationType, fn.name);
-  };
+    return withCommandTimeout(fn(...args), operationType, fn.name)
+  }
 }
 
 /**
@@ -89,51 +89,51 @@ export function wrapPageWithTimeout(page: Page): Page {
   // Create a proxy that wraps all async methods with timeout
   return new Proxy(page, {
     get(target, prop) {
-      const original = target[prop as keyof Page];
+      const original = target[prop as keyof Page]
 
       // Only wrap async functions
       if (typeof original === 'function') {
         return function (...args: any[]) {
-          const result = (original as any).apply(target, args);
+          const result = (original as any).apply(target, args)
 
           // If it returns a promise, wrap with timeout
           if (result && typeof result.then === 'function') {
             // Determine operation type based on method name
-            let operationType: keyof typeof COMMAND_TIMEOUTS = 'default';
+            let operationType: keyof typeof COMMAND_TIMEOUTS = 'default'
 
-            const methodName = String(prop);
+            const methodName = String(prop)
             if (
               methodName.includes('goto') ||
               methodName.includes('navigate')
             ) {
-              operationType = 'navigation';
+              operationType = 'navigation'
             } else if (
               methodName.includes('click') ||
               methodName.includes('type') ||
               methodName.includes('fill')
             ) {
-              operationType = 'interaction';
+              operationType = 'interaction'
             } else if (methodName.includes('eval')) {
-              operationType = 'evaluation';
+              operationType = 'evaluation'
             } else if (
               methodName.includes('screenshot') ||
               methodName.includes('pdf')
             ) {
-              operationType = 'capture';
+              operationType = 'capture'
             }
 
             return withCommandTimeout(
               result,
               operationType,
               `page.${methodName}`
-            );
+            )
           }
 
-          return result;
-        };
+          return result
+        }
       }
 
-      return original;
-    }
-  });
+      return original
+    },
+  })
 }

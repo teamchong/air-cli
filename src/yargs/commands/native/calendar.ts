@@ -5,11 +5,11 @@
  * Supports showing today's events or all events.
  */
 
-import type { ArgumentsCamelCase } from 'yargs';
+import type { ArgumentsCamelCase } from 'yargs'
 
-import { macOSAutomation } from '../../../lib/macos-automation';
-import { createCommand } from '../../lib/command-builder';
-import type { BaseCommandOptions } from '../../types';
+import { macOSAutomation } from '../../../lib/macos-automation'
+import { createCommand } from '../../lib/command-builder'
+import type { BaseCommandOptions } from '../../types'
 
 interface CalendarCommandOptions extends BaseCommandOptions {
   today?: boolean
@@ -22,7 +22,7 @@ export const calendarCommand = createCommand<CalendarCommandOptions>({
     name: 'calendar',
     category: 'native',
     description: 'Access Calendar.app events',
-    aliases: []
+    aliases: [],
   },
   command: 'calendar',
   describe: 'Access Calendar.app events',
@@ -33,16 +33,16 @@ export const calendarCommand = createCommand<CalendarCommandOptions>({
       .option('today', {
         type: 'boolean',
         describe: "Only show today's events",
-        default: true
+        default: true,
       })
       .option('all', {
         type: 'boolean',
         describe: 'Show all events',
-        default: false
+        default: false,
       })
       .option('limit', {
         type: 'number',
-        describe: 'Limit number of events returned'
+        describe: 'Limit number of events returned',
       })
       .example('$0 calendar', "Get today's events from Calendar.app")
       .example('$0 calendar --all', 'Get all events')
@@ -50,69 +50,69 @@ export const calendarCommand = createCommand<CalendarCommandOptions>({
       .example('$0 calendar --json', 'Output events as JSON'),
 
   handler: async context => {
-    const { argv, logger } = context;
+    const { argv, logger } = context
 
     try {
       // Check if running on macOS
       if (process.platform !== 'darwin') {
-        throw new Error('Calendar command only works on macOS');
+        throw new Error('Calendar command only works on macOS')
       }
 
       // Get events based on options
       let events = argv.all
         ? await macOSAutomation.getAllCalendarEvents()
-        : await macOSAutomation.getTodayCalendarEvents();
+        : await macOSAutomation.getTodayCalendarEvents()
 
       // Apply limit if specified
       if (argv.limit && argv.limit > 0) {
-        events = events.slice(0, argv.limit);
+        events = events.slice(0, argv.limit)
       }
 
       // Output as JSON or formatted
       if (argv.json) {
-        logger.json(events);
+        logger.json(events)
       } else {
         if (events.length === 0) {
-          logger.info(argv.all ? 'No events found' : 'No events today');
-          return;
+          logger.info(argv.all ? 'No events found' : 'No events today')
+          return
         }
 
-        logger.info(`Found ${events.length} event(s):\n`);
+        logger.info(`Found ${events.length} event(s):\n`)
 
         events.forEach((evt, index) => {
-          const start = new Date(evt.startDate).toLocaleString();
-          const end = new Date(evt.endDate).toLocaleString();
+          const start = new Date(evt.startDate).toLocaleString()
+          const end = new Date(evt.endDate).toLocaleString()
 
-          logger.info(`📅 [${index + 1}] ${evt.title}`);
-          logger.info(`   Start: ${start}`);
-          logger.info(`   End:   ${end}`);
+          logger.info(`📅 [${index + 1}] ${evt.title}`)
+          logger.info(`   Start: ${start}`)
+          logger.info(`   End:   ${end}`)
 
           if (evt.location) {
-            logger.info(`   Location: ${evt.location}`);
+            logger.info(`   Location: ${evt.location}`)
           }
 
           if (argv.verbose && evt.notes) {
             const preview =
               evt.notes.length > 100
                 ? evt.notes.substring(0, 100) + '...'
-                : evt.notes;
-            logger.info(`   Notes: ${preview}`);
+                : evt.notes
+            logger.info(`   Notes: ${preview}`)
           }
 
-          logger.info(''); // Blank line
-        });
+          logger.info('') // Blank line
+        })
 
-        logger.info(`Total: ${events.length} event(s)`);
+        logger.info(`Total: ${events.length} event(s)`)
       }
     } catch (error: any) {
       if (error.message.includes("Application isn't running")) {
         logger.error(
           'Calendar.app is not running. Please open Calendar.app first.'
-        );
+        )
       } else {
-        logger.error(error.message);
+        logger.error(error.message)
       }
-      throw error;
+      throw error
     }
-  }
-});
+  },
+})

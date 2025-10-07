@@ -5,18 +5,18 @@
  * Supports both continuous monitoring and one-time message retrieval.
  */
 
-import chalk from 'chalk';
+import chalk from 'chalk'
 
-import { BrowserHelper } from '../../../lib/browser-helper';
-import { createCommand } from '../../lib/command-builder';
-import type { ConsoleOptions } from '../../types';
+import { BrowserHelper } from '../../../lib/browser-helper'
+import { createCommand } from '../../lib/command-builder'
+import type { ConsoleOptions } from '../../types'
 
 export const consoleCommand = createCommand<ConsoleOptions>({
   metadata: {
     name: 'console',
     category: 'advanced',
     description: 'Capture browser console output',
-    aliases: []
+    aliases: [],
   },
 
   command: 'console',
@@ -28,70 +28,70 @@ export const consoleCommand = createCommand<ConsoleOptions>({
         describe: 'Chrome debugging port',
         type: 'number',
         default: 9222,
-        alias: 'p'
+        alias: 'p',
       })
       .option('filter', {
         describe: 'Filter messages by type',
         type: 'string',
         choices: ['error', 'warn', 'info', 'debug', 'all'],
-        default: 'all'
+        default: 'all',
       })
       .option('json', {
         describe: 'Output messages as JSON',
         type: 'boolean',
-        default: false
+        default: false,
       })
       .option('tab-index', {
         describe: 'Target specific tab by index (0-based)',
         type: 'number',
-        alias: 'tab'
+        alias: 'tab',
       })
       .option('tab-id', {
         describe: 'Target specific tab by unique ID',
-        type: 'string'
+        type: 'string',
       })
       .option('monitor', {
         describe: 'Continuously monitor console output',
         type: 'boolean',
         default: false,
-        alias: 'm'
+        alias: 'm',
       })
       .conflicts('tab-index', 'tab-id')
       .example('$0 console', 'Show all console messages from the page')
       .example('$0 console --monitor', 'Continuously monitor console messages')
-      .example('$0 console --filter error', 'Show only error messages');
+      .example('$0 console --filter error', 'Show only error messages')
   },
 
   handler: async cmdContext => {
     try {
-      const { argv, logger } = cmdContext;
-      const tabIndex = argv['tab-index'] as number | undefined;
-      const tabId = argv['tab-id'] as string | undefined;
+      const { argv, logger } = cmdContext
+      const tabIndex = argv['tab-index'] as number | undefined
+      const tabId = argv['tab-id'] as string | undefined
 
       await BrowserHelper.withTargetPage(
         argv.port,
         tabIndex,
         tabId,
         async page => {
-          const messages: any[] = [];
+          const messages: any[] = []
 
           // Create console message handler function for proper cleanup
           const consoleHandler = (msg: any) => {
-            const type = msg.type();
-            const text = msg.text();
+            const type = msg.type()
+            const text = msg.text()
 
             // Apply filter if specified
             if (argv.filter !== 'all' && type !== argv.filter) {
-              return;
+              return
             }
 
             const messageData = {
               type,
               text,
-              timestamp: new Date().toISOString()
-            };
+              timestamp: new Date().toISOString(),
+            }
 
-            messages.push(messageData);
+            messages.push(messageData)
 
             // Log messages in real-time if not in JSON mode
             if (!argv.json) {
@@ -102,71 +102,71 @@ export const consoleCommand = createCommand<ConsoleOptions>({
                     ? chalk.yellow('⚠️')
                     : type === 'debug'
                       ? chalk.gray('🐛')
-                      : chalk.blue('ℹ️');
+                      : chalk.blue('ℹ️')
 
-              const output = `${prefix} [${type}] ${text}`;
-              logger.info(output);
+              const output = `${prefix} [${type}] ${text}`
+              logger.info(output)
             }
-          };
+          }
 
           try {
             // Set up console message listener BEFORE any actions
-            page.on('console', consoleHandler);
+            page.on('console', consoleHandler)
 
             // Get tab ID for reference
-            const pageTabId = await BrowserHelper.getPageId(page);
+            const pageTabId = await BrowserHelper.getPageId(page)
 
             // Always reload the page to capture all messages from the beginning
             // Users expect to see ALL console messages when they run this command
-            const currentUrl = page.url();
+            const currentUrl = page.url()
             if (currentUrl && currentUrl !== 'about:blank') {
-              await page.reload();
+              await page.reload()
               // Wait for the page to load
               await page
                 .waitForLoadState('networkidle', { timeout: 10000 })
-                .catch(() => {});
+                .catch(() => {})
             }
 
             // If monitor mode, keep running for a reasonable time
             if (argv.monitor) {
-              logger.info(`📡 Monitoring console output for tab: ${pageTabId}`);
-              logger.info('Press Ctrl+C to stop...');
+              logger.info(`📡 Monitoring console output for tab: ${pageTabId}`)
+              logger.info('Press Ctrl+C to stop...')
 
               // Keep monitoring for up to 30 seconds, then auto-exit
-              let timeoutHandle: NodeJS.Timeout | undefined;
-              let signalHandler: (() => void) | undefined;
+              let timeoutHandle: NodeJS.Timeout | undefined
+              let signalHandler: (() => void) | undefined
 
               try {
                 await new Promise<void>(resolve => {
                   timeoutHandle = setTimeout(() => {
-                    logger.info('⏰ Monitor timeout reached (30s), exiting...');
-                    resolve();
-                  }, 30000);
+                    logger.info('⏰ Monitor timeout reached (30s), exiting...')
+                    resolve()
+                  }, 30000)
 
                   // Also handle process signals
                   signalHandler = () => {
-                    if (timeoutHandle) clearTimeout(timeoutHandle);
-                    resolve();
-                  };
+                    if (timeoutHandle) clearTimeout(timeoutHandle)
+                    resolve()
+                  }
 
-                  process.once('SIGINT', signalHandler);
-                  process.once('SIGTERM', signalHandler);
-                });
+                  process.once('SIGINT', signalHandler)
+                  process.once('SIGTERM', signalHandler)
+                })
               } finally {
                 // Clean up timeout and listeners
-                if (timeoutHandle) clearTimeout(timeoutHandle);
+                if (timeoutHandle) clearTimeout(timeoutHandle)
                 if (signalHandler) {
-                  process.removeListener('SIGINT', signalHandler);
-                  process.removeListener('SIGTERM', signalHandler);
+                  process.removeListener('SIGINT', signalHandler)
+                  process.removeListener('SIGTERM', signalHandler)
                 }
               }
             }
 
             // Otherwise, wait briefly to capture any immediate messages
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 500))
 
             // Show all captured messages
-            const filteredMessages = messages;
+            const filteredMessages = messages
 
             if (argv.json) {
               logger.json({
@@ -174,16 +174,16 @@ export const consoleCommand = createCommand<ConsoleOptions>({
                 tabId: pageTabId,
                 messages: filteredMessages,
                 count: filteredMessages.length,
-                timestamp: new Date().toISOString()
-              });
+                timestamp: new Date().toISOString(),
+              })
             } else {
-              logger.success(`✅ Console snapshot for tab: ${pageTabId}`);
+              logger.success(`✅ Console snapshot for tab: ${pageTabId}`)
               if (filteredMessages.length === 0) {
-                logger.info('📋 No console messages');
+                logger.info('📋 No console messages')
               } else {
                 logger.info(
                   `📋 ${filteredMessages.length} message(s) captured:`
-                );
+                )
                 // Show ALL messages, not just first 10
                 filteredMessages.forEach(msg => {
                   const prefix =
@@ -193,20 +193,20 @@ export const consoleCommand = createCommand<ConsoleOptions>({
                         ? chalk.yellow('⚠️')
                         : msg.type === 'debug'
                           ? chalk.gray('🐛')
-                          : chalk.blue('ℹ️');
-                  logger.info(`  ${prefix} [${msg.type}] ${msg.text}`);
-                });
+                          : chalk.blue('ℹ️')
+                  logger.info(`  ${prefix} [${msg.type}] ${msg.text}`)
+                })
               }
             }
           } finally {
             // CRITICAL: Remove event listener to prevent memory leaks
-            page.off('console', consoleHandler);
+            page.off('console', consoleHandler)
           }
         }
-      );
+      )
     } catch (error: any) {
-      cmdContext.logger.error(`Console monitoring failed: ${error.message}`);
-      throw new Error('Command failed');
+      cmdContext.logger.error(`Console monitoring failed: ${error.message}`)
+      throw new Error('Command failed')
     }
-  }
-});
+  },
+})
