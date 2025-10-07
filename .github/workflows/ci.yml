@@ -10,12 +10,24 @@ jobs:
   test:
     name: Test and Code Quality
     runs-on: ubuntu-latest
+    # IMPORTANT: Keep Playwright version in sync with package.json
+    # Current: 1.55.0 - Update both when upgrading Playwright
     container:
-      image: mcr.microsoft.com/playwright:v1.48.0-jammy
+      image: mcr.microsoft.com/playwright:v1.55.0-jammy
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Verify Playwright version sync
+      run: |
+        PACKAGE_VERSION=$(node -p "require('./package.json').dependencies.playwright")
+        echo "📦 Package.json Playwright version: $PACKAGE_VERSION"
+        echo "🔧 CI container using Playwright v1.55.0"
+        if [ "$PACKAGE_VERSION" != "1.55.0" ]; then
+          echo "⚠️  Warning: Playwright version mismatch detected!"
+          echo "Update .github/workflows/ci.yml container image to match"
+        fi
 
     - name: Install unzip (required by setup-bun)
       run: |
