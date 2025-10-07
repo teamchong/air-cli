@@ -646,16 +646,35 @@ export class BrowserHelper {
       // It's a full path
       browserPath = browserPathOrType
     } else {
-      // It's a browser type name, use default paths
-      const browserPaths: Record<string, string> = {
-        chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-        brave: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-        edge: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-        chromium: '/Applications/Chromium.app/Contents/MacOS/Chromium',
-      }
+      // Platform-specific browser paths
+      const isMac = process.platform === 'darwin'
+      const isLinux = process.platform === 'linux'
+
+      const browserPaths: Record<string, string> = isMac
+        ? {
+            chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            brave: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+            edge: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+            chromium: '/Applications/Chromium.app/Contents/MacOS/Chromium',
+          }
+        : isLinux
+          ? {
+              chrome: '/usr/bin/google-chrome',
+              chromium: '/ms-playwright/chromium-1187/chrome-linux/chrome', // Playwright container path
+              brave: '/usr/bin/brave-browser',
+              edge: '/usr/bin/microsoft-edge',
+            }
+          : {
+              chrome: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+              chromium: 'chromium',
+              brave: 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
+              edge: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+            }
 
       browserPath =
-        browserPaths[browserPathOrType || 'chrome'] || browserPaths.chrome
+        browserPaths[browserPathOrType || (isLinux ? 'chromium' : 'chrome')] ||
+        browserPaths.chrome ||
+        browserPaths.chromium
     }
 
     // Check if browser exists
