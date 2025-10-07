@@ -7,7 +7,7 @@ import { Browser, Page, BrowserContext } from 'playwright'
 
 import { BrowserHelper } from './browser-helper'
 import { IBrowserService } from './browser-service'
-import { withTimeout, TimeoutError } from './timeout-utils'
+import { withTimeout } from './timeout-utils'
 
 // Operation-specific timeouts
 const TIMEOUTS = {
@@ -33,7 +33,7 @@ export class TimeoutProtectedBrowserService implements IBrowserService {
 
   async withBrowser<T>(
     port: number,
-    action: (browser: Browser) => Promise<T>
+    action: (_browser: Browser) => Promise<T>
   ): Promise<T> {
     const browser = await this.getBrowser(port)
     try {
@@ -79,7 +79,7 @@ export class TimeoutProtectedBrowserService implements IBrowserService {
 
   async withActivePage<T>(
     port: number,
-    action: (page: Page) => Promise<T>
+    action: (_page: Page) => Promise<T>
   ): Promise<T> {
     // The action timeout depends on what type of operation it is
     // We'll use a longer timeout by default and let specific commands override

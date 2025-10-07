@@ -23,7 +23,7 @@ class ActionHistory {
   private historyFile: string
   private loaded = false
   private loadPromise: Promise<void> | null = null
-  private saveTimeout: Timer | null = null
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null
 
   private constructor() {
     this.historyFile = path.join(os.tmpdir(), 'air-cli-actions.json')
@@ -55,14 +55,14 @@ class ActionHistory {
         // Convert timestamp strings back to Date objects and filter recent actions
         const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
         this.actions = parsed
-          .map((action: any) => ({
+          .map((action: Action & { timestamp: string | Date }) => ({
             ...action,
             timestamp: new Date(action.timestamp),
           }))
           .filter((action: Action) => action.timestamp > cutoff)
           .slice(-this.maxActions)
       }
-    } catch (error) {
+    } catch {
       // If loading fails, start fresh
       this.actions = []
     }
@@ -77,7 +77,7 @@ class ActionHistory {
     this.saveTimeout = setTimeout(async () => {
       try {
         await Bun.write(this.historyFile, JSON.stringify(this.actions))
-      } catch (error) {
+      } catch {
         // Ignore save errors to prevent breaking commands
       } finally {
         this.saveTimeout = null
@@ -95,7 +95,7 @@ class ActionHistory {
       this.saveTimeout = null
       try {
         await Bun.write(this.historyFile, JSON.stringify(this.actions))
-      } catch (error) {
+      } catch {
         // Ignore save errors
       }
     }

@@ -13,6 +13,7 @@ import { runCommand } from '../../../../test-utils/test-helpers'
 describe('tabs command - REAL TESTS', () => {
   beforeAll(async () => {
     // Build the CLI only if needed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     if (!require('fs').existsSync('dist/src/index.js')) {
       execSync('bun run build', { stdio: 'ignore' })
     }
@@ -85,7 +86,7 @@ describe('tabs command - REAL TESTS', () => {
     describe('close action', () => {
       it('should handle tab close with global browser session', () => {
         // Try to close a tab - may succeed or fail depending on tab availability
-        const { output, exitCode } = runCommand(
+        const { exitCode } = runCommand(
           `${CLI} tabs close --index 999 --port ${TEST_PORT}`
         )
         // Either succeeds (if tab exists) or fails gracefully (if no tab at index)
@@ -96,7 +97,7 @@ describe('tabs command - REAL TESTS', () => {
     describe('select action', () => {
       it('should handle tab select with global browser session', () => {
         // Try to select a tab - should work with existing tabs
-        const { output, exitCode } = runCommand(
+        const { exitCode } = runCommand(
           `${CLI} tabs select --index 0 --port ${TEST_PORT}`
         )
         expect([0, 1]).toContain(exitCode)

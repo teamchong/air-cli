@@ -1,4 +1,3 @@
-import chalk from 'chalk'
 import { CommandModule, Arguments } from 'yargs'
 
 import { BrowserHelper } from '../../../lib/browser-helper'
@@ -77,6 +76,7 @@ export const resizeCommand: CommandModule<{}, ResizeArgs> = {
       )
 
       return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.commandError(`Failed to resize window: ${error.message}`)
       throw new Error('Command failed')

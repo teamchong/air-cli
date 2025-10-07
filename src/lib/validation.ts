@@ -3,6 +3,8 @@
  * Provides type-safe validation with comprehensive error messages
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface ValidationResult {
   isValid: boolean
   errors: string[]
@@ -10,7 +12,7 @@ export interface ValidationResult {
 }
 
 export interface ValidatorFunction {
-  (value: any, fieldName: string): ValidationResult
+  (_value: any, _fieldName: string): ValidationResult
 }
 
 export interface ValidatorOptions {
@@ -271,7 +273,7 @@ export class Validators {
    * Creates a custom validator
    */
   static custom(
-    validatorFn: (value: any) => boolean,
+    validatorFn: (_value: any) => boolean,
     errorMessage: string
   ): ValidatorFunction {
     return (value: any, fieldName: string): ValidationResult => {

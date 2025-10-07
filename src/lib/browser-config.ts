@@ -1,5 +1,5 @@
 import { spawnSync } from 'child_process'
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 
@@ -11,11 +11,11 @@ import { PlatformHelper } from './platform-helper'
 const OLD_CONFIG_FILE = join(homedir(), '.air-cli-config.json')
 
 // Helper functions to get paths dynamically (so they can be mocked in tests)
-function getClaudeDir() {
+function getClaudeDir(): string {
   return PlatformHelper.getClaudeDir()
 }
 
-function getConfigFile() {
+function getConfigFile(): string {
   return join(getClaudeDir(), 'playwright-config.json')
 }
 
@@ -56,11 +56,16 @@ export class BrowserConfig {
         }
         // Delete old file
         try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
           require('fs').unlinkSync(OLD_CONFIG_FILE)
-        } catch {}
+        } catch {
+          // Ignore deletion errors
+        }
         return this.config!
       }
-    } catch {}
+    } catch {
+      // Ignore config loading errors
+    }
 
     // Default config
     this.config = {
@@ -70,7 +75,7 @@ export class BrowserConfig {
     return this.config
   }
 
-  static async saveConfig(config: Partial<Config>) {
+  static async saveConfig(config: Partial<Config>): Promise<void> {
     const current = await this.loadConfig()
     this.config = { ...current, ...config }
 
@@ -113,7 +118,9 @@ export class BrowserConfig {
     return false
   }
 
-  static async getBrowser(type?: BrowserType) {
+  static async getBrowser(
+    type?: BrowserType
+  ): Promise<typeof chromium | typeof firefox | typeof webkit> {
     const config = await this.loadConfig()
     const browserType = type || config.defaultBrowser
 
@@ -140,7 +147,9 @@ export class BrowserConfig {
     return config.lastUsedBrowser
   }
 
-  static async saveLastUsedBrowser(browserPath: string | undefined) {
+  static async saveLastUsedBrowser(
+    browserPath: string | undefined
+  ): Promise<void> {
     if (browserPath === undefined || browserPath === 'default') {
       // Clear the saved browser
       const config = await this.loadConfig()
@@ -155,7 +164,7 @@ export class BrowserConfig {
     port?: number
     headless?: boolean
     devtools?: boolean
-  }) {
+  }): Promise<void> {
     const config = await this.loadConfig()
     await this.saveConfig({
       lastUsedPort: options.port || config.lastUsedPort,

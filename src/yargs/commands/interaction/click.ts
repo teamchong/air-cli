@@ -176,7 +176,7 @@ export const clickCommand = createCommand<ClickOptions>({
           // If not a CSS selector and no element found by text, throw clear error
           const isCss =
             /^[#.]/.test(selector) ||
-            /[.\[\]\>\+\~:]/.test(selector) ||
+            /[.[\]>+~:]/.test(selector) ||
             /^[a-z]+$/i.test(selector)
           if (!isCss) {
             throw new Error(
@@ -210,6 +210,7 @@ export const clickCommand = createCommand<ClickOptions>({
           await page.waitForSelector(actualSelector, {
             timeout: waitTimeout,
           })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           if (error.message?.includes('Timeout')) {
             throw new Error(`Element not found: ${actualSelector}`)

@@ -23,7 +23,7 @@ export const nodesCommand: CommandModule<object, NodesOptions> = {
       .example('$0 mesh nodes --json', 'List nodes as JSON')
   },
 
-  handler: async argv => {
+  handler: async _argv => {
     console.error('❌ This command requires an active mesh node')
     console.error('💡 Start a node first: air mesh start --name my-node')
     process.exit(1)

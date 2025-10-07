@@ -100,6 +100,7 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
             .catch(() => null)
 
           // Get interactive elements count
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let interactiveElements: any[] = []
           let elementCounts = { buttons: 0, links: 0, inputs: 0, forms: 0 }
 
@@ -135,7 +136,7 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
                 .count()
                 .catch(() => 0)
             }
-          } catch (error) {
+          } catch {
             // Accessibility snapshot might fail, continue without it
           }
 
@@ -287,6 +288,7 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
         logger.info('')
 
         // Form state
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const forms = context.forms as any
         if (forms.totalForms > 0) {
           logger.info(chalk.blue('📝 Form Status'))
@@ -310,6 +312,7 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
         // Recent actions - always show section even if empty
         logger.info('')
         logger.info(chalk.blue('📜 Recent Actions'))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const actions = context.actions as any
         if (actions && actions.recent && actions.recent.length > 0) {
           actions.recent.forEach((action: string, index: number) => {
@@ -336,6 +339,7 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
         }
 
         // Verbose information
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const viewport = context.viewport as any
         if (argv.verbose && viewport) {
           logger.info('')
@@ -362,6 +366,7 @@ export const contextCommand: CommandModule<{}, ContextArgs> = {
           )
         }
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.error(chalk.red(`❌ Failed to get context: ${error.message}`))
       throw new Error('Command failed')

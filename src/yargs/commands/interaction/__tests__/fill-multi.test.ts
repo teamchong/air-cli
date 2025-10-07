@@ -4,7 +4,7 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   runCommand,
   extractAndRegisterTabId,
-  closeTestTab,
+  unused_closeTestTab,
 } from '../../../../test-utils/test-helpers'
 
 /**
@@ -88,7 +88,7 @@ describe('multi-field fill command enhancement', () => {
 
   afterAll(async () => {
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
   })
 
@@ -176,7 +176,7 @@ describe('multi-field fill command enhancement', () => {
     })
 
     it('should fill fields by id=value pairs', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "username=johndoe" "fullname=John Doe" --tab-id ${testTabId}`
       )
 
@@ -195,7 +195,7 @@ describe('multi-field fill command enhancement', () => {
     })
 
     it('should fill fields by placeholder=value pairs', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "Your Name=Alice Smith" "Subject=Hello" --tab-id ${testTabId}`
       )
 
@@ -214,7 +214,7 @@ describe('multi-field fill command enhancement', () => {
     })
 
     it('should fill fields by label=value pairs', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "Username=testuser" "Full Name=Test User" "Phone=123-456-7890" --tab-id ${testTabId}`
       )
 
@@ -235,7 +235,7 @@ describe('multi-field fill command enhancement', () => {
 
   describe('mixed identifier types', () => {
     it('should handle mix of name, id, and placeholder', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "email=mixed@test.com" "username=mixeduser" "Subject=Mixed Test" --tab-id ${testTabId}`
       )
 
@@ -255,7 +255,7 @@ describe('multi-field fill command enhancement', () => {
   describe('form disambiguation', () => {
     it('should fill fields in specific form when multiple forms have same field names', async () => {
       // Both login and registration forms have 'email' field
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "#registration-form email=reg@example.com" "#registration-form password=regpass123" --tab-id ${testTabId}`
       )
 
@@ -275,7 +275,7 @@ describe('multi-field fill command enhancement', () => {
     })
 
     it('should support --form flag to scope fills', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "email=scoped@test.com" --form "registration-form" --tab-id ${testTabId}`
       )
 
@@ -291,7 +291,7 @@ describe('multi-field fill command enhancement', () => {
 
   describe('value types', () => {
     it('should handle values with spaces', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "fullname=John William Doe" "message=This is a test message with spaces" --tab-id ${testTabId}`
       )
 
@@ -309,7 +309,7 @@ describe('multi-field fill command enhancement', () => {
     })
 
     it('should handle special characters in values', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "email=test+special@example.com" "password=P@ssw0rd!" --tab-id ${testTabId}`
       )
 
@@ -333,7 +333,7 @@ describe('multi-field fill command enhancement', () => {
       )
 
       // Then clear them with empty value
-      const { output, exitCode } = runCommandWithPort(
+      const { exitCode } = runCommandWithPort(
         `${CLI} fill "email=" --tab-id ${testTabId}`
       )
 
@@ -377,7 +377,7 @@ describe('multi-field fill command enhancement', () => {
     })
 
     it('should handle malformed input gracefully', async () => {
-      const { output, exitCode } = runCommandWithPort(
+      const { output } = runCommandWithPort(
         `${CLI} fill "noequals" "email=valid@test.com" --tab-id ${testTabId}`
       )
 

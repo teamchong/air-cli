@@ -1,5 +1,3 @@
-import chalk from 'chalk'
-
 export interface BrowserPage {
   id: string
   url: string
@@ -9,6 +7,7 @@ export interface BrowserPage {
 
 export class BrowserConnection {
   static async checkConnection(port: number = 9222): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { spawnSync } = require('child_process')
 
     const result = spawnSync(
@@ -31,6 +30,7 @@ export class BrowserConnection {
   }
 
   static async getPages(port: number = 9222): Promise<BrowserPage[]> {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { spawnSync } = require('child_process')
 
     const result = spawnSync('curl', ['-s', `http://localhost:${port}/json`], {
@@ -54,8 +54,8 @@ export class BrowserConnection {
 
     // Find the first non-chrome page (actual web page)
     const activePage = pages.find(
-      (p: any) =>
-        p.type === 'page' &&
+      (p: BrowserPage) =>
+        (p as BrowserPage & { type?: string }).type === 'page' &&
         !p.url.startsWith('chrome://') &&
         !p.url.startsWith('about:')
     )
@@ -63,11 +63,7 @@ export class BrowserConnection {
     return activePage || null
   }
 
-  static async executeInPage(
-    pageId: string,
-    code: string,
-    port: number = 9222
-  ): Promise<any> {
+  static async executeInPage(_pageId: string, _code: string): Promise<unknown> {
     // Chrome DevTools Protocol requires WebSocket for Runtime.evaluate
     // But we CAN use the existing Playwright connection if available
     // For now, we'll need to establish a WebSocket connection

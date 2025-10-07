@@ -68,11 +68,12 @@ export const callMeshCommand = createCommand<CallMeshOptions>({
     }
 
     // Parse params if provided
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let parsedParams: any = undefined
     if (params) {
       try {
         parsedParams = JSON.parse(params)
-      } catch (error) {
+      } catch {
         console.error(`❌ Invalid JSON params: ${params}`)
         process.exit(1)
       }
@@ -90,6 +91,7 @@ export const callMeshCommand = createCommand<CallMeshOptions>({
         console.log('\n✅ Result:')
         console.log(JSON.stringify(result, null, 2))
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (json) {
         console.log(

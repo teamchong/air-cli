@@ -122,7 +122,7 @@ export const hoverCommand = createCommand<HoverOptions>({
           // If not a CSS selector and no element found by text, throw clear error
           const isCss =
             /^[#.]/.test(actualSelector) ||
-            /[.\[\]\>\+\~:]/.test(actualSelector) ||
+            /[.[\]>+~:]/.test(actualSelector) ||
             /^[a-z]+$/i.test(actualSelector)
           if (!isCss) {
             throw new Error(

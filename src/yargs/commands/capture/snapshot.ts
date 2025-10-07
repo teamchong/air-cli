@@ -7,7 +7,6 @@ import { refManager } from '../../../lib/ref-manager'
 import { extractInteractiveElements } from '../../../lib/ref-utils'
 import {
   injectVisualLabelsScript,
-  removeVisualLabelsScript,
   injectHelperFunctionsScript,
 } from '../../../lib/visual-labels'
 
@@ -116,12 +115,14 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
             if (argv.json) {
               logger.info(JSON.stringify(snapshot, null, 2))
             } else {
-              const printNode = (node: any, indent = '') => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const printNode = (node: any, indent = ''): void => {
                 const role = node.role || 'unknown'
                 const name = node.name ? ` "${node.name}"` : ''
                 logger.info(`${indent}${role}${name}`)
 
                 if (node.children) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   node.children.forEach((child: any) => {
                     printNode(child, indent + '  ')
                   })
@@ -141,18 +142,22 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
             await refManager.storeSnapshot(interactiveElements, tabId)
 
             // Get detailed form information if --detailed flag is used
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let detailedFormInfo: any = null
             if (argv.detailed) {
               detailedFormInfo = await page.evaluate(() => {
                 const forms = Array.from(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (globalThis as any).document.querySelectorAll('form')
                 )
                 const inputs = Array.from(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (globalThis as any).document.querySelectorAll(
                     'input, textarea, select'
                   )
                 )
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formDetails = forms.map((form: any, index) => {
                   const formInputs = Array.from(
                     form.querySelectorAll('input, textarea, select')
@@ -163,6 +168,7 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                     action: form.action || null,
                     method: form.method || 'get',
                     inputCount: formInputs.length,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     inputs: formInputs.map((input: any) => ({
                       type: input.type || input.tagName.toLowerCase(),
                       name: input.name || null,
@@ -176,7 +182,9 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                 })
 
                 const standaloneInputs = inputs
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   .filter((input: any) => !input.closest('form'))
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   .map((input: any) => ({
                     type: input.type || input.tagName.toLowerCase(),
                     name: input.name || null,
@@ -222,14 +230,17 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                     // Find matching detailed info for this input
                     const matchingInput =
                       detailedFormInfo?.standaloneInputs?.find(
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (input: any) =>
                           input.placeholder === elem.name ||
                           input.name === elem.name ||
                           input.id === elem.name
                       ) ||
                       detailedFormInfo?.forms
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         ?.flatMap((form: any) => form.inputs)
                         ?.find(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (input: any) =>
                             input.placeholder === elem.name ||
                             input.name === elem.name ||
@@ -271,6 +282,7 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                   detailedFormInfo.forms &&
                   detailedFormInfo.forms.length > 0
                 ) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   detailedFormInfo.forms.forEach((form: any, index: number) => {
                     logger.info(chalk.cyan(`Form ${index + 1}:`))
                     if (form.id) logger.info(`  ID: ${form.id}`)
@@ -278,7 +290,8 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                     logger.info(`  Method: ${form.method}`)
                     logger.info(`  ${form.inputCount} input field(s):`)
 
-                    form.inputs.forEach((input: any, inputIndex: number) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    form.inputs.forEach((input: any) => {
                       const statusIcon = input.value ? '✓' : '○'
                       const requiredFlag = input.required ? chalk.red(' *') : ''
                       const disabledFlag = input.disabled
@@ -301,6 +314,7 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                   detailedFormInfo.standaloneInputs.length > 0
                 ) {
                   logger.info(chalk.cyan('Standalone Inputs (not in forms):'))
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   detailedFormInfo.standaloneInputs.forEach((input: any) => {
                     const statusIcon = input.value ? '✓' : '○'
                     const requiredFlag = input.required ? chalk.red(' *') : ''
@@ -329,6 +343,7 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
                 const totalForms = detailedFormInfo?.forms?.length || 0
                 const totalInputs =
                   (detailedFormInfo?.forms?.reduce(
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sum: number, form: any) => sum + form.inputCount,
                     0
                   ) || 0) + (detailedFormInfo?.standaloneInputs?.length || 0)
@@ -350,6 +365,7 @@ export const snapshotCommand: CommandModule<{}, SnapshotArgs> = {
 
       // Exit cleanly
       return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.error(chalk.red(`❌ Failed to capture snapshot: ${error.message}`))
       throw new Error('Command failed')

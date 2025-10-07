@@ -233,7 +233,9 @@ export class ServiceRegistry {
   /**
    * Export registry as JSON
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toJSON(): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const services: any = {}
 
     for (const [name, providers] of this.services.entries()) {
@@ -244,6 +246,7 @@ export class ServiceRegistry {
       }))
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const health: any = {}
     for (const [nodeName, h] of this.nodeHealth.entries()) {
       health[nodeName] = {

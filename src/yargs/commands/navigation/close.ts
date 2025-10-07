@@ -86,11 +86,12 @@ export const closeCommand = createCommand<CloseOptions>({
           sessionName: argv.saveSession || null,
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle case where browser is already closed
       if (
-        error.message.includes('Target closed') ||
-        error.message.includes('Connection closed')
+        error instanceof Error &&
+        (error.message.includes('Target closed') ||
+          error.message.includes('Connection closed'))
       ) {
         if (spinner) {
           spinner.succeed('Browser was already closed')
@@ -99,7 +100,8 @@ export const closeCommand = createCommand<CloseOptions>({
         return
       }
 
-      throw new Error(`Failed to close browser: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new Error(`Failed to close browser: ${message}`)
     }
   },
 

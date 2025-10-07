@@ -31,7 +31,7 @@ export function resetLabelCounter(): void {
  * Returns A, B, C... Z, AA, AB, etc. in order.
  *
  * @param node - The accessibility tree node (unused but kept for compatibility)
- * @param path - The element's path in the tree (unused but kept for compatibility)
+ * @param _path - The element's path in the tree (unused but kept for compatibility)
  * @returns An Excel-style column string as the element reference
  *
  * @example
@@ -40,7 +40,8 @@ export function resetLabelCounter(): void {
  * const ref = generateRef(node, 'root-0-1'); // Returns: 'A' (first call), 'B' (second call), etc.
  * ```
  */
-export function generateRef(node: any, path: string = ''): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function generateRef(node: any, _path: string = ''): string {
   const ref = numberToExcelColumn(labelCounter)
   labelCounter++
   return ref
@@ -62,6 +63,7 @@ export function generateRef(node: any, path: string = ''): string {
  * console.log(isInteractive(textNode));   // false
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isInteractive(node: any): boolean {
   const interactiveRoles = [
     'button',
@@ -99,7 +101,7 @@ export function isInteractive(node: any): boolean {
  *
  * @param node - The root node to start searching from
  * @param targetRef - The A-Z style reference identifier to find
- * @param path - Current path in the tree traversal (default: '')
+ * @param _path - Current path in the tree traversal (default: '')
  * @returns The matching node or null if not found
  *
  * @example
@@ -111,10 +113,12 @@ export function isInteractive(node: any): boolean {
  * }
  * ```
  */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function findElementByRef(
   node: any,
   targetRef: string,
-  path: string = ''
+  _path: string = ''
 ): any {
   // Extract all interactive elements with their refs
   const elements = extractInteractiveElements(node)
@@ -131,6 +135,7 @@ export function findElementByRef(
 /**
  * Helper function to find a node by its properties
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function findNodeByProperties(node: any, target: any): any {
   if (!node) return null
 
@@ -172,6 +177,7 @@ function findNodeByProperties(node: any, target: any): any {
  * console.log(nodeToSelector(inputNode));  // 'input[aria-label="Email"]'
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function nodeToSelector(node: any): string {
   // Try to create a unique selector based on the node properties
   if (node.role === 'button' && node.name) {
@@ -255,6 +261,8 @@ export function nodeToSelector(node: any): string {
  * // ]
  * ```
  */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractInteractiveElements(
   node: any,
   path: string = '',
@@ -280,6 +288,7 @@ export function extractInteractiveElements(
 
   // Recurse through children
   if (node.children) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     node.children.forEach((child: any, index: number) => {
       extractInteractiveElements(child, `${path}-${index}`, results)
     })

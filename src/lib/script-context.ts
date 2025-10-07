@@ -5,6 +5,9 @@
  * without requiring deep knowledge of the Playwright API structure.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 /**
  * Create a simplified script context with helper functions
  */

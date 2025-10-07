@@ -104,7 +104,7 @@ export interface ResizeOptions extends BaseCommandOptions {
  */
 export interface EvalOptions extends BaseCommandOptions {
   expression: string
-  arg?: any
+  arg?: unknown
 }
 
 /**
@@ -127,7 +127,7 @@ export interface TabOptions extends BaseCommandOptions {
 /**
  * Command handler result
  */
-export interface CommandResult<T = any> {
+export interface CommandResult<T = unknown> {
   success: boolean
   data?: T
   error?: string
@@ -155,7 +155,7 @@ export type PlaywrightCommand<T extends BaseCommandOptions> = CommandModule<
  * Helper type for command handlers
  */
 export type CommandHandler<T extends BaseCommandOptions> = (
-  argv: ArgumentsCamelCase<T>
+  _argv: ArgumentsCamelCase<T>
 ) => Promise<void> | void
 
 /**
@@ -189,12 +189,12 @@ export interface TestParseOptions {
  * Logger interface for consistent output
  */
 export interface Logger {
-  info(message: string): void
-  success(message: string): void
-  error(message: string): void
-  warn(message: string): void
-  debug(message: string): void
-  json(data: any): void
+  info(_message: string): void
+  success(_message: string): void
+  error(_message: string): void
+  warn(_message: string): void
+  debug(_message: string): void
+  json(_data: unknown): void
 }
 
 /**
@@ -268,8 +268,8 @@ export interface PerformanceMetrics {
 export interface ValidationError {
   field: string
   message: string
-  expected?: any
-  received?: any
+  expected?: unknown
+  received?: unknown
 }
 
 // ==============================================
@@ -473,7 +473,7 @@ export interface ListOptions extends BaseCommandOptions {
 export interface ExecuteOptions extends BaseCommandOptions {
   expression?: string // JavaScript expression
   file?: string // JavaScript file path
-  arg?: any // Argument to pass to function
+  arg?: unknown // Argument to pass to function
   waitForFunction?: boolean // Wait for function result
   polling?: number // Polling interval for waitForFunction
   timeout?: number // Function execution timeout
@@ -578,7 +578,7 @@ export interface DetailedBrowserState extends BrowserState {
     accuracy?: number
   }
   permissions?: string[]
-  cookies?: any[]
+  cookies?: unknown[]
 }
 
 /**
@@ -589,7 +589,7 @@ export interface SessionData {
   description?: string
   created: string // ISO date string
   url: string
-  cookies: any[]
+  cookies: unknown[]
   localStorage: Record<string, string>
   sessionStorage: Record<string, string>
   viewport: {
@@ -597,7 +597,7 @@ export interface SessionData {
     height: number
   }
   userAgent: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 /**
@@ -641,7 +641,7 @@ export interface EnhancedElementRef extends ElementRef {
  */
 export interface EnhancedCommandContext {
   command: string
-  args: any
+  args: unknown
   startTime: number
   sessionId?: string
   browserState?: DetailedBrowserState
@@ -671,7 +671,7 @@ export interface DetailedValidationError extends ValidationError {
 export interface CommandExecutionError extends Error {
   code?: string
   command?: string
-  args?: any
+  args?: unknown
   context?: EnhancedCommandContext
   screenshot?: string // Path to error screenshot
   suggestions?: string[]
@@ -686,7 +686,7 @@ export interface BrowserConnectionError extends Error {
   timeout?: number
   pid?: number
   retryAttempts?: number
-  lastResponse?: any
+  lastResponse?: unknown
 }
 
 // ==============================================
@@ -735,14 +735,14 @@ export interface CLIPlugin {
   name: string
   version: string
   commands?: CommandModule[]
-  middleware?: Array<(argv: any) => void>
+  middleware?: Array<(_argv: unknown) => void>
   hooks?: {
-    beforeCommand?: (context: EnhancedCommandContext) => void | Promise<void>
+    beforeCommand?: (_context: EnhancedCommandContext) => void | Promise<void>
     afterCommand?: (
-      context: EnhancedCommandContext,
-      result: CommandResult
+      _context: EnhancedCommandContext,
+      _result: CommandResult
     ) => void | Promise<void>
-    onError?: (error: CommandExecutionError) => void | Promise<void>
+    onError?: (_error: CommandExecutionError) => void | Promise<void>
   }
   config?: Partial<CLIConfig>
 }

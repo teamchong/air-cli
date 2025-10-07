@@ -6,6 +6,8 @@
  * and other native apps alongside web browser automation.
  */
 
+/* eslint-disable no-undef */
+
 import { execSync } from 'child_process'
 
 import { run } from '@jxa/run'
@@ -50,6 +52,7 @@ export class MacOSAutomation {
         const Mail = Application('Mail')
         const unread = Mail.inbox.messages.whose({ readStatus: false })
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return unread().map((msg: any) => ({
           id: msg.id(),
           subject: msg.subject(),
@@ -61,6 +64,7 @@ export class MacOSAutomation {
       })
 
       return messages as MailMessage[]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to access Mail.app: ${error.message}`)
     }
@@ -75,6 +79,7 @@ export class MacOSAutomation {
         const Mail = Application('Mail')
         const allMessages = Mail.inbox.messages
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return allMessages().map((msg: any) => ({
           id: msg.id(),
           subject: msg.subject(),
@@ -86,6 +91,7 @@ export class MacOSAutomation {
       })
 
       return messages as MailMessage[]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to access Mail.app: ${error.message}`)
     }
@@ -104,6 +110,7 @@ export class MacOSAutomation {
         tomorrow.setDate(tomorrow.getDate() + 1)
 
         // Get all calendars' events for today
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const allEvents: any[] = []
         const calendars = Calendar.calendars()
 
@@ -133,6 +140,7 @@ export class MacOSAutomation {
       })
 
       return events as CalendarEvent[]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to access Calendar.app: ${error.message}`)
     }
@@ -147,6 +155,7 @@ export class MacOSAutomation {
         const Calendar = Application('Calendar')
         const allEvents = Calendar.defaultCalendar.events
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return allEvents().map((evt: any) => ({
           id: evt.id(),
           title: evt.summary(),
@@ -158,6 +167,7 @@ export class MacOSAutomation {
       })
 
       return events as CalendarEvent[]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to access Calendar.app: ${error.message}`)
     }
@@ -173,6 +183,7 @@ export class MacOSAutomation {
         const folder = Finder.folders.byName(dirPath)
         const files = folder.items
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return files().map((item: any) => ({
           name: item.name(),
           path: item.posixPath ? item.posixPath() : dirPath + '/' + item.name(),
@@ -184,6 +195,7 @@ export class MacOSAutomation {
       }, path)
 
       return items as FinderItem[]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to access Finder: ${error.message}`)
     }
@@ -193,6 +205,7 @@ export class MacOSAutomation {
    * Get UI element tree for any app using System Events
    * Useful for apps that don't have good AppleScript dictionaries
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getUITree(appName: string): Promise<any> {
     try {
       const script = `
@@ -225,6 +238,7 @@ export class MacOSAutomation {
         `osascript -l JavaScript -e '${script}'`
       ).toString()
       return JSON.parse(result)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to get UI tree for ${appName}: ${error.message}`)
     }
@@ -255,6 +269,7 @@ export class MacOSAutomation {
         const app = Application(name)
         app.launch()
       }, appName)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to launch ${appName}: ${error.message}`)
     }
@@ -269,6 +284,7 @@ export class MacOSAutomation {
         const app = Application(name)
         app.quit()
       }, appName)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to quit ${appName}: ${error.message}`)
     }

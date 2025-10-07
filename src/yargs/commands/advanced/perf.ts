@@ -174,6 +174,7 @@ export const perfCommand = createCommand<PerfOptions>({
         logger.info('')
         logger.info(chalk.gray('Use --slow to see all slow operations'))
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       cmdContext.logger.error(
         `Failed to show performance stats: ${error.message}`

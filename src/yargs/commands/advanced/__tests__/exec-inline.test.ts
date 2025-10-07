@@ -1,4 +1,3 @@
-import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -9,7 +8,7 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   extractAndRegisterTabId,
   runCommand,
-  closeTestTab,
+  unused_closeTestTab,
   createTestTab,
   enforceTabLimit,
 } from '../../../../test-utils/test-helpers'
@@ -51,7 +50,7 @@ describe('inline script execution enhancement', () => {
 
   afterAll(async () => {
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
     // Clean up temp directory
     if (tempDir && fs.existsSync(tempDir)) {
@@ -216,7 +215,7 @@ describe('inline script execution enhancement', () => {
       const script = `
         try {
           await page.click('#nonexistent');
-        } catch (error) {
+        } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
           console.log('Expected error:', error.message);
           await page.click('#btn');
           return 'Handled error gracefully';

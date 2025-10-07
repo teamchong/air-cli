@@ -73,12 +73,13 @@ export async function withCommandTimeout<T>(
 /**
  * Create a timeout-protected version of a function
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createTimeoutProtectedFunction<TArgs extends any[], TResult>(
-  fn: (...args: TArgs) => Promise<TResult>,
+  fn: (..._args: TArgs) => Promise<TResult>,
   operationType: keyof typeof COMMAND_TIMEOUTS = 'default'
-): (...args: TArgs) => Promise<TResult> {
-  return async (...args: TArgs): Promise<TResult> => {
-    return withCommandTimeout(fn(...args), operationType, fn.name)
+): (..._args: TArgs) => Promise<TResult> {
+  return async (..._args: TArgs): Promise<TResult> => {
+    return withCommandTimeout(fn(..._args), operationType, fn.name)
   }
 }
 
@@ -88,12 +89,15 @@ export function createTimeoutProtectedFunction<TArgs extends any[], TResult>(
 export function wrapPageWithTimeout(page: Page): Page {
   // Create a proxy that wraps all async methods with timeout
   return new Proxy(page, {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     get(target, prop) {
       const original = target[prop as keyof Page]
 
       // Only wrap async functions
       if (typeof original === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return function (...args: any[]) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const result = (original as any).apply(target, args)
 
           // If it returns a promise, wrap with timeout

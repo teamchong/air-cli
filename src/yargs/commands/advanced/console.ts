@@ -73,10 +73,12 @@ export const consoleCommand = createCommand<ConsoleOptions>({
         tabIndex,
         tabId,
         async page => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const messages: any[] = []
 
           // Create console message handler function for proper cleanup
-          const consoleHandler = (msg: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const consoleHandler = (msg: any): void => {
             const type = msg.type()
             const text = msg.text()
 
@@ -144,7 +146,7 @@ export const consoleCommand = createCommand<ConsoleOptions>({
                   }, 30000)
 
                   // Also handle process signals
-                  signalHandler = () => {
+                  signalHandler = (): void => {
                     if (timeoutHandle) clearTimeout(timeoutHandle)
                     resolve()
                   }
@@ -204,6 +206,7 @@ export const consoleCommand = createCommand<ConsoleOptions>({
           }
         }
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       cmdContext.logger.error(`Console monitoring failed: ${error.message}`)
       throw new Error('Command failed')

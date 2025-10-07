@@ -4,15 +4,11 @@ import * as path from 'path'
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'bun:test'
 
 import { BrowserHelper } from '../../../../lib/browser-helper'
-import {
-  TEST_PORT,
-  CLI,
-  TEST_TMP_DIR,
-} from '../../../../test-utils/test-constants'
+import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   runCommand,
   extractAndRegisterTabId,
-  closeTestTab,
+  unused_closeTestTab,
 } from '../../../../test-utils/test-helpers'
 /**
  * Simplified Upload Command Tests - TAB ID FROM COMMAND OUTPUT
@@ -44,8 +40,9 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
         const client = await (page.context() as any).newCDPSession(page)
 
         // Get the element using page.evaluate to get node ID
-        const backendNodeId = await page.evaluate(sel => {
-          const el = document.querySelector(sel)
+
+        const backendNodeId = await page.evaluate((sel: any) => {
+          const el = (globalThis as any).document.querySelector(sel)
           if (!el) throw new Error(`Element not found: ${sel}`)
           // Get backend node ID via CDP
           return (
@@ -107,7 +104,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
   afterEach(async () => {
     // Clean up test tab after each test
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
       testTabId = '' // Clear to prevent double-cleanup
     }
   })
@@ -119,11 +116,13 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
       if (fs.existsSync(uploadTestDir)) {
         fs.rmSync(uploadTestDir, { recursive: true, force: true })
       }
-    } catch {}
+    } catch {
+      // Ignore cleanup errors
+    }
 
     // Clean up test tab
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
   })
 
@@ -155,7 +154,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
         testTabId,
         async page => {
           const hasFiles = await page.evaluate(() => {
-            const input = document.querySelector(
+            const input = (globalThis as any).document.querySelector(
               '#file-input'
             ) as HTMLInputElement
             return input?.files && input.files.length > 0
@@ -182,6 +181,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
         testTabId,
         async page => {
           const fileCount = await page.evaluate(() => {
+            // eslint-disable-next-line no-undef
             const input = document.querySelector(
               '#multi-file'
             ) as HTMLInputElement
@@ -210,9 +210,11 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
         testTabId,
         async page => {
           const bothHaveFiles = await page.evaluate(() => {
+            // eslint-disable-next-line no-undef
             const doc = document.querySelector(
               '#doc-upload'
             ) as HTMLInputElement
+            // eslint-disable-next-line no-undef
             const img = document.querySelector(
               '#image-upload'
             ) as HTMLInputElement
@@ -257,7 +259,7 @@ describe('upload command - TAB ID FROM OUTPUT', () => {
       )
       testTabId = extractAndRegisterTabId(output)
 
-      const { output: cmdOutput, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} upload "#test" "${testFile1}" --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         2000
       )

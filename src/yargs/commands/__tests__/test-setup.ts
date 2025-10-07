@@ -24,7 +24,7 @@ const mockProcessExit = mock((code?: number) => {
 /**
  * Setup test environment before each test
  */
-export function setupTestEnvironment() {
+export function setupTestEnvironment(): void {
   beforeEach(() => {
     // Clear mock call history
     mockStdinResume.mockClear()
@@ -45,15 +45,19 @@ export function setupTestEnvironment() {
     })
 
     // Mock process.stdin.resume to prevent hanging
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     process.stdin.resume = mockStdinResume as any
 
     // Mock process.exit to prevent test process from exiting
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     process.exit = mockProcessExit as any
 
     // Mock setTimeout for continuous monitoring commands
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spyOn(global, 'setTimeout').mockImplementation(((fn: any, ms?: number) => {
       if (ms && ms > 5000) {
         // Don't actually wait for long timeouts
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return {} as any
       }
       return originalSetTimeout(fn, ms)
@@ -78,7 +82,7 @@ export function setupTestEnvironment() {
 /**
  * Mock fs module for file operations
  */
-export function mockFileSystem() {
+export function mockFileSystem(): void {
   const mockReadFile = mock().mockResolvedValue('// mock file content')
   const mockWriteFile = mock().mockResolvedValue(undefined)
   const mockAccess = mock().mockResolvedValue(undefined)
@@ -103,7 +107,7 @@ export function mockFileSystem() {
 /**
  * Mock child_process for spawn operations
  */
-export function mockChildProcess() {
+export function mockChildProcess(): void {
   const mockUnref = mock()
   const mockOn = mock((event, callback) => {
     if (event === 'close') {
@@ -139,6 +143,7 @@ export function mockChildProcess() {
 /**
  * Mock BrowserHelper with sensible defaults
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mockBrowserHelper() {
   const mockPage = {
     goto: mock().mockResolvedValue(undefined),

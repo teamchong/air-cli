@@ -1,4 +1,4 @@
-import { execSync, spawn } from 'child_process'
+import { spawn } from 'child_process'
 
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 
@@ -14,7 +14,10 @@ import { runCommand } from '../../../../test-utils/test-helpers'
 describe('network command - REAL TESTS', () => {
   beforeAll(async () => {
     // Build the CLI only if needed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     if (!require('fs').existsSync('dist/src/index.js')) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const execSync = require('child_process').execSync
       execSync('bun run build', { stdio: 'ignore' })
     }
   })

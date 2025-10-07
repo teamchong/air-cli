@@ -115,7 +115,9 @@ export async function environmentConfigMiddleware<T extends BaseCommandOptions>(
       ? parseInt(env.PLAYWRIGHT_TIMEOUT)
       : 30000,
     logging: {
-      level: (env.PLAYWRIGHT_LOG_LEVEL as any) || 'info',
+      level:
+        (env.PLAYWRIGHT_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') ||
+        'info',
       colors: env.NO_COLOR !== '1' && env.FORCE_COLOR !== '0',
     },
     browser: {
@@ -238,7 +240,8 @@ export async function loggingMiddleware<T extends BaseCommandOptions>(
 ): Promise<void> {
   // Skip logging if quiet mode or json output is enabled
   // JSON output commands need clean output, and quiet mode suppresses all logging
-  const shouldLog = !argv.quiet && !(argv as any).json && argv.verbose
+  const shouldLog =
+    !argv.quiet && !('json' in argv && argv.json) && argv.verbose
 
   if (shouldLog) {
     const command = argv._?.[0] || 'unknown'
@@ -288,7 +291,8 @@ export function selectorShorthandMiddleware<
     }
 
     // Log transformation in verbose mode (but not in JSON/quiet mode)
-    const shouldLog = argv.verbose && !argv.quiet && !(argv as any).json
+    const shouldLog =
+      argv.verbose && !argv.quiet && !('json' in argv && argv.json)
     if (shouldLog && argv.selector !== selector) {
       console.error(`Transformed selector "${selector}" to "${argv.selector}"`)
     }
@@ -308,7 +312,8 @@ export async function browserConnectionMiddleware<T extends BaseCommandOptions>(
   }
 
   // In verbose mode, log connection details (but not in JSON/quiet mode)
-  const shouldLog = argv.verbose && !argv.quiet && !(argv as any).json
+  const shouldLog =
+    argv.verbose && !argv.quiet && !('json' in argv && argv.json)
   if (shouldLog) {
     console.error(`Will connect to browser on port ${argv.port}`)
   }
@@ -358,7 +363,7 @@ export async function configFileMiddleware<T extends BaseCommandOptions>(
       }
 
       break // Use first config file found
-    } catch (error) {
+    } catch {
       // Config file doesn't exist or is invalid - continue
       continue
     }
@@ -381,7 +386,9 @@ export async function globalMiddlewareChain<T extends BaseCommandOptions>(
 
   // Apply selector shorthand if this command has a selector
   if ('selector' in argv) {
-    selectorShorthandMiddleware(argv as any)
+    selectorShorthandMiddleware(
+      argv as ArgumentsCamelCase<T & { selector?: string }>
+    )
   }
 }
 
@@ -416,9 +423,12 @@ export const middleware = {
  * Utility function to create a middleware function that only runs for specific commands
  */
 export function conditionalMiddleware<T extends BaseCommandOptions>(
+  // eslint-disable-next-line no-unused-vars
   condition: (argv: ArgumentsCamelCase<T>) => boolean,
+  // eslint-disable-next-line no-unused-vars
   middlewareFunction: (argv: ArgumentsCamelCase<T>) => Promise<void> | void
-) {
+  // eslint-disable-next-line no-unused-vars
+): (argv: ArgumentsCamelCase<T>) => Promise<void> {
   return async (argv: ArgumentsCamelCase<T>): Promise<void> => {
     if (condition(argv)) {
       await middlewareFunction(argv)

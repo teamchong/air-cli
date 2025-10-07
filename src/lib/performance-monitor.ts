@@ -222,6 +222,7 @@ export function trackPerformanceSync<T>(
     const result = operation()
     tracker.end(true)
     return result
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     tracker.end(false, error.message)
     throw error

@@ -99,6 +99,7 @@ export const sessionCommand: CommandModule = {
             if (argv.description) {
               logger.info(`   Description: ${argv.description}`)
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
             const errorMsg = chalk.red(
               `❌ Failed to save session: ${error.message}`
@@ -155,6 +156,7 @@ export const sessionCommand: CommandModule = {
             } else {
               console.log(successMsg)
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
             const errorMsg = chalk.red(
               `❌ Failed to load session: ${error.message}`
@@ -224,7 +226,6 @@ export const sessionCommand: CommandModule = {
 
             sessions.forEach((session, index) => {
               const updatedDate = new Date(session.updatedAt)
-              const createdDate = new Date(session.createdAt)
               const isRecent =
                 Date.now() - updatedDate.getTime() < 24 * 60 * 60 * 1000 // Within 24 hours
 
@@ -249,6 +250,7 @@ export const sessionCommand: CommandModule = {
             logger.info('\n💡 Usage:')
             logger.info('   playwright session load <name>')
             logger.info('   playwright session delete <name>')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
             logger.commandError(`Failed to list sessions: ${error.message}`)
             throw new Error('Command failed')
@@ -306,6 +308,7 @@ export const sessionCommand: CommandModule = {
 
             await SessionManager.deleteSession(argv.name)
             logger.success(`Session '${argv.name}' deleted successfully`)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
             logger.commandError(`Failed to delete session: ${error.message}`)
             throw new Error('Command failed')
@@ -326,7 +329,7 @@ Examples:
       `)
   },
 
-  handler: async argv => {
+  handler: async _argv => {
     // This will be handled by the subcommands
   },
 }

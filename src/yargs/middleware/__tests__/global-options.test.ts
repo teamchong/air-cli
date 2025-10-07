@@ -9,11 +9,9 @@ import {
 } from 'bun:test'
 import chalk from 'chalk'
 
-import type { BaseCommandOptions } from '../../types'
 import {
   environmentConfigMiddleware,
   globalOptionsMiddleware,
-  browserConfigMiddleware,
   loggingMiddleware,
   selectorShorthandMiddleware,
   browserConnectionMiddleware,
@@ -40,8 +38,8 @@ mock.module('../../../lib/browser-config', () => ({
 }))
 
 describe('Global Options Middleware', () => {
-  let originalEnv: NodeJS.ProcessEnv
-  let originalChalkLevel: any
+  let originalEnv: Record<string, string | undefined>
+  let originalChalkLevel: number
 
   beforeEach(() => {
     originalEnv = { ...process.env }
@@ -53,7 +51,7 @@ describe('Global Options Middleware', () => {
 
   afterEach(() => {
     process.env = originalEnv
-    chalk.level = originalChalkLevel
+    chalk.level = originalChalkLevel as 0 | 1 | 2 | 3
   })
 
   describe('environmentConfigMiddleware', () => {
@@ -345,6 +343,7 @@ describe('Global Options Middleware', () => {
 
     it('should create conditional middleware', async () => {
       const mockMiddleware = mock().mockResolvedValue(undefined)
+
       const condition = (argv: any) => argv.test === true
 
       const conditionalMw = conditionalMiddleware(condition, mockMiddleware)

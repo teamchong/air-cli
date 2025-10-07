@@ -4,8 +4,10 @@
  * Opens browser (connects if running, launches if not) and optionally navigates to a URL.
  */
 
+import { execSync } from 'child_process'
+import net from 'net'
+
 import { BrowserHelper } from '../../../lib/browser-helper'
-import { logger } from '../../../lib/logger'
 import { createCommand } from '../../lib/command-builder'
 import type { OpenOptions } from '../../types'
 
@@ -15,11 +17,10 @@ import type { OpenOptions } from '../../types'
  */
 async function isPortOpen(port: number): Promise<boolean> {
   try {
-    const net = require('net')
     return new Promise(resolve => {
       const socket = net.createConnection(port, 'localhost')
 
-      const cleanup = () => {
+      const cleanup = (): void => {
         socket.removeAllListeners()
         if (!socket.destroyed) {
           socket.destroy()
@@ -374,7 +375,7 @@ export const openCommand = createCommand<OpenOptions>({
             )
           }
         })
-      } catch (connectionError: any) {
+      } catch {
         // Port is open but connection failed - zombie process detected
         if (spinner) {
           spinner.text = 'Zombie process detected, relaunching browser...'
@@ -382,8 +383,7 @@ export const openCommand = createCommand<OpenOptions>({
 
         // Kill the zombie process
         try {
-          const { execSync: execSyncKill } = require('child_process')
-          execSyncKill(`lsof -ti:${argv.port} | xargs kill -9`, {
+          execSync(`lsof -ti:${argv.port} | xargs kill -9`, {
             stdio: 'ignore',
           })
         } catch {
@@ -414,11 +414,11 @@ export const openCommand = createCommand<OpenOptions>({
 
         return
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (spinner) {
         // Check for various connection/navigation errors and provide user-friendly messages
         if (
-          error.message &&
+          error instanceof Error &&
           (error.message.includes('ERR_CONNECTION_REFUSED') ||
             error.message.includes('Cannot navigate to invalid URL') ||
             error.message.includes('net::ERR_') ||
@@ -432,7 +432,7 @@ export const openCommand = createCommand<OpenOptions>({
 
       // Throw a custom error with user-friendly message for connection/navigation errors
       if (
-        error.message &&
+        error instanceof Error &&
         (error.message.includes('ERR_CONNECTION_REFUSED') ||
           error.message.includes('Cannot navigate to invalid URL') ||
           error.message.includes('net::ERR_') ||
@@ -442,7 +442,8 @@ export const openCommand = createCommand<OpenOptions>({
           'Connection failed - make sure a server is running at the target URL'
         )
       } else {
-        throw new Error(`Browser connection failed: ${error.message}`)
+        const message = error instanceof Error ? error.message : String(error)
+        throw new Error(`Browser connection failed: ${message}`)
       }
     }
   },

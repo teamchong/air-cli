@@ -1,12 +1,10 @@
-import { execSync } from 'child_process'
-
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   runCommand,
   extractAndRegisterTabId,
-  closeTestTab,
+  unused_closeTestTab,
 } from '../../../../test-utils/test-helpers'
 /**
  * Navigate Command Tests - TAB ID FROM COMMAND OUTPUT
@@ -32,7 +30,7 @@ describe('navigate command - TAB ID FROM OUTPUT', () => {
 
   afterAll(async () => {
     // Clean up our test tab using the specific tab ID
-    closeTestTab(testTabId)
+    unused_closeTestTab(testTabId)
   })
 
   describe('command structure', () => {
@@ -96,7 +94,7 @@ describe('navigate command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} navigate "data:text/html,<h1>Test</h1>" --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         2000
       )

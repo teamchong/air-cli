@@ -198,6 +198,7 @@ export const removeVisualLabelsScript = `
 /**
  * Script to get element by label
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getElementByLabelScript = (label: string) => `
 (function() {
   const element = document.querySelector('[data-playwright-label="${label}"]');

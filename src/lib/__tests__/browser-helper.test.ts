@@ -2,10 +2,10 @@ import { execSync } from 'child_process'
 
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 
-import { TEST_PORT, CLI } from '../../test-utils/test-constants'
+import { CLI } from '../../test-utils/test-constants'
 import {
   createTestTab,
-  closeTestTab,
+  unused_closeTestTab,
   runCommand,
 } from '../../test-utils/test-helpers'
 
@@ -33,7 +33,7 @@ describe('BrowserHelper - Real Integration', () => {
 
   afterAll(async () => {
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
   })
 

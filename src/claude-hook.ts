@@ -12,14 +12,14 @@
  * 3. Write JavaScript code to /dev/playwright/script.js for complex automation
  */
 
-import chalk from 'chalk'
+import * as net from 'net'
 
 import { BrowserHelper } from './lib/browser-helper'
 import { logger } from './lib/logger'
 
 interface HookInput {
   tool: string
-  params: any
+  params: Record<string, unknown>
 }
 
 // Track browser connection state
@@ -29,7 +29,6 @@ async function isBrowserConnected(port: number = 9222): Promise<boolean> {
   if (browserConnected !== null) return browserConnected
 
   try {
-    const net = require('net')
     const result = await new Promise<boolean>(resolve => {
       const socket = net.createConnection(port, 'localhost')
       socket.on('connect', () => {
@@ -87,22 +86,6 @@ function validateBashCommand(command: string): {
     'resize',
   ]
 
-  // Commands that don't need browser
-  const noBrowserNeeded = [
-    'open',
-    'install',
-    'codegen',
-    'test',
-    'claude',
-    'list',
-    'close',
-    'help',
-    '--version',
-    '-v',
-    '--help',
-    '-h',
-  ]
-
   // Extract the playwright subcommand
   const match = command.match(/playwright\s+(\S+)/)
   if (!match) return { valid: true } // Can't determine, allow it
@@ -120,7 +103,13 @@ function validateBashCommand(command: string): {
   return { valid: true }
 }
 
-async function executePlaywrightCode(code: string) {
+async function executePlaywrightCode(code: string): Promise<{
+  error?: string
+  success?: boolean
+  action?: string
+  url?: string
+  result?: unknown
+}> {
   try {
     const page = await BrowserHelper.getActivePage()
     if (!page) {
@@ -142,26 +131,27 @@ async function executePlaywrightCode(code: string) {
     // Default: evaluate as JavaScript
     const result = await page.evaluate(code)
     return { success: true, result }
-  } catch (error: any) {
-    return { error: error.message }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { error: errorMessage }
   }
 }
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = []
   for await (const chunk of process.stdin) {
-    chunks.push(chunk)
+    chunks.push(chunk as Buffer)
   }
   return Buffer.concat(chunks).toString('utf-8')
 }
 
-async function main() {
+async function main(): Promise<void> {
   const input = await readStdin()
   const hookData: HookInput = JSON.parse(input)
 
   // Handle Bash commands - validate before execution
   if (hookData.tool === 'Bash' && hookData.params?.command) {
-    const command = hookData.params.command
+    const command = hookData.params.command as string
     const validation = validateBashCommand(command)
 
     if (validation.message === 'needs-browser-check') {
@@ -184,9 +174,10 @@ async function main() {
   // Check if this is a Write operation to /dev/playwright
   if (
     hookData.tool === 'Write' &&
-    hookData.params?.file_path?.startsWith('/dev/playwright')
+    typeof hookData.params?.file_path === 'string' &&
+    hookData.params.file_path.startsWith('/dev/playwright')
   ) {
-    const code = hookData.params.content
+    const code = hookData.params.content as string
 
     logger.info('🎭 Playwright Hook: Intercepting code execution')
 

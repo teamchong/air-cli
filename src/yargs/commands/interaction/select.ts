@@ -84,6 +84,7 @@ export const selectCommand = createCommand<SelectOptions>({
           values: values,
         })
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (spinner) {
         spinner.fail(`Failed to select ${values.join(', ')} in ${selector}`)

@@ -1,14 +1,10 @@
-import { execSync } from 'child_process'
-
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 
 import { TabManager } from '../../../../test-utils/tab-manager'
-import { cleanupCDPConnections } from '../../../../test-utils/test-cleanup'
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   runCommand,
   extractAndRegisterTabId,
-  closeTestTab,
 } from '../../../../test-utils/test-helpers'
 
 /**
@@ -51,7 +47,7 @@ describe('context command for state visibility', () => {
       testTabId = TabManager.createTab(
         `data:text/html,${encodeURIComponent(html)}`
       )
-    } catch (error) {
+    } catch {
       // Fallback to direct command if TabManager fails
       const { output } = runCommand(
         `${CLI} tabs new --port ${TEST_PORT} --url "data:text/html,${encodeURIComponent(html)}"`
@@ -110,15 +106,18 @@ describe('context command for state visibility', () => {
   describe('action history tracking', () => {
     beforeEach(() => {
       // Reset action history for clean test by clearing the temp file
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const fs = require('fs')
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const path = require('path')
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const os = require('os')
       const historyFile = path.join(os.tmpdir(), 'air-cli-actions.json')
       try {
         if (fs.existsSync(historyFile)) {
           fs.unlinkSync(historyFile)
         }
-      } catch (error) {
+      } catch {
         // Ignore cleanup errors
       }
     })

@@ -14,6 +14,7 @@ import { runCommand } from '../../../../test-utils/test-helpers'
 describe('session command - REAL TESTS', () => {
   beforeAll(async () => {
     // Build the CLI only if needed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     if (!require('fs').existsSync('dist/src/index.js')) {
       execSync('bun run build', { stdio: 'ignore' })
     }

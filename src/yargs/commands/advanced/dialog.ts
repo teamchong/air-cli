@@ -60,7 +60,8 @@ export const dialogCommand = createCommand<DialogOptions>({
 
       // Set up a promise to wait for dialog
       const dialogPromise = new Promise<void>((resolve, reject) => {
-        const dialogHandler = async (dialog: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const dialogHandler = async (dialog: any): Promise<void> => {
           clearTimeout(timeout)
 
           logger.info(`📢 Dialog detected: ${dialog.type()}`)
@@ -98,6 +99,7 @@ export const dialogCommand = createCommand<DialogOptions>({
       })
 
       await dialogPromise
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       cmdContext.logger.error(`Failed to handle dialog: ${error.message}`)
       // Set proper exit code and throw to ensure command fails

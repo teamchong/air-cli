@@ -1,9 +1,11 @@
-import { Browser, Page, BrowserContext } from 'playwright'
+import { Browser, Page } from 'playwright'
+import type { BrowserContext } from 'playwright'
 
 /**
  * Interface for browser operations
  * This abstraction allows for easy testing and dependency injection
  */
+/* eslint-disable no-unused-vars */
 export interface IBrowserService {
   /**
    * Get browser connection
@@ -65,84 +67,85 @@ export interface IBrowserService {
    */
   createTabHTTP(port: number, url: string): Promise<boolean>
 }
+/* eslint-enable no-unused-vars */
 
 /**
  * Mock browser service for testing
  */
 export class MockBrowserService implements IBrowserService {
-  private mockBrowser: any
-  private mockPage: any
+  private mockBrowser: Browser
+  private mockPage: Page
 
-  constructor(mockBrowser?: any, mockPage?: any) {
-    this.mockBrowser = mockBrowser || {
-      contexts: () => [],
-      close: () => Promise.resolve(),
-      newContext: () =>
+  constructor(mockBrowser?: Browser, mockPage?: Page) {
+    this.mockBrowser = (mockBrowser || {
+      contexts: (): BrowserContext[] => [],
+      close: (): Promise<void> => Promise.resolve(),
+      newContext: (): Promise<BrowserContext> =>
         Promise.resolve({
-          newPage: () => Promise.resolve(this.mockPage),
-          setDefaultTimeout: () => {},
-          pages: () => [],
-        }),
-    }
+          newPage: (): Promise<Page> => Promise.resolve(this.mockPage),
+          setDefaultTimeout: (): void => {},
+          pages: (): Page[] => [],
+        } as unknown as BrowserContext),
+    }) as Browser
 
-    this.mockPage = mockPage || {
-      url: () => 'https://example.com',
+    this.mockPage = (mockPage || {
+      url: (): string => 'https://example.com',
       accessibility: {
-        snapshot: () => Promise.resolve(null),
+        snapshot: (): Promise<null> => Promise.resolve(null),
       },
-      click: () => Promise.resolve(),
-      type: () => Promise.resolve(),
-      goto: () => Promise.resolve(),
-    }
+      click: (): Promise<void> => Promise.resolve(),
+      type: (): Promise<void> => Promise.resolve(),
+      goto: (): Promise<void> => Promise.resolve(),
+    }) as Page
   }
 
-  async getBrowser(port = 9222): Promise<Browser> {
+  async getBrowser(_port = 9222): Promise<Browser> {
     return this.mockBrowser
   }
 
   async withBrowser<T>(
-    port: number,
-    action: (browser: Browser) => Promise<T>
+    _port: number,
+    action: (_browser: Browser) => Promise<T>
   ): Promise<T> {
     return action(this.mockBrowser)
   }
 
-  async getPages(port = 9222): Promise<Page[]> {
+  async getPages(_port = 9222): Promise<Page[]> {
     return [this.mockPage]
   }
 
-  async getPage(index = 0, port = 9222): Promise<Page | null> {
+  async getPage(index = 0, _port = 9222): Promise<Page | null> {
     return index === 0 ? this.mockPage : null
   }
 
-  async getActivePage(port = 9222): Promise<Page> {
+  async getActivePage(_port = 9222): Promise<Page> {
     return this.mockPage
   }
 
   async withActivePage<T>(
-    port: number,
-    action: (page: Page) => Promise<T>
+    _port: number,
+    action: (_page: Page) => Promise<T>
   ): Promise<T> {
     return action(this.mockPage)
   }
 
-  async getContexts(port = 9222): Promise<BrowserContext[]> {
+  async getContexts(_port = 9222): Promise<BrowserContext[]> {
     return []
   }
 
-  async isPortOpen(port: number): Promise<boolean> {
+  async isPortOpen(_port: number): Promise<boolean> {
     return true
   }
 
   async launchChrome(
-    port = 9222,
-    browserPathOrType?: string,
-    url?: string
+    _port = 9222,
+    _browserPathOrType?: string,
+    _url?: string
   ): Promise<void> {
     // Mock implementation - does nothing
   }
 
-  async createTabHTTP(port: number, url: string): Promise<boolean> {
+  async createTabHTTP(_port: number, _url: string): Promise<boolean> {
     return true
   }
 }

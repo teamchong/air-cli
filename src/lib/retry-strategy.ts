@@ -33,15 +33,15 @@ export abstract class RetryStrategy {
     circuitBreakerState: 'closed',
   }
 
-  constructor(protected config: RetryConfig) {}
+  constructor(protected _config: RetryConfig) {}
 
-  abstract calculateDelay(attempt: number): number
+  abstract calculateDelay(_attempt: number): number
 
   async execute<T>(operation: RetryableOperation<T>): Promise<T> {
     const startTime = performance.now()
     let lastError: Error = new Error('Operation failed')
 
-    for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
+    for (let attempt = 1; attempt <= this._config.maxAttempts; attempt++) {
       this.metrics.totalAttempts++
 
       try {
@@ -60,6 +60,7 @@ export abstract class RetryStrategy {
 
         this.metrics.totalRetryTime = performance.now() - startTime
         return result
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         lastError = error
         this.metrics.failedAttempts++
@@ -72,7 +73,7 @@ export abstract class RetryStrategy {
         }
 
         // If this was the last attempt, fail
-        if (attempt === this.config.maxAttempts) {
+        if (attempt === this._config.maxAttempts) {
           this.updateCircuitBreaker(false)
           break
         }
@@ -85,7 +86,7 @@ export abstract class RetryStrategy {
 
     this.metrics.totalRetryTime = performance.now() - startTime
     throw new Error(
-      `Operation failed after ${this.config.maxAttempts} attempts. Last error: ${lastError.message}`
+      `Operation failed after ${this._config.maxAttempts} attempts. Last error: ${lastError.message}`
     )
   }
 
@@ -95,9 +96,9 @@ export abstract class RetryStrategy {
     return new Promise<T>((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(
-          new Error(`Operation timed out after ${this.config.timeoutMs}ms`)
+          new Error(`Operation timed out after ${this._config.timeoutMs}ms`)
         )
-      }, this.config.timeoutMs)
+      }, this._config.timeoutMs)
 
       operation()
         .then(result => {
@@ -113,7 +114,7 @@ export abstract class RetryStrategy {
 
   private isRetryableError(error: Error): boolean {
     const message = error.message.toLowerCase()
-    return this.config.retryableErrors.some(retryableError =>
+    return this._config.retryableErrors.some(retryableError =>
       message.includes(retryableError.toLowerCase())
     )
   }
@@ -156,9 +157,9 @@ export abstract class RetryStrategy {
  * Linear retry strategy - increases delay linearly
  */
 export class LinearRetryStrategy extends RetryStrategy {
-  calculateDelay(attempt: number): number {
-    const delay = this.config.baseDelayMs * attempt
-    return Math.min(delay, this.config.maxDelayMs)
+  calculateDelay(_attempt: number): number {
+    const delay = this._config.baseDelayMs * _attempt
+    return Math.min(delay, this._config.maxDelayMs)
   }
 }
 
@@ -166,9 +167,9 @@ export class LinearRetryStrategy extends RetryStrategy {
  * Exponential backoff retry strategy - increases delay exponentially
  */
 export class ExponentialRetryStrategy extends RetryStrategy {
-  calculateDelay(attempt: number): number {
-    const delay = this.config.baseDelayMs * Math.pow(2, attempt - 1)
-    return Math.min(delay, this.config.maxDelayMs)
+  calculateDelay(_attempt: number): number {
+    const delay = this._config.baseDelayMs * Math.pow(2, _attempt - 1)
+    return Math.min(delay, this._config.maxDelayMs)
   }
 }
 
@@ -177,7 +178,7 @@ export class ExponentialRetryStrategy extends RetryStrategy {
  */
 export class FixedRetryStrategy extends RetryStrategy {
   calculateDelay(_attempt: number): number {
-    return this.config.baseDelayMs
+    return this._config.baseDelayMs
   }
 }
 

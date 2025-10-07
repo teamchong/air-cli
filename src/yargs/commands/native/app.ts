@@ -6,7 +6,6 @@
  */
 
 import { run } from '@jxa/run'
-import type { ArgumentsCamelCase } from 'yargs'
 
 import { macOSAutomation } from '../../../lib/macos-automation'
 import { createCommand } from '../../lib/command-builder'
@@ -134,6 +133,7 @@ export const appCommand = createCommand<AppCommandOptions>({
       // Default: check if app is running
       const isRunning = await macOSAutomation.isAppRunning(appName)
       logger.info(`${appName} is ${isRunning ? 'running' : 'not running'}`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.error(error.message)
       throw error
@@ -148,6 +148,7 @@ async function handleAction(
   action: string,
   appName: string,
   jsonOutput: boolean,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   logger: any
 ): Promise<void> {
   switch (action) {

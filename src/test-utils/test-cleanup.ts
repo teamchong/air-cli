@@ -15,46 +15,49 @@ import { TEST_PORT } from './test-constants'
  *
  * This prevents connection pool exhaustion when running full test suite
  */
-export async function cleanupCDPConnections(): Promise<void> {
+export async function unused_cleanupCDPConnections(): Promise<void> {
   try {
     const pool = CDPConnectionPool.getInstance()
 
     // Release all connections back to pool (mark as not in use)
     // This allows the cleanup interval to remove stale connections
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const connections = (pool as any).connections
     if (connections) {
-      for (const [key, conn] of connections) {
+      for (const [, conn] of connections) {
         conn.inUse = false
         conn.lastUsed = Date.now() - 70000 // Force immediate cleanup (older than 60s timeout)
       }
     }
 
     // Trigger immediate cleanup of stale connections
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cleanupMethod = (pool as any).cleanupStaleConnections
     if (typeof cleanupMethod === 'function') {
       cleanupMethod.call(pool)
     }
-  } catch (error) {
+  } catch (_error) {
     // Don't fail tests if cleanup fails
-    console.warn('CDP connection cleanup warning:', error)
+    console.warn('CDP connection cleanup warning:', _error)
   }
 }
 
 /**
  * Full connection pool reset for test isolation
- * More aggressive than cleanupCDPConnections
+ * More aggressive than unused_cleanupCDPConnections
  */
 export async function resetConnectionPool(): Promise<void> {
   try {
     const pool = CDPConnectionPool.getInstance()
 
     // Clear all connections
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clearMethod = (pool as any).clearAll
     if (typeof clearMethod === 'function') {
       clearMethod.call(pool)
     }
-  } catch (error) {
-    console.warn('Connection pool reset warning:', error)
+  } catch (_error) {
+    console.warn('Connection pool reset warning:', _error)
   }
 }
 
@@ -73,8 +76,8 @@ export async function releaseChromeMemory(): Promise<void> {
       history: true,
       cookies: false, // Keep cookies for session continuity
     })
-  } catch (error) {
+  } catch (_error) {
     // Don't fail tests if cleanup fails
-    console.warn('Chrome memory release warning:', error)
+    console.warn('Chrome memory release warning:', _error)
   }
 }

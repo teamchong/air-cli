@@ -5,7 +5,7 @@
 export class TimeoutError extends Error {
   constructor(
     message: string,
-    public readonly operation?: string
+    public readonly _operation?: string
   ) {
     super(message)
     this.name = 'TimeoutError'
@@ -53,10 +53,11 @@ export async function withTimeout<T>(
  * @param defaultTimeoutMs Default timeout in milliseconds
  * @returns A new function that includes timeout protection
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function timeoutProtected<T extends any[], R>(
-  fn: (...args: T) => Promise<R>,
+  fn: (..._args: T) => Promise<R>,
   defaultTimeoutMs = 5000
-): (...args: T) => Promise<R> {
+): (..._args: T) => Promise<R> {
   return async (...args: T): Promise<R> => {
     return withTimeout(fn(...args), defaultTimeoutMs, fn.name)
   }

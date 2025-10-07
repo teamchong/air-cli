@@ -5,8 +5,6 @@
  * Supports showing today's events or all events.
  */
 
-import type { ArgumentsCamelCase } from 'yargs'
-
 import { macOSAutomation } from '../../../lib/macos-automation'
 import { createCommand } from '../../lib/command-builder'
 import type { BaseCommandOptions } from '../../types'
@@ -104,6 +102,7 @@ export const calendarCommand = createCommand<CalendarCommandOptions>({
 
         logger.info(`Total: ${events.length} event(s)`)
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message.includes("Application isn't running")) {
         logger.error(

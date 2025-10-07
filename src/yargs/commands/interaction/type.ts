@@ -179,7 +179,7 @@ export const typeCommand = createCommand<TypeOptions>({
           // If not a CSS selector and no element found by text, throw clear error
           const isCss =
             /^[#.]/.test(selector) ||
-            /[.\[\]\>\+\~:]/.test(selector) ||
+            /[.[\]>+~:]/.test(selector) ||
             /^[a-z]+$/i.test(selector)
           if (!isCss) {
             throw new Error(

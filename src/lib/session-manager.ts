@@ -1,5 +1,4 @@
 import { mkdirSync } from 'fs'
-import { homedir } from 'os'
 import { join } from 'path'
 
 import { BrowserHelper } from './browser-helper'
@@ -7,6 +6,8 @@ import { PlatformHelper } from './platform-helper'
 
 const CLAUDE_DIR = PlatformHelper.getClaudeDir()
 const SESSIONS_DIR = join(CLAUDE_DIR, 'playwright-sessions')
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface SessionData {
   name: string
@@ -26,7 +27,7 @@ export interface SessionData {
 }
 
 export class SessionManager {
-  private static async ensureSessionsDir() {
+  private static async ensureSessionsDir(): Promise<void> {
     PlatformHelper.getOrCreateClaudeDir()
     const dirExists = await Bun.file(SESSIONS_DIR).exists()
     if (!dirExists) {

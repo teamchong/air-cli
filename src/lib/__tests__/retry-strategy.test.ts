@@ -176,7 +176,7 @@ describe('RetryStrategy', () => {
       })
 
       const operation = mock().mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 50))
+        () => new Promise(resolve => globalThis.setTimeout(resolve, 50))
       )
 
       await expect(strategy.execute(operation)).rejects.toThrow(

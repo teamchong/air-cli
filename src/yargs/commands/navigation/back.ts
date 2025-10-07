@@ -61,19 +61,21 @@ export const backCommand = createCommand<NavigationHistoryOptions>({
               setTimeout(() => reject(new Error('Navigation timeout')), 3000)
             ),
           ])
-        } catch (error: any) {
+        } catch (error: unknown) {
           // If goBack fails, it might be because there's no history
           if (
-            error.message.includes('go back') ||
-            error.message.includes('history')
+            error instanceof Error &&
+            (error.message.includes('go back') ||
+              error.message.includes('history'))
           ) {
             throw new Error(
               'Cannot navigate back - no previous page in history'
             )
           }
           if (
-            error.message.includes('timeout') ||
-            error.message.includes('Timeout')
+            error instanceof Error &&
+            (error.message.includes('timeout') ||
+              error.message.includes('Timeout'))
           ) {
             // Navigation was initiated but timed out - that's OK
             logger.warn('Navigation back initiated (may still be loading)')
@@ -91,7 +93,7 @@ export const backCommand = createCommand<NavigationHistoryOptions>({
             ),
           ])
           url = page.url()
-        } catch (error: any) {
+        } catch {
           title = 'Unknown'
           url = 'about:blank'
         }

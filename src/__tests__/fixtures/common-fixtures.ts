@@ -220,11 +220,16 @@ export const sessionFixtures = {
  * Helper to create custom fixtures for specific tests
  */
 export class FixtureBuilder {
-  static createPage(overrides: Partial<typeof pageDataFixtures.basic> = {}) {
+  static createPage(
+    overrides: Partial<typeof pageDataFixtures.basic> = {}
+  ): typeof pageDataFixtures.basic {
     return { ...pageDataFixtures.basic, ...overrides }
   }
 
-  static createBrowserContext(pageUrls: string[] = []) {
+  static createBrowserContext(pageUrls: string[] = []): {
+    id: string
+    pages: Array<{ url: string; title: string }>
+  } {
     return {
       id: `context-${Date.now()}`,
       pages: pageUrls.map(url => ({
@@ -238,7 +243,12 @@ export class FixtureBuilder {
     type: 'log' | 'error' | 'warn' | 'info' = 'log',
     text: string = 'Test message',
     url: string = 'https://example.com'
-  ) {
+  ): {
+    type: 'log' | 'error' | 'warn' | 'info'
+    text: string
+    timestamp: string
+    location: { url: string; lineNumber: number }
+  } {
     return {
       type,
       text,
@@ -251,7 +261,13 @@ export class FixtureBuilder {
     url: string = 'https://api.example.com/test',
     method: string = 'GET',
     status: number = 200
-  ) {
+  ): {
+    url: string
+    method: string
+    status: number
+    responseTime: number
+    headers: { 'content-type': string }
+  } {
     return {
       url,
       method,

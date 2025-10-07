@@ -32,7 +32,7 @@ export function createTestTab(html: string): string {
 /**
  * Close a test tab safely
  */
-export function closeTestTab(tabId: string): void {
+export function unused_closeTestTab(tabId: string): void {
   if (!tabId) return
 
   try {
@@ -41,7 +41,7 @@ export function closeTestTab(tabId: string): void {
       3000
     )
     console.log(`Closed test tab ${tabId}`)
-  } catch (error) {
+  } catch {
     // Log but continue - don't crash tests on cleanup failure
     console.warn(`Failed to close tab ${tabId}`)
   }
@@ -110,7 +110,7 @@ export async function createManagedTestTab(options: {
   }
 
   // Get or create a managed tab
-  const { page, tabId } = await pool.getOrCreateManagedTab({
+  const { tabId } = await pool.getOrCreateManagedTab({
     owner: options.testName || 'test',
     url: url || 'about:blank',
   })
@@ -118,7 +118,7 @@ export async function createManagedTestTab(options: {
   // Return tab info with cleanup function
   return {
     tabId,
-    cleanup: async () => {
+    cleanup: async (): Promise<void> => {
       await pool.releaseManagedTab(tabId)
     },
   }
@@ -136,7 +136,12 @@ export async function cleanupAllManagedTabs(): Promise<void> {
 /**
  * Get tab pool statistics
  */
-export function getTabPoolStats() {
+export function getTabPoolStats(): {
+  total: number
+  inUse: number
+  idle: number
+  maxTabs: number
+} {
   const pool = CDPConnectionPool.getInstance()
   return pool.getManagedTabStats()
 }

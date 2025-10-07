@@ -43,6 +43,7 @@ export const installCommand: CommandModule<{}, InstallArgs> = {
       // Exit cleanly
 
       return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       logger.commandError(`Installation failed: ${error.message}`)
       throw new Error('Command failed')

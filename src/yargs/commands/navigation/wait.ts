@@ -74,7 +74,8 @@ export const waitCommand = createCommand<WaitArgs>({
   },
 
   handler: async ({ argv, spinner, logger }) => {
-    let { selector, timeout, state, waitFor } = argv
+    let { selector, timeout } = argv
+    const { state, waitFor } = argv
     const tabIndex = argv['tab-index'] as number | undefined
     const tabId = argv['tab-id'] as string | undefined
 
@@ -105,6 +106,7 @@ export const waitCommand = createCommand<WaitArgs>({
             // Wait for element with specific state
             await page.waitForSelector(selector, {
               timeout,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               state: state as any,
             })
 
@@ -124,6 +126,7 @@ export const waitCommand = createCommand<WaitArgs>({
             }
           } else if (waitFor) {
             // Wait for page load state
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await page.waitForLoadState(waitFor as any, { timeout })
 
             if (spinner) {
@@ -156,6 +159,7 @@ export const waitCommand = createCommand<WaitArgs>({
               })
             }
           }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           if (error.name === 'TimeoutError') {
             if (selector) {

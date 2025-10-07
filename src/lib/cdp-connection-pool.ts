@@ -7,12 +7,7 @@
  * Monitor tab feature was completely removed to fix timeout issues.
  */
 
-import {
-  chromium,
-  type Browser,
-  type BrowserContext,
-  type Page,
-} from 'playwright'
+import { type Browser, type BrowserContext, type Page } from 'playwright'
 
 interface PooledConnection {
   browser: Browser
@@ -98,7 +93,9 @@ export class CDPConnectionPool {
           // Note: We can't actually close the browser (it's external)
           // but we can remove it from our pool
           this.connections.delete(lru)
-        } catch {}
+        } catch {
+          // Intentionally empty - errors removing connections are non-critical
+        }
       } else {
         throw new Error(
           `Connection pool exhausted (max: ${this.maxConnections})`
@@ -109,6 +106,7 @@ export class CDPConnectionPool {
     // Create new connection
     try {
       // Use require() to get fresh Playwright instance - fixes module corruption after many tests
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const playwright = require('playwright')
       const chromeInstance = playwright.chromium
 
@@ -136,6 +134,7 @@ export class CDPConnectionPool {
 
       this.connections.set(key, connection)
       return browser
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // More detailed error message for debugging
       const errorMsg = error.message || String(error)
@@ -175,7 +174,7 @@ export class CDPConnectionPool {
    */
   async withConnection<T>(
     port: number,
-    action: (browser: Browser) => Promise<T>
+    action: (_browser: Browser) => Promise<T>
   ): Promise<T> {
     const browser = await this.getConnection(port)
     try {
@@ -433,10 +432,14 @@ export class CDPConnectionPool {
    */
   private async getPageId(page: Page): Promise<string> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cdpSession = await (page.context() as any)._browser._connection
         ._transport._ws
+
       const targetId =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (page as any)._guid ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (page as any)._targetId ||
         cdpSession?.targetId ||
         'unknown'
@@ -461,7 +464,7 @@ export class CDPConnectionPool {
   /**
    * Force close the oldest non-persistent tab when at tab limit
    */
-  private async forceCloseOldestTab(browser: Browser): Promise<void> {
+  private async forceCloseOldestTab(_browser: Browser): Promise<void> {
     // Find oldest managed tab that's not persistent
     const tabs = Array.from(this.managedTabs.values())
       .filter(tab => !tab.persistent)
@@ -481,7 +484,13 @@ export class CDPConnectionPool {
   /**
    * Get tab pool statistics
    */
-  getManagedTabStats() {
+  getManagedTabStats(): {
+    total: number
+    inUse: number
+    idle: number
+    maxTabs: number
+    idleTimeout: number
+  } {
     let inUse = 0
     let idle = 0
 
@@ -522,8 +531,8 @@ export class CDPConnectionPool {
     // Note: browser.close() disconnects from CDP but doesn't close external browser
     const closePromises: Promise<void>[] = []
 
-    for (const [key, connection] of this.connections) {
-      const closePromise = (async () => {
+    for (const connection of this.connections.values()) {
+      const closePromise = (async (): Promise<void> => {
         try {
           // Force close with timeout - Playwright CDP connections can hang
           await Promise.race([

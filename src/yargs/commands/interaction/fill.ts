@@ -155,6 +155,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
           })
 
           logger.success(`Filled [${ref}] with "${value}"`)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           logger.error(`Failed to fill [${ref}]: ${err.message}`)
           throw err
@@ -196,18 +197,25 @@ export const fillCommand = createCommand<FillWithRefOptions>({
       try {
         availableFields = await page.evaluate(() => {
           const inputs = Array.from(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (globalThis as any).document.querySelectorAll(
               'input, textarea, select'
             )
           )
           const fieldNames: string[] = []
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           inputs.forEach((input: any) => {
             if (input.name) fieldNames.push(input.name)
             if (input.id) fieldNames.push(input.id)
             if (input.placeholder) fieldNames.push(input.placeholder)
           })
           // Also get labels
-          const labels = Array.from(document.querySelectorAll('label'))
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const labels = Array.from(
+            (globalThis as any).document.querySelectorAll('label')
+          )
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           labels.forEach((label: any) => {
             const text = label.textContent?.trim()
             if (text) fieldNames.push(text)
@@ -240,6 +248,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
             }
             results.push({ field: selector, value, success: true })
             filledCount++
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (err: any) {
             const errorMsg = `Failed to fill ${selector}: ${err.message}`
             errors.push(errorMsg)
@@ -421,7 +430,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
                   // If not a CSS selector and no element found by text, throw clear error
                   const isCss =
                     /^[#.]/.test(actualSelector) ||
-                    /[.\[\]\>\+\~:]/.test(actualSelector) ||
+                    /[.[\]>+~:]/.test(actualSelector) ||
                     /^[a-z]+$/i.test(actualSelector)
                   if (!isCss) {
                     throw new Error(
@@ -459,6 +468,7 @@ export const fillCommand = createCommand<FillWithRefOptions>({
             }
             results.push({ field: selectorPart, value, success: true })
             filledCount++
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (err: any) {
             let errorMsg = err.message
 

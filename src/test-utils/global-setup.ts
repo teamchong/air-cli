@@ -12,7 +12,7 @@ import { TabManager } from './tab-manager'
 import { TEST_PORT, TEST_TMP_DIR } from './test-constants'
 
 // Execute setup immediately when this module is imported
-;(async function globalSetup() {
+;(async function globalSetup(): Promise<void> {
   console.log('🚀 Setting up browser for all tests...')
 
   // Clean and recreate test temp directory
@@ -20,8 +20,8 @@ import { TEST_PORT, TEST_TMP_DIR } from './test-constants'
     rmSync(TEST_TMP_DIR, { recursive: true, force: true })
     mkdirSync(TEST_TMP_DIR, { recursive: true })
     console.log(`📁 Created test temp directory: ${TEST_TMP_DIR}`)
-  } catch (error) {
-    console.warn('Warning: Could not setup test temp directory:', error)
+  } catch (_error) {
+    console.warn('Warning: Could not setup test temp directory:', _error)
   }
 
   try {
@@ -86,13 +86,13 @@ import { TEST_PORT, TEST_TMP_DIR } from './test-constants'
         execSync(`bun run src/index.ts close --port ${TEST_PORT}`, {
           stdio: 'ignore',
         })
-      } catch (e) {
+      } catch {
         // Ignore errors during cleanup
       }
     })
-  } catch (error) {
-    console.error('❌ Global setup failed:', error)
-    throw error
+  } catch (_error) {
+    console.error('❌ Global setup failed:', _error)
+    throw _error
   }
 })()
 

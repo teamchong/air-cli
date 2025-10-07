@@ -52,6 +52,7 @@ export class TabManager {
         env: cleanEnv,
       })
       return { output, exitCode: 0 }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.code === 'ETIMEDOUT') {
         throw new Error(`Command timed out (hanging): ${cmd}`)
@@ -215,9 +216,9 @@ export class TabManager {
     for (const tabId of tabsToClose) {
       try {
         this.closeTabById(tabId)
-      } catch (error) {
+      } catch (_error) {
         // Continue cleanup even if individual tab close fails
-        console.warn(`Failed to close tab ${tabId}:`, error)
+        console.warn(`Failed to close tab ${tabId}:`, _error)
       }
     }
 
@@ -304,8 +305,8 @@ export class TabManager {
         )
         this.cleanupTestTabs()
       }
-    } catch (error) {
-      console.warn('Failed to enforce tab limit:', error)
+    } catch (_error) {
+      console.warn('Failed to enforce tab limit:', _error)
     }
   }
 
@@ -342,9 +343,9 @@ export class TabManager {
             if (exitCode === 0) {
               console.log(`Closed test tab: ${tab.title.substring(0, 30)}...`)
             }
-          } catch (error) {
+          } catch (_error) {
             // Continue cleanup even if individual tab close fails
-            console.warn(`Failed to close test tab ${tab.id}:`, error)
+            console.warn(`Failed to close test tab ${tab.id}:`, _error)
           }
         }
       }
@@ -370,13 +371,13 @@ export class TabManager {
               `${CLI} tabs close --tab-id ${tab.id} --port ${TEST_PORT}`,
               2000
             )
-          } catch (error) {
-            console.warn(`Failed to close excess tab ${tab.id}:`, error)
+          } catch (_error) {
+            console.warn(`Failed to close excess tab ${tab.id}:`, _error)
           }
         }
       }
-    } catch (error) {
-      console.warn('Could not perform test tab cleanup:', error)
+    } catch (_error) {
+      console.warn('Could not perform test tab cleanup:', _error)
     }
   }
 }

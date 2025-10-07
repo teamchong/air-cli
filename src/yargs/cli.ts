@@ -24,34 +24,28 @@ import { dialogCommand } from './commands/advanced/dialog'
 import { evalCommand } from './commands/advanced/eval'
 import { execCommand } from './commands/advanced/exec'
 import { networkCommand } from './commands/advanced/network'
+import { perfCommand } from './commands/advanced/perf'
 import { listCommand } from './commands/capture/list'
 import { pdfCommand } from './commands/capture/pdf'
+import { resizeCommand } from './commands/capture/resize'
 import { screenshotCommand } from './commands/capture/screenshot'
+import { snapshotCommand } from './commands/capture/snapshot'
 import { clickCommand } from './commands/interaction/click'
+import { dragCommand } from './commands/interaction/drag'
+import { fillCommand } from './commands/interaction/fill'
+import { hoverCommand } from './commands/interaction/hover'
+import { pressCommand } from './commands/interaction/press'
+import { selectCommand } from './commands/interaction/select'
+import { typeCommand } from './commands/interaction/type'
+import { uploadCommand } from './commands/interaction/upload'
+import { meshCommand } from './commands/mesh/index'
+import { appCommand } from './commands/native/app'
 import { backCommand } from './commands/navigation/back'
+import { closeCommand } from './commands/navigation/close'
 import { navigateCommand } from './commands/navigation/navigate'
 import { openCommand } from './commands/navigation/open'
-import { closeCommand } from './commands/navigation/close'
 import { tabsCommand } from './commands/navigation/tabs'
 import { waitCommand } from './commands/navigation/wait'
-
-// Interaction commands
-import { hoverCommand } from './commands/interaction/hover'
-import { typeCommand } from './commands/interaction/type'
-import { fillCommand } from './commands/interaction/fill'
-import { selectCommand } from './commands/interaction/select'
-import { dragCommand } from './commands/interaction/drag'
-import { pressCommand } from './commands/interaction/press'
-import { uploadCommand } from './commands/interaction/upload'
-
-// Capture commands
-import { snapshotCommand } from './commands/capture/snapshot'
-import { resizeCommand } from './commands/capture/resize'
-
-// Advanced commands
-import { perfCommand } from './commands/advanced/perf'
-
-// Utility commands
 import { claudeCommand } from './commands/utility/claude'
 import { codegenCommand } from './commands/utility/codegen'
 import { contextCommand } from './commands/utility/context'
@@ -60,10 +54,8 @@ import { sessionCommand } from './commands/utility/session'
 import { testCommand } from './commands/utility/test'
 
 // Native app commands (macOS only)
-import { appCommand } from './commands/native/app'
 
 // Mesh networking commands
-import { meshCommand } from './commands/mesh/index'
 
 /**
  * Global CLI options interface
@@ -83,7 +75,7 @@ export interface GlobalOptions {
  * @param argv - Optional argv array for testing (defaults to process.argv)
  * @returns Configured Yargs instance
  */
-export function createCli(argv?: string[]) {
+export function createCli(argv?: string[]): ReturnType<typeof yargs> {
   const cli = yargs(argv || hideBin(process.argv))
     .scriptName('air')
     .usage('$0 <command> [options]')
@@ -225,6 +217,7 @@ export function createCli(argv?: string[]) {
  * Register a command with the CLI
  * This helper ensures consistent command registration
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function registerCommand(
   cli: ReturnType<typeof createCli>,
   command: CommandModule

@@ -14,6 +14,7 @@ let connectionsBeforeFile = 0
 
 beforeAll(() => {
   const pool = CDPConnectionPool.getInstance()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const connections = (pool as any).connections
   connectionsBeforeFile = connections ? connections.size : 0
 
@@ -30,9 +31,10 @@ afterAll(async () => {
 
     // GENTLE cleanup: Just mark connections as available (not in use)
     // Don't force-close them - let the natural cleanup interval handle it
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const connections = (pool as any).connections
     if (connections) {
-      for (const [key, conn] of connections) {
+      for (const [, conn] of connections) {
         // Only mark as not in use, don't force age
         if (conn.inUse) {
           conn.inUse = false
@@ -48,8 +50,8 @@ afterAll(async () => {
         `🧹 CDP connections released: ${connectionsBeforeFile} → ${connectionsAfter}`
       )
     }
-  } catch (error) {
+  } catch (_error) {
     // Don't fail tests if cleanup fails
-    console.warn('CDP connection cleanup warning:', error)
+    console.warn('CDP connection cleanup warning:', _error)
   }
 })

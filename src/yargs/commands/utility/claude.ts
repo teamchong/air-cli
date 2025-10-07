@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-import { CommandModule, Arguments } from 'yargs'
+import { CommandModule } from 'yargs'
 
 import { logger } from '../../../lib/logger'
 
@@ -169,7 +169,7 @@ export const claudeCommand: CommandModule = {
   aliases: ['claude-instructions'],
   describe: 'Output Claude-specific usage instructions',
 
-  handler: async argv => {
+  handler: async _argv => {
     try {
       // Try to read CLAUDE.md from the repo
       const instructionsPath = join(process.cwd(), 'CLAUDE.md')

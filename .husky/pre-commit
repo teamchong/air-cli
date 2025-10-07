@@ -7,6 +7,13 @@ bun run typecheck || {
   exit 1
 }
 
+# Run full lint check
+echo "🔎 Running ESLint..."
+bun run lint || {
+  echo "❌ ESLint check failed. Please fix linting errors before committing."
+  exit 1
+}
+
 # Run lint-staged for formatting and linting
 echo "✨ Running lint-staged..."
 bun x lint-staged

@@ -3,6 +3,8 @@
  * Provides a simple API to add validation without major refactoring
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { Sanitizers } from './decorators'
 import { logger } from './logger'
 import {
@@ -15,7 +17,7 @@ import {
 export interface ParameterValidationRule {
   name: string
   validators: ValidatorFunction[]
-  sanitizer?: (value: any) => any
+  sanitizer?: (_value: any) => any
   required?: boolean
 }
 
@@ -45,7 +47,7 @@ export class ValidationHelper {
     const allErrors: string[] = []
 
     // Auto-detect and validate common parameters
-    for (const [key, value] of Object.entries(params)) {
+    for (const [key] of Object.entries(params)) {
       switch (key) {
         case 'url':
           validationSchema[key] = [Validators.url({ required: true })]
@@ -67,12 +69,13 @@ export class ValidationHelper {
           // Selector validator handles trimming internally
           break
 
-        case 'waitUntil':
+        case 'waitUntil': {
           const waitOptions = ['load', 'domcontentloaded', 'networkidle']
           validationSchema[key] = [
             Validators.enum(waitOptions, { required: false }),
           ]
           break
+        }
 
         default:
           // No automatic validation for unknown parameters
@@ -140,7 +143,7 @@ export class ValidationHelper {
       }
     }
 
-    const { isValid, errors, sanitizedData } = ValidationUtils.validateObject(
+    const { errors, sanitizedData } = ValidationUtils.validateObject(
       params,
       validationSchema
     )
@@ -331,7 +334,7 @@ export class ValidationSchemaBuilder {
   custom(
     name: string,
     validators: ValidatorFunction[],
-    sanitizer?: (value: any) => any
+    sanitizer?: (_value: any) => any
   ): this {
     this.rules.push({
       name,
@@ -361,7 +364,8 @@ export class ValidationSchemaBuilder {
 /**
  * Mixin that adds validation capabilities to any class
  */
-export function WithValidation<T extends new (...args: any[]) => {}>(Base: T) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function WithValidation<T extends new (..._args: any[]) => {}>(Base: T) {
   return class extends Base {
     protected validateParams(
       params: Record<string, any>,

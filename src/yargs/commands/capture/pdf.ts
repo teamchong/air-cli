@@ -82,6 +82,7 @@ export const pdfCommand: CommandModule<{}, PdfArgs> = {
       )
 
       return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       spinner.fail(chalk.red(`❌ PDF generation failed: ${error.message}`))
       throw new Error('Command failed')

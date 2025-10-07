@@ -1,20 +1,10 @@
-import { execSync } from 'child_process'
-
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-  afterEach,
-} from 'bun:test'
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 
 import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   extractAndRegisterTabId,
   runCommand,
-  closeTestTab,
+  unused_closeTestTab,
 } from '../../../../test-utils/test-helpers'
 
 /**
@@ -42,7 +32,7 @@ describe('click command - TAB ID FROM OUTPUT', () => {
   afterAll(async () => {
     // Clean up test tab
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
   })
 
@@ -118,7 +108,7 @@ describe('click command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} click "#test" --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         10000
       )

@@ -5,8 +5,6 @@
  * Supports filtering by read status and outputting as JSON.
  */
 
-import type { ArgumentsCamelCase } from 'yargs'
-
 import { macOSAutomation } from '../../../lib/macos-automation'
 import { createCommand } from '../../lib/command-builder'
 import type { BaseCommandOptions } from '../../types'
@@ -100,6 +98,7 @@ export const mailCommand = createCommand<MailCommandOptions>({
 
         logger.info(`Total: ${messages.length} message(s)`)
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message.includes("Application isn't running")) {
         logger.error('Mail.app is not running. Please open Mail.app first.')

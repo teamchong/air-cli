@@ -52,7 +52,7 @@ class MemoryMonitor {
           const rssKB = parseInt(parts[5], 10)
           return sum + (isNaN(rssKB) ? 0 : rssKB)
         }, 0) / 1024
-    } catch (error) {
+    } catch {
       // Chrome might not be running or ps failed
     }
 

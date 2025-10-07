@@ -23,7 +23,13 @@ export default [
         global: 'readonly',
         module: 'readonly',
         require: 'readonly',
-        exports: 'readonly'
+        exports: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        NodeJS: 'readonly',
+        Bun: 'readonly'
       }
     },
     plugins: {
@@ -31,7 +37,7 @@ export default [
       'import': importPlugin
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-var-requires': 'error',
@@ -54,6 +60,7 @@ export default [
         }
       ],
       'import/no-duplicates': 'error',
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-console': 'off',
       'no-debugger': 'error',
       'no-alert': 'error',

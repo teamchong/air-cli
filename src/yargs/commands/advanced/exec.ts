@@ -110,6 +110,7 @@ export const execCommand = createCommand<ExecuteOptions>({
         try {
           code = await fs.promises.readFile(argv.file, 'utf-8')
           codeSource = 'file'
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (fileError: any) {
           if (fileError.code === 'ENOENT') {
             logger.error(`File not found: ${argv.file}`)
@@ -179,6 +180,7 @@ export const execCommand = createCommand<ExecuteOptions>({
               'console',
               trimmedCode
             )
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (syntaxError: any) {
             // Handle syntax errors in the script
             const errorMessage = syntaxError.message || String(syntaxError)
@@ -200,27 +202,32 @@ export const execCommand = createCommand<ExecuteOptions>({
           }
 
           // Create a console wrapper that captures output
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const consoleOutput: any[] = []
           const consoleWrapper = {
-            log: (...args: any[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            log: (...args: any[]): void => {
               consoleOutput.push({ type: 'log', args })
               if (!isQuiet) {
                 logger.info(args.map(String).join(' '))
               }
             },
-            error: (...args: any[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            error: (...args: any[]): void => {
               consoleOutput.push({ type: 'error', args })
               if (!isQuiet) {
                 logger.error(args.map(String).join(' '))
               }
             },
-            warn: (...args: any[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            warn: (...args: any[]): void => {
               consoleOutput.push({ type: 'warn', args })
               if (!isQuiet) {
                 logger.warn(args.map(String).join(' '))
               }
             },
-            info: (...args: any[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            info: (...args: any[]): void => {
               consoleOutput.push({ type: 'info', args })
               if (!isQuiet) {
                 console.info(...args)
@@ -270,6 +277,7 @@ export const execCommand = createCommand<ExecuteOptions>({
               // Always clear the timeout to prevent hanging
               clearTimeout(timeoutHandle!)
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (execError: any) {
             // Handle execution errors gracefully
             const errorMessage = execError.message || String(execError)
@@ -322,6 +330,7 @@ export const execCommand = createCommand<ExecuteOptions>({
           }
         }
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Log the error if not already logged
       if (error.message && !error.message.includes('Command failed')) {

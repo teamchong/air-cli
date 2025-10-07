@@ -14,11 +14,7 @@ import {
 } from 'bun:test'
 
 import { TEST_PORT, CLI } from '../../test-utils/test-constants'
-import {
-  createTestTab,
-  closeTestTab,
-  runCommand,
-} from '../../test-utils/test-helpers'
+import { unused_closeTestTab, runCommand } from '../../test-utils/test-helpers'
 
 /**
  * Session Manager Real Integration Tests
@@ -53,7 +49,7 @@ describe('SessionManager - Real Integration', () => {
 
   afterAll(async () => {
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
   })
 
@@ -62,7 +58,7 @@ describe('SessionManager - Real Integration', () => {
     if (existsSync(SESSIONS_DIR)) {
       try {
         rmSync(SESSIONS_DIR, { recursive: true, force: true })
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -73,7 +69,7 @@ describe('SessionManager - Real Integration', () => {
     if (existsSync(SESSIONS_DIR)) {
       try {
         rmSync(SESSIONS_DIR, { recursive: true, force: true })
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     }

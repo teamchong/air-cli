@@ -1,4 +1,3 @@
-import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -11,8 +10,7 @@ import {
 } from '../../../../test-utils/test-constants'
 import {
   createTestTab,
-  closeTestTab,
-  cleanupAllTestTabs,
+  unused_closeTestTab,
   runCommand,
 } from '../../../../test-utils/test-helpers'
 
@@ -46,10 +44,12 @@ describe('pdf command - TAB ID FROM OUTPUT', () => {
         fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-page.pdf'))
       if (fs.existsSync(path.join(TEST_TMP_DIR, 'test-custom.pdf')))
         fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-custom.pdf'))
-    } catch {}
+    } catch {
+      // Ignore cleanup errors
+    }
 
     // Clean up our test tab using the specific tab ID
-    closeTestTab(testTabId)
+    unused_closeTestTab(testTabId)
   })
 
   describe('command structure', () => {
@@ -114,7 +114,7 @@ describe('pdf command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} pdf --tab-index 0 --tab-id ${testTabId}`,
         10000
       )

@@ -26,24 +26,23 @@ export interface TimeoutOptions {
 /**
  * Wraps a command handler with timeout protection
  */
-export function withTimeoutProtection<T extends Record<string, any>>(
-  handler: (argv: T) => Promise<any>,
+export function withTimeoutProtection<T extends Record<string, unknown>>(
+  // eslint-disable-next-line no-unused-vars
+  handler: (argv: T) => Promise<unknown>,
   options: TimeoutOptions = {}
-): (argv: T) => Promise<any> {
+  // eslint-disable-next-line no-unused-vars
+): (argv: T) => Promise<unknown> {
   return async (argv: T) => {
     // Determine timeout based on options or command type
     const timeout =
-      argv.timeout ||
+      (typeof argv.timeout === 'number' ? argv.timeout : undefined) ||
       options.timeout ||
       TIMEOUT_DEFAULTS[options.operationType || 'default']
 
     // Wrap the entire command execution in a timeout
     try {
-      return await withTimeout(
-        handler(argv),
-        timeout,
-        `Command '${argv.$0} ${argv._?.join(' ')}'`
-      )
+      const commandName = `Command '${String(argv.$0)} ${Array.isArray(argv._) ? argv._.join(' ') : ''}'`
+      return await withTimeout(handler(argv), timeout, commandName)
     } catch (error) {
       if (error instanceof TimeoutError) {
         // Cleanup any hanging connections
@@ -65,10 +64,12 @@ export function withTimeoutProtection<T extends Record<string, any>>(
 /**
  * Global timeout middleware for yargs
  */
-export const timeoutMiddleware = (argv: any) => {
+export const timeoutMiddleware = <T extends Record<string, unknown>>(
+  argv: T
+): T => {
   // Add global timeout option if not present
   if (!('timeout' in argv)) {
-    argv.timeout = undefined
+    ;(argv as Record<string, unknown>).timeout = undefined
   }
   return argv
 }

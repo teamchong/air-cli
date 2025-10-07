@@ -1,6 +1,3 @@
-import * as childProcess from 'child_process'
-import * as fs from 'fs'
-import * as fsPromises from 'fs/promises'
 import { homedir } from 'os'
 import { join } from 'path'
 
@@ -14,28 +11,22 @@ import {
   mock,
 } from 'bun:test'
 
-// Import modules to be mocked
-
-import * as playwright from 'playwright'
-
 // Create mock implementations
-const mockExistsSync = mock((_path: any) => false)
-const mockReadFileSync = mock((_path: any, _options?: any) =>
+const mockExistsSync = mock((_path: any): boolean => false)
+const mockReadFileSync = mock((_path: any): string =>
   JSON.stringify({ defaultBrowser: 'chromium', browsersInstalled: false })
 )
-const mockWriteFileSync = mock(
-  (_path: any, _data: any, _options?: any) => undefined
-)
-const mockMkdirSync = mock((_path: any, _options?: any) => undefined)
-const mockUnlinkSync = mock((_path: any) => undefined)
+const mockWriteFileSync = mock((_path: any, _data: any): void => undefined)
+const mockMkdirSync = mock((_path: any, _options?: any): void => undefined)
+const mockUnlinkSync = mock((_path: any): void => undefined)
 const mockSpawnSync = mock(
-  (_command: any, _args?: any, _options?: any) => ({ status: 0 }) as any
+  (_command: any, _args?: any, _options?: any): any => ({ status: 0 })
 )
-const mockGetClaudeDir = mock(() => '/test/.claude')
-const mockGetOrCreateClaudeDir = mock(() => '/test/.claude')
-const mockChromiumExecutablePath = mock(() => '/test/chromium')
-const mockFirefoxExecutablePath = mock(() => '/test/firefox')
-const mockWebkitExecutablePath = mock(() => '/test/webkit')
+const mockGetClaudeDir = mock((): string => '/test/.claude')
+const mockGetOrCreateClaudeDir = mock((): string => '/test/.claude')
+const mockChromiumExecutablePath = mock((): string => '/test/chromium')
+const mockFirefoxExecutablePath = mock((): string => '/test/firefox')
+const mockWebkitExecutablePath = mock((): string => '/test/webkit')
 
 // Mock the modules
 mock.module('fs', () => ({
@@ -80,12 +71,8 @@ mock.module('playwright', () => ({
 
 // Import the module under test AFTER all mocks are set up
 import { BrowserConfig, type BrowserType } from '../browser-config'
-import * as logger from '../logger'
-import * as platformHelper from '../platform-helper'
-import { PlatformHelper } from '../platform-helper'
 
 const CLAUDE_DIR = '/test/.claude'
-const CONFIG_FILE = join(CLAUDE_DIR, 'playwright-config.json')
 const OLD_CONFIG_FILE = join(homedir(), '.air-cli-config.json')
 
 // Helper function to get the config file path - matches the implementation
@@ -114,7 +101,7 @@ describe('BrowserConfig', () => {
 
     // Setup completely isolated mocks with strict control
     // IMPORTANT: Return false for ALL paths by default to prevent loading real config files
-    mockExistsSync.mockImplementation((path: any) => {
+    mockExistsSync.mockImplementation((_path: any): boolean => {
       // Never allow any real file to exist in tests by default
       return false
     })
@@ -170,7 +157,8 @@ describe('BrowserConfig', () => {
       ;(BrowserConfig as any).config = null
 
       // Set up mocks for this specific test
-      mockExistsSync.mockImplementation((path: any) => {
+
+      mockExistsSync.mockImplementation((path: any): boolean => {
         return path === getTestConfigFile()
       })
       mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig))
@@ -190,7 +178,7 @@ describe('BrowserConfig', () => {
         browsersInstalled: false,
       }
 
-      mockExistsSync.mockImplementation((path: any) => {
+      mockExistsSync.mockImplementation((path: any): boolean => {
         return path === OLD_CONFIG_FILE
       })
       mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig))
@@ -226,7 +214,7 @@ describe('BrowserConfig', () => {
       mockReadFileSync.mockClear()
 
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig))
 
@@ -246,7 +234,7 @@ describe('BrowserConfig', () => {
       mockReadFileSync.mockClear()
 
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -270,7 +258,7 @@ describe('BrowserConfig', () => {
       mockExistsSync.mockClear()
       mockReadFileSync.mockClear()
 
-      mockExistsSync.mockImplementation((path: any) => {
+      mockExistsSync.mockImplementation((path: any): boolean => {
         return path !== CLAUDE_DIR
       })
       mockReadFileSync.mockReturnValue(
@@ -295,7 +283,7 @@ describe('BrowserConfig', () => {
       mockReadFileSync.mockClear()
 
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -319,7 +307,8 @@ describe('BrowserConfig', () => {
       mockWebkitExecutablePath.mockReturnValue('/test/webkit')
 
       // Mock existsSync to return true for browser paths
-      mockExistsSync.mockImplementation((path: any) => {
+
+      mockExistsSync.mockImplementation((path: any): boolean => {
         return (
           path === '/test/chromium' ||
           path === '/test/firefox' ||
@@ -371,8 +360,9 @@ describe('BrowserConfig', () => {
       mockSpawnSync.mockReturnValue({
         status: 0,
       } as any)
+
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -391,8 +381,9 @@ describe('BrowserConfig', () => {
       mockSpawnSync.mockReturnValue({
         status: 0,
       } as any)
+
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -415,8 +406,9 @@ describe('BrowserConfig', () => {
       mockReadFileSync.mockClear()
 
       // Setup mocks for this specific test
+
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -473,7 +465,7 @@ describe('BrowserConfig', () => {
 
     it('should use default from config', async () => {
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -493,7 +485,7 @@ describe('BrowserConfig', () => {
   describe('selectBrowser', () => {
     it('should return default browser', async () => {
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
@@ -514,7 +506,7 @@ describe('BrowserConfig', () => {
   describe('getLastUsedBrowser', () => {
     it('should return last used browser', async () => {
       mockExistsSync.mockImplementation(
-        (path: any) => path === getTestConfigFile()
+        (path: any): boolean => path === getTestConfigFile()
       )
       mockReadFileSync.mockReturnValue(
         JSON.stringify({

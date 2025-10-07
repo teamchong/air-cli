@@ -17,7 +17,8 @@ import { createServer, Server as HTTPSServer } from 'https'
 import { certificateManager } from './security/certificate-manager'
 
 export interface ServiceHandler {
-  (req: IncomingMessage, res: ServerResponse, params: any): Promise<void>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (_req: IncomingMessage, _res: ServerResponse, _params: any): Promise<void>
 }
 
 export interface AuthorizationRule {
@@ -125,6 +126,7 @@ export class SecureNode {
   ): Promise<void> {
     try {
       // Extract client identity from certificate
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const socket = req.socket as any
       const clientCert = socket.getPeerCertificate()
       const clientName = clientCert.subject?.CN || 'unknown'
@@ -154,6 +156,7 @@ export class SecureNode {
       }
 
       // Parse query parameters
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const params: any = {}
       url.searchParams.forEach((value, key) => {
         params[key] = value
@@ -166,6 +169,7 @@ export class SecureNode {
 
       // Call handler
       await handler(req, res, params)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('❌ Request error:', error.message)
       this.sendError(res, 500, error.message)
@@ -200,6 +204,7 @@ export class SecureNode {
   /**
    * Parse request body
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseBody(req: IncomingMessage): Promise<any> {
     return new Promise((resolve, reject) => {
       let body = ''
@@ -218,6 +223,7 @@ export class SecureNode {
   /**
    * Send JSON response
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendJSON(res: ServerResponse, data: any, statusCode = 200): void {
     res.writeHead(statusCode, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(data, null, 2))
@@ -249,8 +255,11 @@ export class SecureClient {
     targetPort: number,
     path: string,
     method: 'GET' | 'POST' = 'GET',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const https = require('https')
 
     // Get this node's certificates

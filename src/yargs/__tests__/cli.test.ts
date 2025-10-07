@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, spyOn } from 'bun:test'
-import yargs from 'yargs'
 
 import { createCli } from '../cli'
 
@@ -18,7 +17,7 @@ describe('Yargs CLI Structure', () => {
     })
 
     it('should have global options configured', async () => {
-      const argv = await cli.parse(['--help'], {}, (err, argv, output) => {
+      await cli.parse(['--help'], {}, (_err, _argv, output) => {
         // Check that global options are present in help text
         expect(output).toContain('--port')
         expect(output).toContain('--verbose')
@@ -29,48 +28,48 @@ describe('Yargs CLI Structure', () => {
     })
 
     it('should parse global port option correctly', async () => {
-      const argv = await cli.parse(['--port', '8080'], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse(['--port', '8080'], {}, (_err, argv) => {
+        if (!_err) {
           expect(argv.port).toBe(8080)
         }
       })
     })
 
     it('should use default port when not specified', async () => {
-      const argv = await cli.parse([], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse([], {}, (_err, argv) => {
+        if (!_err) {
           expect(argv.port).toBe(9222)
         }
       })
     })
 
     it('should parse verbose flag', async () => {
-      const argv = await cli.parse(['--verbose'], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse(['--verbose'], {}, (_err, argv) => {
+        if (!_err) {
           expect(argv.verbose).toBe(true)
         }
       })
     })
 
     it('should parse quiet flag', async () => {
-      const argv = await cli.parse(['--quiet'], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse(['--quiet'], {}, (_err, argv) => {
+        if (!_err) {
           expect(argv.quiet).toBe(true)
         }
       })
     })
 
     it('should parse json flag', async () => {
-      const argv = await cli.parse(['--json'], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse(['--json'], {}, (_err, argv) => {
+        if (!_err) {
           expect(argv.json).toBe(true)
         }
       })
     })
 
     it('should parse no-color flag', async () => {
-      const argv = await cli.parse(['--no-color'], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse(['--no-color'], {}, (_err, argv) => {
+        if (!_err) {
           // Yargs parses --no-color as color=false
           expect(argv.color).toBe(false)
         }
@@ -82,7 +81,7 @@ describe('Yargs CLI Structure', () => {
     it('should be configured to demand commands in production', () => {
       // Test that the CLI is configured correctly for production
       // In test mode, we set demandCommand to 0, in prod it should be 1
-      const testCli = createCli([])
+      createCli([])
 
       // Verify test mode doesn't demand commands
       expect(process.env.NODE_ENV).toBe('test')
@@ -92,7 +91,7 @@ describe('Yargs CLI Structure', () => {
       delete process.env.NODE_ENV
 
       // Create a production CLI to verify configuration
-      const prodCli = createCli([])
+      createCli([])
 
       // Reset environment
       process.env.NODE_ENV = originalEnv
@@ -108,11 +107,11 @@ describe('Yargs CLI Structure', () => {
       let errorMessage = ''
       // Try to use an unknown option
       try {
-        await cli.parse(['--unknown-option'], {}, err => {
-          if (err) throw err
+        await cli.parse(['--unknown-option'], {}, _err => {
+          if (_err) throw _err
         })
-      } catch (err: any) {
-        errorMessage = err.message
+      } catch (err: unknown) {
+        errorMessage = (err as Error).message
       }
       expect(errorMessage).toContain('Unknown argument')
     })
@@ -144,8 +143,8 @@ describe('Yargs CLI Structure', () => {
     it('should handle conflicting quiet and verbose flags', async () => {
       const consoleError = spyOn(console, 'error').mockImplementation(() => {})
 
-      await cli.parse(['--quiet', '--verbose'], {}, (err, argv) => {
-        if (!err) {
+      await cli.parse(['--quiet', '--verbose'], {}, (_err, argv) => {
+        if (!_err) {
           // Middleware should resolve the conflict
           expect(argv.quiet).toBe(false)
           expect(argv.verbose).toBe(true)
@@ -168,8 +167,8 @@ describe('Yargs advantages over Commander.js', () => {
     const cli = createCli(['--port', '3000'])
 
     let parsedArgs: any = null
-    await cli.parse(['--port', '3000'], {}, (err, argv) => {
-      if (!err) {
+    await cli.parse(['--port', '3000'], {}, (_err, argv) => {
+      if (!_err) {
         parsedArgs = argv
       }
     })
@@ -180,14 +179,14 @@ describe('Yargs advantages over Commander.js', () => {
 
   it('provides TypeScript type inference', () => {
     // The types are automatically inferred from the builder
-    const cli = createCli()
+    createCli()
     // TypeScript knows about all options and their types
     // This provides better IDE support and compile-time checking
   })
 
   it('handles array parsing without preprocessing', async () => {
     // Yargs handles arrays natively, no need for minimist preprocessing
-    const cli = createCli()
+    createCli()
 
     // When commands are added, they can handle arrays directly
     // Example: playwright fill field1=value1 field2=value2

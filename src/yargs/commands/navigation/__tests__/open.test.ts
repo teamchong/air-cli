@@ -104,9 +104,14 @@ describe('open command - REAL INTEGRATION TEST', () => {
         stdio: 'pipe',
         timeout: 8000, // 8s timeout to prevent indefinite hang
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorOccurred = true
-      errorMessage = error.stdout || error.stderr || error.message || ''
+      const err = error as {
+        stdout?: string
+        stderr?: string
+        message?: string
+      }
+      errorMessage = err.stdout || err.stderr || err.message || ''
       // Command should fail - either with error message or timeout
       // Check for error indication if message is present
       if (errorMessage && !errorMessage.includes('ETIMEDOUT')) {
@@ -132,9 +137,10 @@ describe('open command - REAL INTEGRATION TEST', () => {
         encoding: 'utf8',
         stdio: 'pipe',
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorOccurred = true
-      errorMessage = error.stdout || error.stderr || ''
+      const err = error as { stdout?: string; stderr?: string }
+      errorMessage = err.stdout || err.stderr || ''
       // Should show a user-friendly error message
       expect(errorMessage).toContain(
         'Connection failed - make sure a server is running'

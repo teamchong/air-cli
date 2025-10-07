@@ -125,7 +125,14 @@ describe('Global Container Setup Functions', () => {
       once: () => mockBrowser,
       addListener: () => mockBrowser,
     } as any
-    const mockPage = { url: () => 'https://test.com' }
+    const mockPage = {
+      url: () => 'https://test.com',
+      evaluate: () => Promise.resolve(),
+      evaluateHandle: () => Promise.resolve(),
+      addInitScript: () => Promise.resolve(),
+      $: () => Promise.resolve(null),
+      $$: () => Promise.resolve([]),
+    } as any
 
     setupTestServices(mockBrowser, mockPage)
 
@@ -159,7 +166,7 @@ describe('MockBrowserService', () => {
   it('should execute withActivePage callback', async () => {
     let callbackExecuted = false
 
-    const result = await mockService.withActivePage(9222, async page => {
+    const result = await mockService.withActivePage(9222, async () => {
       callbackExecuted = true
       return 'test-result'
     })
@@ -171,7 +178,7 @@ describe('MockBrowserService', () => {
   it('should execute withBrowser callback', async () => {
     let callbackExecuted = false
 
-    const result = await mockService.withBrowser(9222, async browser => {
+    const result = await mockService.withBrowser(9222, async () => {
       callbackExecuted = true
       return 'test-result'
     })

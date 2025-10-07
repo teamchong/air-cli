@@ -13,7 +13,6 @@ import {
   createCommand,
   createLogger,
   validators,
-  createBrowserCommand,
   modifierMiddleware,
   formatOutput,
   withTimeout,

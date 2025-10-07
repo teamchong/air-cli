@@ -49,6 +49,7 @@ export const listMeshCommand = createCommand<ListMeshOptions>({
 
     const node = new AirMesh(nodeName)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const output: any = {}
 
     // List local services

@@ -80,6 +80,7 @@ export class CertificateManager {
       console.log(`📁 Location: ${this.certDir}`)
       console.log('⚠️  IMPORTANT: Keep ca-key.pem SECRET!')
       console.log('📋 Share ca-cert.pem with all nodes')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to create CA: ${error.message}`)
     }
@@ -144,6 +145,7 @@ export class CertificateManager {
         createdAt: new Date(),
         expiresAt: certInfo.expiresAt,
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(
         `Failed to generate certificate for ${nodeName}: ${error.message}`
@@ -237,6 +239,7 @@ export class CertificateManager {
         execSync(`rm "${certPath}"`)
       }
       console.log(`✅ Revoked certificate for ${nodeName}`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new Error(`Failed to revoke certificate: ${error.message}`)
     }

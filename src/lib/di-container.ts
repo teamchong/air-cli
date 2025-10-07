@@ -1,3 +1,5 @@
+import { Browser, BrowserContext, Page } from 'playwright'
+
 import { BrowserHelper } from './browser-helper'
 import { IBrowserService, MockBrowserService } from './browser-service'
 
@@ -13,8 +15,8 @@ export const SERVICE_TYPES = {
  * Provides a way to register and resolve services
  */
 export class DIContainer {
-  private services = new Map<symbol, any>()
-  private factories = new Map<symbol, () => any>()
+  private services = new Map<symbol, unknown>()
+  private factories = new Map<symbol, () => unknown>()
 
   /**
    * Register a service instance
@@ -85,7 +87,10 @@ export function setupDefaultServices(): void {
 /**
  * Configure services for testing
  */
-export function setupTestServices(mockBrowser?: any, mockPage?: any): void {
+export function setupTestServices(
+  mockBrowser?: Browser,
+  mockPage?: Page
+): void {
   container.register(
     SERVICE_TYPES.BrowserService,
     new MockBrowserService(mockBrowser, mockPage)
@@ -96,37 +101,37 @@ export function setupTestServices(mockBrowser?: any, mockPage?: any): void {
  * Adapter to make BrowserHelper implement IBrowserService interface
  */
 class BrowserHelperAdapter implements IBrowserService {
-  async getBrowser(port = 9222): Promise<any> {
+  async getBrowser(port = 9222): Promise<Browser> {
     return BrowserHelper.getBrowser(port)
   }
 
   async withBrowser<T>(
     port: number,
-    action: (browser: any) => Promise<T>
+    action: (_browser: Browser) => Promise<T>
   ): Promise<T> {
     return BrowserHelper.withBrowser(port, action)
   }
 
-  async getPages(port = 9222): Promise<any[]> {
+  async getPages(port = 9222): Promise<Page[]> {
     return BrowserHelper.getPages(port)
   }
 
-  async getPage(index = 0, port = 9222): Promise<any> {
+  async getPage(index = 0, port = 9222): Promise<Page | null> {
     return BrowserHelper.getPage(index, port)
   }
 
-  async getActivePage(port = 9222): Promise<any> {
+  async getActivePage(port = 9222): Promise<Page> {
     return BrowserHelper.getActivePage(port)
   }
 
   async withActivePage<T>(
     port: number,
-    action: (page: any) => Promise<T>
+    action: (_page: Page) => Promise<T>
   ): Promise<T> {
     return BrowserHelper.withActivePage(port, action)
   }
 
-  async getContexts(port = 9222): Promise<any[]> {
+  async getContexts(port = 9222): Promise<BrowserContext[]> {
     return BrowserHelper.getContexts(port)
   }
 

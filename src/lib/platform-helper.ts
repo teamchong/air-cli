@@ -124,6 +124,7 @@ export class PlatformHelper {
     const dir = this.getClaudeDir()
 
     if (!existsSync(dir)) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { mkdirSync } = require('fs')
       mkdirSync(dir, { recursive: true })
     }

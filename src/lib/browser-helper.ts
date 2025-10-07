@@ -1,17 +1,14 @@
 import { spawn } from 'child_process'
+import * as crypto from 'crypto'
 import * as fs from 'fs'
+import * as net from 'net'
 import os from 'os'
 
-import {
-  chromium,
-  type Browser,
-  type Page,
-  type BrowserContext,
-} from 'playwright'
+import { type Browser, type Page, type BrowserContext } from 'playwright'
 
 import { BrowserTabRegistry } from './browser-tab-registry'
 import { CDPConnectionPool } from './cdp-connection-pool'
-import { withTimeout, TimeoutError, retryWithBackoff } from './timeout-utils'
+import { withTimeout, TimeoutError } from './timeout-utils'
 
 /**
  * Helper class for managing Chrome browser connections and operations.
@@ -44,7 +41,7 @@ export class BrowserHelper {
   static async getBrowser(port: number = 9222): Promise<Browser> {
     try {
       return await withTimeout(
-        (async () => {
+        (async (): Promise<Browser> => {
           const pool = CDPConnectionPool.getInstance()
           return await pool.getConnection(port)
         })(),
@@ -79,7 +76,7 @@ export class BrowserHelper {
    */
   static async withBrowser<T>(
     port: number,
-    action: (browser: Browser) => Promise<T>
+    action: (_browser: Browser) => Promise<T>
   ): Promise<T> {
     const pool = CDPConnectionPool.getInstance()
     return await pool.withConnection(port, action)
@@ -193,7 +190,7 @@ export class BrowserHelper {
    */
   static async withActivePage<T>(
     port: number,
-    action: (page: Page) => Promise<T>
+    action: (_page: Page) => Promise<T>
   ): Promise<T> {
     return withTimeout(
       this.withBrowser(port, async browser => {
@@ -256,6 +253,7 @@ export class BrowserHelper {
    */
   static async getPageId(page: Page): Promise<string> {
     // Add timeout protection for CDP operations with proper cleanup
+
     let timeoutId: NodeJS.Timeout | undefined
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(
@@ -305,15 +303,18 @@ export class BrowserHelper {
       // Cleanup CDP session if it was created before the error
       if (cdpSession) {
         try {
-          await cdpSession.detach().catch(() => {})
-        } catch {}
+          await cdpSession.detach().catch(() => {
+            // Ignore detach errors
+          })
+        } catch {
+          // Ignore detach errors
+        }
       }
 
       // If CDP fails, fallback to page URL as ID (less reliable but won't hang)
       console.warn('CDP getPageId failed, using URL hash as fallback:', error)
       const url = page.url()
       // Generate a pseudo-ID from URL
-      const crypto = require('crypto')
       return crypto.createHash('md5').update(url).digest('hex').toUpperCase()
     }
   }
@@ -377,7 +378,7 @@ export class BrowserHelper {
             `Getting page ID for page ${index}`
           )
           return { page, pageId }
-        } catch (error) {
+        } catch {
           return { page: null, pageId: null }
         }
       })
@@ -455,7 +456,9 @@ export class BrowserHelper {
       try {
         url = page.url()
         contextPages = page.context().pages().length
-      } catch {}
+      } catch {
+        // Ignore errors getting diagnostic info
+      }
 
       throw new Error(
         `Tab ${tabIdentifier} is unresponsive (url: ${url}, context has ${contextPages} pages). ` +
@@ -468,7 +471,7 @@ export class BrowserHelper {
     port: number,
     tabIndex: number | undefined,
     tabId: string | undefined,
-    action: (page: Page) => Promise<T>
+    action: (_page: Page) => Promise<T>
   ): Promise<T> {
     // Validate arguments
     if (tabIndex !== undefined && tabId !== undefined) {
@@ -483,8 +486,8 @@ export class BrowserHelper {
     }
 
     // Wrap the entire operation with timeout protection
-    const operation = async () => {
-      return this.withBrowser(port, async browser => {
+    const operation = async (): Promise<T> => {
+      return this.withBrowser(port, async _browser => {
         let targetPage: Page | null = null
 
         if (tabId !== undefined) {
@@ -541,7 +544,9 @@ export class BrowserHelper {
           try {
             url = targetPage.url()
             isClosed = targetPage.isClosed()
-          } catch {}
+          } catch {
+            // Ignore errors getting diagnostic info
+          }
 
           throw new Error(
             `Action failed on tab ${tabId || tabIndex} (url: ${url}, closed: ${isClosed}): ` +
@@ -594,7 +599,6 @@ export class BrowserHelper {
    * ```
    */
   static async isPortOpen(port: number): Promise<boolean> {
-    const net = require('net')
     return new Promise(resolve => {
       const socket = net.createConnection(port, 'localhost')
       socket.on('connect', () => {
@@ -652,8 +656,10 @@ export class BrowserHelper {
 
       const browserPaths: Record<string, string> = isMac
         ? {
-            chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-            brave: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+            chrome:
+              '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            brave:
+              '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
             edge: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
             chromium: '/Applications/Chromium.app/Contents/MacOS/Chromium',
           }
@@ -665,9 +671,11 @@ export class BrowserHelper {
               edge: '/usr/bin/microsoft-edge',
             }
           : {
-              chrome: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+              chrome:
+                'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
               chromium: 'chromium',
-              brave: 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
+              brave:
+                'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
               edge: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
             }
 
@@ -726,6 +734,7 @@ export class BrowserHelper {
       const isReady = await this.isPortOpen(port)
       if (isReady) {
         // Port is open, but give CDP server a moment to fully initialize
+
         await new Promise(resolve => setTimeout(resolve, 300))
         return
       }
@@ -764,7 +773,10 @@ export class BrowserHelper {
             if (options.cookies) dataTypes.push('cookies')
             if (options.history) dataTypes.push('cache') // Page cache includes history
 
-            await cdpSession.send('Network.clearBrowserCache' as any)
+            // Clear browser cache via CDP
+            await cdpSession.send(
+              'Network.clearBrowserCache' as 'Network.clearBrowserCache'
+            )
 
             await cdpSession.detach()
           } catch (error) {
@@ -797,6 +809,7 @@ export class BrowserHelper {
    */
   static async createTabHTTP(port: number, url: string): Promise<boolean> {
     try {
+      // eslint-disable-next-line no-undef
       const response = await fetch(
         `http://localhost:${port}/json/new?${encodeURIComponent(url)}`,
         {

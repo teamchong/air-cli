@@ -72,6 +72,7 @@ export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
         tabIndex,
         tabId,
         async page => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const screenshotOptions: any = {
             path: argv.path,
             fullPage: !!argv.fullPage,
@@ -92,6 +93,7 @@ export const screenshotCommand: CommandModule<{}, ScreenshotArgs> = {
       )
 
       return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       spinner.fail(chalk.red(`❌ Screenshot failed: ${error.message}`))
       throw new Error('Command failed')

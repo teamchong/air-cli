@@ -12,57 +12,79 @@ import {
 
 // Metadata storage for decorators
 const validationMetadata = new WeakMap<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   any,
   Record<string, ValidatorFunction[]>
 >()
+
 const sanitizationMetadata = new WeakMap<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   any,
-  Record<string, (value: any) => any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Record<string, (_value: any) => any>
 >()
 
 /**
  * Decorator for validating command parameters
  * Uses Chain of Responsibility pattern to apply multiple validators
  */
-export function validate(...validators: ValidatorFunction[]) {
+export function validate(...validators: ValidatorFunction[]): (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _target: any,
+  _propertyKey: string | symbol,
+  _parameterIndex: number
+) => void {
   return function (
-    target: any,
-    propertyKey: string | symbol,
-    parameterIndex: number
-  ) {
-    const existingMetadata = validationMetadata.get(target) || {}
-    const paramName = String(propertyKey)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _target: any,
+    _propertyKey: string | symbol,
+    _parameterIndex: number
+  ): void {
+    const existingMetadata = validationMetadata.get(_target) || {}
+    const paramName = String(_propertyKey)
 
     existingMetadata[paramName] = validators
-    validationMetadata.set(target, existingMetadata)
+    validationMetadata.set(_target, existingMetadata)
   }
 }
 
 /**
  * Decorator for URL validation
  */
-export function ValidateUrl(required = false, message?: string) {
+export function ValidateUrl(
+  required = false,
+  message?: string
+): ReturnType<typeof validate> {
   return validate(Validators.url({ required, message }))
 }
 
 /**
  * Decorator for port validation
  */
-export function ValidatePort(required = false, message?: string) {
+export function ValidatePort(
+  required = false,
+  message?: string
+): ReturnType<typeof validate> {
   return validate(Validators.port({ required, message }))
 }
 
 /**
  * Decorator for timeout validation
  */
-export function ValidateTimeout(required = false, message?: string) {
+export function ValidateTimeout(
+  required = false,
+  message?: string
+): ReturnType<typeof validate> {
   return validate(Validators.timeout({ required, message }))
 }
 
 /**
  * Decorator for selector validation
  */
-export function ValidateSelector(required = true, message?: string) {
+export function ValidateSelector(
+  required = true,
+  message?: string
+): ReturnType<typeof validate> {
   return validate(Validators.selector({ required, message }))
 }
 
@@ -73,7 +95,7 @@ export function ValidateEnum<T>(
   allowedValues: T[],
   required = false,
   message?: string
-) {
+): ReturnType<typeof validate> {
   return validate(Validators.enum(allowedValues, { required, message }))
 }
 
@@ -85,7 +107,7 @@ export function ValidateString(
   maxLength = Infinity,
   required = false,
   message?: string
-) {
+): ReturnType<typeof validate> {
   return validate(
     Validators.string(minLength, maxLength, { required, message })
   )
@@ -94,13 +116,24 @@ export function ValidateString(
 /**
  * Decorator for input sanitization
  */
-export function sanitize(sanitizer: (value: any) => any) {
-  return function (target: any, propertyKey: string | symbol) {
-    const existingMetadata = sanitizationMetadata.get(target) || {}
-    const paramName = String(propertyKey)
+export function sanitize(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sanitizer: (_value: any) => any
+): (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _target: any,
+  _propertyKey: string | symbol
+) => void {
+  return function (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _target: any,
+    _propertyKey: string | symbol
+  ): void {
+    const existingMetadata = sanitizationMetadata.get(_target) || {}
+    const paramName = String(_propertyKey)
 
     existingMetadata[paramName] = sanitizer
-    sanitizationMetadata.set(target, existingMetadata)
+    sanitizationMetadata.set(_target, existingMetadata)
   }
 }
 
@@ -111,6 +144,7 @@ export class Sanitizers {
   /**
    * Trim whitespace from strings
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static trim(value: any): any {
     return typeof value === 'string' ? value.trim() : value
   }
@@ -118,6 +152,7 @@ export class Sanitizers {
   /**
    * Convert to lowercase
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static toLowerCase(value: any): any {
     return typeof value === 'string' ? value.toLowerCase() : value
   }
@@ -125,6 +160,7 @@ export class Sanitizers {
   /**
    * Remove dangerous HTML characters
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static escapeHtml(value: any): any {
     if (typeof value !== 'string') return value
 
@@ -139,6 +175,7 @@ export class Sanitizers {
   /**
    * Ensure URL has protocol
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static normalizeUrl(value: any): any {
     if (typeof value !== 'string') return value
 
@@ -156,6 +193,7 @@ export class Sanitizers {
   /**
    * Convert string to number
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static toNumber(value: any): any {
     if (typeof value === 'number') return value
     if (typeof value === 'string') {
@@ -171,13 +209,15 @@ export class Sanitizers {
  * Implements Chain of Responsibility pattern for parameter validation
  */
 export function validateParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   target: any,
   propertyName: string,
   descriptor: PropertyDescriptor
-) {
+): PropertyDescriptor {
   const method = descriptor.value
 
-  descriptor.value = async function (...args: any[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  descriptor.value = async function (...args: any[]): Promise<any> {
     const validators =
       validationMetadata.get(target.constructor.prototype) || {}
     const sanitizers =
@@ -185,6 +225,7 @@ export function validateParams(
 
     // Create parameter map based on method signature
     const paramNames = getParameterNames(method)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const paramMap: Record<string, any> = {}
 
     paramNames.forEach((name, index) => {
@@ -238,7 +279,7 @@ export function validateParams(
 /**
  * Class decorator that automatically applies parameter validation to all execute methods
  */
-export function ValidatedCommand(constructor: Function) {
+export function ValidatedCommand(constructor: Function): void {
   const originalExecute = constructor.prototype.execute
 
   if (originalExecute) {
@@ -314,7 +355,8 @@ export class ValidationChain {
     return this
   }
 
-  custom(validatorFn: (value: any) => boolean, errorMessage: string): this {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  custom(validatorFn: (_value: any) => boolean, errorMessage: string): this {
     this.validators.push(Validators.custom(validatorFn, errorMessage))
     return this
   }
@@ -327,4 +369,4 @@ export class ValidationChain {
 /**
  * Factory for creating validation chains
  */
-export const validation = () => new ValidationChain()
+export const validation = (): ValidationChain => new ValidationChain()

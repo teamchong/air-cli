@@ -59,7 +59,7 @@ export const uploadCommand = createCommand<UploadOptions>({
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { selector, files, port, timeout } = argv
+    const { selector, files, port } = argv
     const tabIndex = argv['tab-index'] as number | undefined
     const tabId = argv['tab-id'] as string | undefined
 
@@ -84,6 +84,7 @@ export const uploadCommand = createCommand<UploadOptions>({
       // Use CDP DOM.setFileInputFiles for better compatibility with long-running browser sessions
       // This bypasses Chrome's sandbox file access restrictions
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const client = await (page.context() as any).newCDPSession(page)
 
         // Get the backend node ID using CDP
@@ -107,6 +108,7 @@ export const uploadCommand = createCommand<UploadOptions>({
         })
 
         await client.detach()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (
           error.code === 'ENOENT' ||

@@ -4,7 +4,7 @@
  * These types support macOS native app automation via JXA.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any, no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
   function Application(_name: string): any
 }

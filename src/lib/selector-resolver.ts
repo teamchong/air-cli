@@ -97,7 +97,7 @@ export function resolveSelector(input: string): SelectorResolution[] {
  */
 function isCssSelector(input: string): boolean {
   // If input has spaces, it's likely text content, not a CSS selector
-  if (input.includes(' ') && !input.match(/[\>\+\~]/)) {
+  if (input.includes(' ') && !input.match(/[>+~]/)) {
     return false
   }
 
@@ -163,7 +163,7 @@ function isCssSelector(input: string): boolean {
     /^\.[\w-]+$/, // Class: .myclass (must be complete)
     /^\[.+\]$/, // Attribute: [data-test]
     /^[\w-]+\[.+\]$/, // Tag with attribute: input[type="text"]
-    /[\>\+\~]/, // Combinators: > + ~
+    /[>+~]/, // Combinators: > + ~
     /^:[\w-]+/, // Pseudo: :hover
     /::[\w-]+/, // Pseudo-element: ::before
   ]
@@ -224,6 +224,7 @@ export function generatePlaywrightTextSelector(text: string): string[] {
  * Find the best selector from available options by testing them
  */
 export async function findBestSelector(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   page: any,
   textInput: string
 ): Promise<{ selector: string; strategy: string } | null> {
@@ -330,6 +331,7 @@ export async function findBestSelector(
           strategy: strategy + '+first',
         }
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Strategy failed, try next one
       // Debug logging to understand why selectors fail

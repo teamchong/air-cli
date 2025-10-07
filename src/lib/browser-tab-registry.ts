@@ -5,7 +5,7 @@
  * The browser tracks all tabs via CDP and provides instant lookups.
  */
 
-import { Browser, Page, BrowserContext } from 'playwright'
+import { Browser, Page } from 'playwright'
 
 import { BrowserHelper } from './browser-helper'
 import { withTimeout } from './timeout-utils'
@@ -18,6 +18,7 @@ interface TabInfo {
   pageIndex: number
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export class BrowserTabRegistry {
   private static readonly REGISTRY_URL =
     'data:text/html,<title>Tab Registry</title><body>Tab Registry Active</body>'
@@ -112,7 +113,7 @@ export class BrowserTabRegistry {
                         browserContextId: info.browserContextId,
                       })
                     }, event.targetInfo)
-                  } catch (error) {
+                  } catch {
                     // Ignore errors if registry page is closed or unavailable
                   }
                 }
@@ -123,7 +124,7 @@ export class BrowserTabRegistry {
                   await page.evaluate(targetId => {
                     ;(globalThis as any).__tabRegistry.delete(targetId)
                   }, event.targetId)
-                } catch (error) {
+                } catch {
                   // Ignore errors if registry page is closed or unavailable
                 }
               })
@@ -143,7 +144,7 @@ export class BrowserTabRegistry {
                         })
                       }
                     }, event.targetInfo)
-                  } catch (error) {
+                  } catch {
                     // Ignore errors if registry page is closed or unavailable
                   }
                 }
@@ -152,7 +153,7 @@ export class BrowserTabRegistry {
 
             return page
           }
-        } catch (error) {
+        } catch {
           // Ignore timeout or errors for individual pages and continue checking others
           // This prevents one unresponsive tab from hanging the entire registry lookup
           continue
@@ -210,7 +211,7 @@ export class BrowserTabRegistry {
               browserContextId: info.browserContextId,
             })
           }, event.targetInfo)
-        } catch (error) {
+        } catch {
           // Ignore errors if registry page is closed or unavailable
         }
       }
@@ -221,7 +222,7 @@ export class BrowserTabRegistry {
         await page.evaluate(targetId => {
           ;(globalThis as any).__tabRegistry.delete(targetId)
         }, event.targetId)
-      } catch (error) {
+      } catch {
         // Ignore errors if registry page is closed or unavailable
       }
     })
@@ -241,7 +242,7 @@ export class BrowserTabRegistry {
               })
             }
           }, event.targetInfo)
-        } catch (error) {
+        } catch {
           // Ignore errors if registry page is closed or unavailable
         }
       }
@@ -261,6 +262,7 @@ export class BrowserTabRegistry {
    */
   static async findPageById(
     browser: Browser,
+
     tabId: string
   ): Promise<Page | null> {
     const registry = await this.getRegistryPage(browser)
@@ -288,10 +290,6 @@ export class BrowserTabRegistry {
 
     // Find the actual page object by context and URL
     for (const context of browser.contexts()) {
-      // Match by context ID if available
-      const contextId =
-        (context as any)._guid || (context as any)._browserContext?.guid
-
       for (const page of context.pages()) {
         // Fast match by URL first
         if (page.url() === tabInfo.url) {
@@ -340,6 +338,7 @@ export class BrowserTabRegistry {
       const entries = Array.from((globalThis as any).__tabRegistry.entries())
       return {
         tabCount: entries.length,
+
         tabs: entries.map((entry: any) => entry[0]),
       }
     })

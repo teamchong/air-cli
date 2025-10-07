@@ -7,19 +7,23 @@ import winston from 'winston'
  */
 export enum LogLevel {
   /** Critical errors that stop execution */
+  // eslint-disable-next-line no-unused-vars
   ERROR = 'error',
   /** Warning messages for potential issues */
+  // eslint-disable-next-line no-unused-vars
   WARN = 'warn',
   /** General information messages */
+  // eslint-disable-next-line no-unused-vars
   INFO = 'info',
   /** Detailed debugging information */
+  // eslint-disable-next-line no-unused-vars
   DEBUG = 'debug',
 }
 
 // Custom format for CLI output with colors
 const cliFormat = winston.format.combine(
   winston.format.timestamp({ format: 'HH:mm:ss' }),
-  winston.format.printf(({ level, message, timestamp }) => {
+  winston.format.printf(({ level, message }) => {
     const colorMap = {
       error: chalk.red,
       warn: chalk.yellow,

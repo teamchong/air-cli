@@ -11,18 +11,13 @@
 
 import chalk from 'chalk'
 import ora, { Ora } from 'ora'
-import type { CommandModule, ArgumentsCamelCase, Argv } from 'yargs'
+import type { ArgumentsCamelCase, Argv } from 'yargs'
 
 import { BrowserHelper } from '../../lib/browser-helper'
-import { logger } from '../../lib/logger'
-import {
-  withTimeout as withTimeoutUtil,
-  TimeoutError,
-} from '../../lib/timeout-utils'
+import { withTimeout as withTimeoutUtil } from '../../lib/timeout-utils'
 import type {
   BaseCommandOptions,
   PlaywrightCommand,
-  CommandHandler,
   CommandMetadata,
   CommandResult,
   Logger,
@@ -64,10 +59,11 @@ export interface CreateCommandOptions<T extends BaseCommandOptions> {
   metadata: CommandMetadata
   command: string
   describe: string
-  builder: (yargs: Argv) => Argv<T> | { [key: string]: any }
-  handler: (context: CommandContext<T>) => Promise<void>
-  middleware?: Array<(argv: ArgumentsCamelCase<T>) => void | Promise<void>>
-  validateArgs?: (argv: ArgumentsCamelCase<T>) => void | string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  builder: (_yargs: Argv) => Argv<T> | { [key: string]: any }
+  handler: (_context: CommandContext<T>) => Promise<void>
+  middleware?: Array<(_argv: ArgumentsCamelCase<T>) => void | Promise<void>>
+  validateArgs?: (_argv: ArgumentsCamelCase<T>) => void | string
   requiresBrowser?: boolean
   supportsJson?: boolean
 }
@@ -86,7 +82,6 @@ export function createCommand<T extends BaseCommandOptions>(
     handler,
     middleware = [],
     validateArgs,
-    requiresBrowser = true,
     supportsJson = true,
   } = options
 
@@ -95,7 +90,7 @@ export function createCommand<T extends BaseCommandOptions>(
     describe,
     aliases: metadata.aliases,
 
-    builder: (yargs: Argv) => {
+    builder: (yargs: Argv): Argv<T> => {
       // Apply the custom builder
       const built =
         typeof builder === 'function' ? builder(yargs) : yargs.options(builder)
@@ -104,7 +99,7 @@ export function createCommand<T extends BaseCommandOptions>(
       return built.group([], `${metadata.category} Commands:`)
     },
 
-    handler: async (argv: ArgumentsCamelCase<T>) => {
+    handler: async (argv: ArgumentsCamelCase<T>): Promise<void> => {
       const startTime = Date.now()
       let spinner: Ora | undefined
 
@@ -171,6 +166,7 @@ export function createCommand<T extends BaseCommandOptions>(
         }
 
         // Success - handler completed without throwing
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         // Error handling
         if (spinner?.isSpinning) {
@@ -205,33 +201,34 @@ export function createCommand<T extends BaseCommandOptions>(
  */
 export function createLogger(argv: BaseCommandOptions): Logger {
   return {
-    info: (message: string) => {
+    info: (message: string): void => {
       if (!argv.quiet && !argv.json) {
         console.log(message)
       }
     },
 
-    success: (message: string) => {
+    success: (message: string): void => {
       if (!argv.quiet && !argv.json) {
         console.log(chalk.green('✅'), message)
       }
     },
 
-    error: (message: string) => {
+    error: (message: string): void => {
       if (!argv.json) {
         console.error(chalk.red('❌'), message)
       }
     },
 
-    warn: (message: string) => {
+    warn: (message: string): void => {
       if (!argv.quiet && !argv.json) {
         console.warn(chalk.yellow('⚠️'), message)
       }
     },
 
-    debug: (_message: string) => {},
+    debug: (_message: string): void => {},
 
-    json: (data: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    json: (data: any): void => {
       if (argv.json) {
         console.log(JSON.stringify(data, null, 2))
       }
@@ -288,7 +285,8 @@ export const validators = {
  */
 export function createBrowserCommand<T extends BaseCommandOptions>(
   options: Omit<CreateCommandOptions<T>, 'requiresBrowser'> & {
-    browserHandler: (page: any, context: CommandContext<T>) => Promise<void>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    browserHandler: (_page: any, _context: CommandContext<T>) => Promise<void>
   }
 ): PlaywrightCommand<T> {
   const { browserHandler, ...rest } = options
@@ -318,7 +316,7 @@ export function createBrowserCommand<T extends BaseCommandOptions>(
  * Middleware for handling ref selectors
  */
 export async function refSelectorMiddleware<T extends { selector?: string }>(
-  argv: ArgumentsCamelCase<T>
+  _argv: ArgumentsCamelCase<T>
 ): Promise<void> {
   // Middleware for ref selectors if needed in the future
   // Currently refs use simple [A], [B], [C] format
@@ -334,14 +332,20 @@ export function modifierMiddleware<T extends BaseCommandOptions>(
   // Parse modifier flags into an array
   const modifiers: string[] = []
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((argv as any).shift === true) modifiers.push('Shift')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((argv as any).ctrl === true) modifiers.push('Control')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((argv as any).alt === true) modifiers.push('Alt')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((argv as any).meta === true) modifiers.push('Meta')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((argv as any)['ctrl-or-meta'] === true)
     modifiers.push('ControlOrMeta')
 
     // Add modifiers array to argv
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(argv as any).modifiers = modifiers
 }
 
@@ -349,6 +353,7 @@ export function modifierMiddleware<T extends BaseCommandOptions>(
  * Helper to format command output
  */
 export function formatOutput(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
   format: 'json' | 'table' | 'list' = 'list'
 ): string {
@@ -405,6 +410,7 @@ export async function withRetry<T>(
   for (let i = 0; i <= maxRetries; i++) {
     try {
       return await operation()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       lastError = error
 

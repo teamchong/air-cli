@@ -57,6 +57,7 @@ export const listCommand: CommandModule<{}, ListArgs> = {
 
       // Exit cleanly
       return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message.includes('No browser running')) {
         logger.warn('No browser running')

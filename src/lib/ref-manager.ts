@@ -5,6 +5,8 @@
  * and provides methods to resolve refs back to usable selectors for interaction commands.
  */
 
+/* eslint-disable no-undef */
+
 import * as os from 'os'
 import * as path from 'path'
 
@@ -65,10 +67,11 @@ class RefManager {
         // Restore tabRefMap
         this.tabRefMap = new Map()
         for (const [tabId, entries] of Object.entries(parsed.tabRefMap || {})) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.tabRefMap.set(tabId, new Map(Object.entries(entries as any)))
         }
       }
-    } catch (error) {
+    } catch {
       // Ignore errors, start with empty maps
     }
   }
@@ -94,7 +97,7 @@ class RefManager {
           ),
         }
         await Bun.write(this.persistFile, JSON.stringify(data, null, 2))
-      } catch (error) {
+      } catch {
         // Ignore errors
       } finally {
         this.saveTimeout = null
@@ -121,7 +124,7 @@ class RefManager {
           ),
         }
         await Bun.write(this.persistFile, JSON.stringify(data, null, 2))
-      } catch (error) {
+      } catch {
         // Ignore errors
       }
     }
@@ -130,6 +133,7 @@ class RefManager {
   /**
    * Store a ref with its associated selector and metadata (internal, no save)
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private storeRefInternal(ref: string, node: any, tabId?: string): void {
     const selector = nodeToSelector(node)
     const entry: RefEntry = {
@@ -156,6 +160,7 @@ class RefManager {
   /**
    * Store a ref with its associated selector and metadata
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async storeRef(ref: string, node: any, tabId?: string): Promise<void> {
     await this.ensureLoaded()
     this.storeRefInternal(ref, node, tabId)
@@ -165,6 +170,7 @@ class RefManager {
   /**
    * Store multiple refs from a snapshot
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async storeSnapshot(elements: any[], tabId?: string): Promise<void> {
     await this.ensureLoaded()
 

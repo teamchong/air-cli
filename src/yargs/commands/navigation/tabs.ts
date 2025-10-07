@@ -87,7 +87,7 @@ export const tabsCommand = createCommand<TabOptions>({
 
     switch (action) {
       case 'list': {
-        await BrowserHelper.withBrowser(argv.port, async browser => {
+        await BrowserHelper.withBrowser(argv.port, async _browser => {
           const pages = await BrowserHelper.getPages(argv.port)
 
           if (pages.length === 0) {
@@ -129,7 +129,7 @@ export const tabsCommand = createCommand<TabOptions>({
                   )
                 ),
               ])
-            } catch (error) {
+            } catch {
               tabId = 'unknown'
             }
 
@@ -196,6 +196,7 @@ export const tabsCommand = createCommand<TabOptions>({
 
       case 'close': {
         const pages = await BrowserHelper.getPages(argv.port)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let targetPage: any
         let targetIndex: number = -1
 
@@ -254,6 +255,7 @@ export const tabsCommand = createCommand<TabOptions>({
 
       case 'select': {
         const pages = await BrowserHelper.getPages(argv.port)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let targetPage: any
         let targetIndex: number = -1
 

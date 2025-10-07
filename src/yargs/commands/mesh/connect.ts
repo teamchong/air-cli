@@ -66,6 +66,7 @@ export const connectMeshCommand = createCommand<ConnectMeshOptions>({
       console.log(
         `   air mesh call --from ${localNode} --to ${remoteNode} --service <name>`
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error(`❌ Connection failed: ${error.message}`)
       process.exit(1)

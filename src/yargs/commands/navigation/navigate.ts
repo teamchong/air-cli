@@ -83,7 +83,7 @@ export const navigateCommand = createCommand<NavigateOptions>({
     if (!url.startsWith('data:') && !url.startsWith('http')) {
       try {
         new URL(url)
-      } catch (error) {
+      } catch {
         throw new Error(`Invalid URL format: ${url}`)
       }
     }
@@ -95,13 +95,20 @@ export const navigateCommand = createCommand<NavigateOptions>({
       tabId,
       async page => {
         // Navigate with options
-        const navigationOptions: any = {
+        const navigationOptions: {
+          waitUntil: 'load' | 'domcontentloaded' | 'networkidle' | 'commit'
+          timeout?: number
+          referer?: string
+        } = {
           waitUntil: waitUntil as
             | 'load'
             | 'domcontentloaded'
             | 'networkidle'
             | 'commit',
-          timeout,
+        }
+
+        if (timeout !== undefined) {
+          navigationOptions.timeout = timeout
         }
 
         if (referer) {
@@ -110,10 +117,11 @@ export const navigateCommand = createCommand<NavigateOptions>({
 
         try {
           await page.goto(url, navigationOptions)
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (
-            error.message?.includes('Timeout') ||
-            error.message?.includes('timeout')
+            error instanceof Error &&
+            (error.message.includes('Timeout') ||
+              error.message.includes('timeout'))
           ) {
             throw new Error(
               `Navigation timeout: Failed to load ${url} within ${timeout}ms`

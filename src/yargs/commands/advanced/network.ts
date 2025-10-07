@@ -66,11 +66,14 @@ export const networkCommand = createCommand<NetworkOptions>({
         throw new Error('No active page. Use "air open" first')
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requests: any[] = []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requestMap = new Map<string, any>()
 
       // Create handler functions for proper cleanup
-      const requestHandler = (request: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const requestHandler = (request: any): void => {
         const url = request.url()
         const method = request.method()
 
@@ -101,7 +104,8 @@ export const networkCommand = createCommand<NetworkOptions>({
         }
       }
 
-      const responseHandler = (response: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const responseHandler = (response: any): void => {
         const url = response.url()
         const status = response.status()
         const request = response.request()
@@ -145,7 +149,8 @@ export const networkCommand = createCommand<NetworkOptions>({
         }
       }
 
-      const requestFailedHandler = (request: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const requestFailedHandler = (request: any): void => {
         const url = request.url()
         const method = request.method()
 
@@ -224,6 +229,7 @@ export const networkCommand = createCommand<NetworkOptions>({
         page.off('response', responseHandler)
         page.off('requestfailed', requestFailedHandler)
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       cmdContext.logger.error(`Failed to monitor network: ${error.message}`)
       throw new Error('Command failed')

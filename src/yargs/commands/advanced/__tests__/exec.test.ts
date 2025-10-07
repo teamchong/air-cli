@@ -10,7 +10,7 @@ import {
 import {
   runCommand,
   extractAndRegisterTabId,
-  closeTestTab,
+  unused_closeTestTab,
 } from '../../../../test-utils/test-helpers'
 
 /**
@@ -42,7 +42,7 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
   afterAll(async () => {
     // Clean up test tab
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
     }
   })
 
@@ -84,7 +84,7 @@ describe('exec command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} exec "${testScriptPath}" --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         10000
       )

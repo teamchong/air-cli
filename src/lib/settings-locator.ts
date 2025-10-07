@@ -106,11 +106,12 @@ export class SettingsLocator {
           'settings.local.json'
         )
         break
-      case 'policy':
+      case 'policy': {
         // System-wide managed settings
         const systemDir = this.getSystemConfigDir()
         settingsPath = path.join(systemDir, 'managed-settings.json')
         break
+      }
     }
 
     return fs.existsSync(settingsPath) ? settingsPath : null
@@ -248,7 +249,7 @@ export class SettingsLocator {
     }
 
     // Convert /home/user to /mnt/c/Users/user
-    const match = unixPath.match(/^\/home\/([^\/]+)(.*)/)
+    const match = unixPath.match(/^\/home\/([^/]+)(.*)/)
     if (match) {
       const username = match[1]
       const restPath = match[2]

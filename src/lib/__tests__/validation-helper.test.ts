@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'bun:test'
 
 import { ValidationError } from '../validation'
-import { ValidationHelper, ValidationSchemaBuilder } from '../validation-helper'
+import { ValidationHelper } from '../validation-helper'
 
 describe('ValidationHelper', () => {
   describe('validateCommandParams', () => {

@@ -20,7 +20,8 @@ export interface AirNodeOptions {
 }
 
 export interface ServiceHandler {
-  (...args: any[]): Promise<any> | any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (..._args: any[]): Promise<any> | any
 }
 
 /**
@@ -85,10 +86,13 @@ export class AirNode {
   /**
    * Call a service on another node
    */
+
   async call(
     nodeName: string,
     serviceName: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...args: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     // Check if peer is connected
     const peers = this.p2pNode.getPeers()
@@ -148,18 +152,21 @@ export class AirNode {
    */
   private registerInternalHandlers(): void {
     // Handle service calls
-    this.p2pNode.on('service:*', async (message: P2PMessage, peer: P2PPeer) => {
-      const serviceType = message.type.replace('service:', '')
-      const handler = this.services.get(serviceType)
+    this.p2pNode.on(
+      'service:*',
+      async (message: P2PMessage, _peer: P2PPeer) => {
+        const serviceType = message.type.replace('service:', '')
+        const handler = this.services.get(serviceType)
 
-      if (!handler) {
-        throw new Error(`Service not found: ${serviceType}`)
+        if (!handler) {
+          throw new Error(`Service not found: ${serviceType}`)
+        }
+
+        const { args } = message.data
+        const result = await handler(...(args || []))
+        return result
       }
-
-      const { args } = message.data
-      const result = await handler(...(args || []))
-      return result
-    })
+    )
 
     // Handle discovery requests
     this.p2pNode.on('discovery:ping', async () => {
@@ -191,6 +198,7 @@ export class AirNode {
       console.log(`🔍 mDNS discovery started: ${this.nodeName}`)
 
       // Browse for other nodes
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.bonjour.find({ type: 'air-node' }, (service: any) => {
         if (service.name === this.nodeName) return // Skip self
 
@@ -208,6 +216,7 @@ export class AirNode {
             )
           })
       })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.warn(`⚠️  mDNS discovery failed: ${error.message}`)
       console.warn(
@@ -239,6 +248,7 @@ export class AirNode {
 
       const browser = this.bonjour.find({ type: 'air-node' })
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       browser.on('up', (service: any) => {
         if (service.name === nodeName) {
           browser.stop()

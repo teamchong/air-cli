@@ -4,7 +4,7 @@ import { TEST_PORT, CLI } from '../../../../test-utils/test-constants'
 import {
   extractAndRegisterTabId,
   runCommand,
-  closeTestTab,
+  unused_closeTestTab,
   enforceTabLimit,
 } from '../../../../test-utils/test-helpers'
 
@@ -19,7 +19,9 @@ describe('console command - REAL TESTS', () => {
 
   beforeAll(async () => {
     // Build the CLI only if needed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     if (!require('fs').existsSync('dist/src/index.js')) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const execSync = require('child_process').execSync
       execSync('bun run build', { stdio: 'ignore' })
     }
@@ -36,7 +38,7 @@ describe('console command - REAL TESTS', () => {
   afterAll(async () => {
     // Clean up our test tab using the helper function
     if (testTabId) {
-      closeTestTab(testTabId)
+      unused_closeTestTab(testTabId)
       console.log(`Closed test tab ${testTabId}`)
     }
     // Enforce tab limit to prevent browser crashes
@@ -56,7 +58,7 @@ describe('console command - REAL TESTS', () => {
     it('should monitor console with global session', () => {
       // Console command with global browser session should work but we test with timeout
       // Note: console now reloads page and captures all messages by default
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} console --port ${TEST_PORT}`,
         8000
       )
@@ -66,7 +68,7 @@ describe('console command - REAL TESTS', () => {
 
     it('should monitor console with specific tab ID', () => {
       // Test console monitoring - it will reload and capture all messages
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} console --tab-id ${testTabId} --port ${TEST_PORT}`,
         8000
       )
@@ -75,7 +77,7 @@ describe('console command - REAL TESTS', () => {
     })
 
     it('should handle invalid tab ID gracefully', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} console --tab-id "INVALID_ID" --port ${TEST_PORT}`,
         10000
       )
@@ -86,7 +88,7 @@ describe('console command - REAL TESTS', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} console --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         10000
       )

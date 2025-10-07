@@ -1,4 +1,3 @@
-import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -12,7 +11,7 @@ import {
 import {
   runCommand,
   extractAndRegisterTabId,
-  closeTestTab,
+  unused_closeTestTab,
 } from '../../../../test-utils/test-helpers'
 
 /**
@@ -46,10 +45,12 @@ describe('screenshot command - TAB ID FROM OUTPUT', () => {
         fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-screenshot.png'))
       if (fs.existsSync(path.join(TEST_TMP_DIR, 'test-custom.png')))
         fs.unlinkSync(path.join(TEST_TMP_DIR, 'test-custom.png'))
-    } catch {}
+    } catch {
+      // Ignore cleanup errors
+    }
 
     // Clean up our test tab using the specific tab ID
-    closeTestTab(testTabId)
+    unused_closeTestTab(testTabId)
   })
 
   describe('command structure', () => {
@@ -111,7 +112,7 @@ describe('screenshot command - TAB ID FROM OUTPUT', () => {
     })
 
     it('should prevent conflicting tab arguments', () => {
-      const { output, exitCode } = runCommand(
+      const { exitCode } = runCommand(
         `${CLI} screenshot --tab-index 0 --tab-id ${testTabId} --port ${TEST_PORT}`,
         10000
       )

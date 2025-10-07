@@ -6,7 +6,6 @@
  */
 
 import { BrowserHelper } from '../../../lib/browser-helper'
-import { logger } from '../../../lib/logger'
 import { createCommand } from '../../lib/command-builder'
 import type { EvalOptions } from '../../types'
 
@@ -89,6 +88,7 @@ export const evalCommand = createCommand<EvalOptions>({
           }
         }
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (!isQuiet) {
         logger.error(`Evaluation failed: ${error.message}`)
