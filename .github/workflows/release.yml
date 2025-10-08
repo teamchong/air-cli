@@ -13,6 +13,8 @@ permissions:
   id-token: write
 
 jobs:
+  # Note: Semantic release only runs after CI workflow passes
+  # Use branch protection rules to enforce CI success before merge
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -31,13 +33,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install
-
-      - name: Run quality checks
-        run: |
-          bun run typecheck
-          bun run lint || true
-          bun run format:check
-          bun run test:coverage:ci
 
       - name: Build project
         run: bun run build:ts
