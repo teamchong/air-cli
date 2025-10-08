@@ -675,7 +675,7 @@ export class BrowserHelper {
         : isLinux
           ? {
               chrome: '/usr/bin/google-chrome',
-              chromium: chromium.executablePath(), // Use Playwright's actual path
+              chromium: '', // Will be resolved dynamically below
               brave: '/usr/bin/brave-browser',
               edge: '/usr/bin/microsoft-edge'
             }
@@ -692,6 +692,17 @@ export class BrowserHelper {
         browserPaths[browserPathOrType || (isLinux ? 'chromium' : 'chrome')] ||
         browserPaths.chrome ||
         browserPaths.chromium;
+
+      // On Linux, if chromium path is empty, use Playwright's chromium
+      if (isLinux && !browserPath) {
+        try {
+          browserPath = chromium.executablePath();
+        } catch {
+          throw new Error(
+            'Chromium browser not found. Install with: npx playwright install chromium'
+          );
+        }
+      }
     }
 
     // Check if browser exists
