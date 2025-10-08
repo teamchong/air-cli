@@ -18,13 +18,6 @@ export default function teardown(): void {
     console.log('🧹 Cleaning up accumulated test tabs...');
     TabManager.cleanupTestTabs();
 
-    // Skip browser close in CI (Playwright handles it)
-    if (process.env.CI) {
-      console.log('ℹ️  Running in CI - Playwright handles browser cleanup');
-      console.log('✅ Cleanup complete');
-      return;
-    }
-
     // Close the anchor tab (this will exit Chrome since it's the last tab)
     const anchorTabId = process.env.ANCHOR_TAB_ID;
     if (anchorTabId) {

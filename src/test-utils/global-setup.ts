@@ -31,15 +31,7 @@ import { TEST_PORT, TEST_TMP_DIR } from './test-constants';
       execSync('bun run build:ts', { stdio: 'inherit' });
     }
 
-    // In CI, use Playwright's browser which is already available
-    if (process.env.CI) {
-      console.log('ℹ️  Running in CI - using Playwright browser');
-      // Clear any existing tab tracking
-      TabManager.clearTracking();
-      return;
-    }
-
-    // Launch browser session for local development
+    // Launch browser session (works in both local dev and CI)
     console.log('🌐 Starting browser session in headless mode...');
 
     // Set environment variable for headless mode
