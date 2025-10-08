@@ -55,8 +55,8 @@ jobs:
     - name: Build project
       run: bun run build:ts
 
-    - name: Run tests with coverage
-      run: bun run test:coverage:ci
+    - name: Run tests (sharded to prevent timeouts)
+      run: bun run test:ci
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4

@@ -79,17 +79,30 @@ import { TEST_PORT, TEST_TMP_DIR } from './test-constants';
       process.env.ANCHOR_TAB_ID = anchorTabId;
     }
 
-    // Register cleanup on process exit
-    process.on('exit', () => {
+    // Register cleanup handlers
+    const cleanup = (): void => {
       console.log('🧹 Cleaning up browser session...');
       try {
+        // Try graceful close first
         execSync(`bun run src/index.ts close --port ${TEST_PORT}`, {
-          stdio: 'ignore'
+          stdio: 'ignore',
+          timeout: 2000
         });
       } catch {
-        // Ignore errors during cleanup
+        // Force kill Chrome if graceful close fails
+        try {
+          execSync(`pkill -9 -f "Chrome.*${TEST_PORT}"`, {
+            stdio: 'ignore',
+            timeout: 2000
+          });
+        } catch {
+          // Ignore - Chrome may already be gone
+        }
       }
-    });
+    };
+
+    // Use beforeExit for cleanup
+    process.on('beforeExit', cleanup);
   } catch (_error) {
     console.error('❌ Global setup failed:', _error);
     throw _error;
