@@ -67,7 +67,10 @@ jobs:
       run: bun run build:ts
 
     - name: Run test shard
-      run: bun run test:shard:${{ matrix.shard }}
+      run: |
+        bun run test:shard:${{ matrix.shard }} || TEST_EXIT=$?
+        pkill -9 chrome || true
+        exit ${TEST_EXIT:-0}
 
   build-artifacts:
     name: Build Artifacts
