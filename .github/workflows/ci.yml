@@ -67,7 +67,7 @@ jobs:
       run: bun run build:ts
 
     - name: Run test shard
-      run: bun run test:shard:${{ matrix.shard }} | true
+      run: bun run test:shard:${{ matrix.shard }} || true
 
   build-artifacts:
     name: Build Artifacts

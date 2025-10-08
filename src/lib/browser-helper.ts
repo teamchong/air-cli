@@ -4,7 +4,12 @@ import * as fs from 'fs';
 import * as net from 'net';
 import os from 'os';
 
-import { type Browser, type Page, type BrowserContext } from 'playwright';
+import {
+  type Browser,
+  type Page,
+  type BrowserContext,
+  chromium
+} from 'playwright';
 
 import { BrowserTabRegistry } from './browser-tab-registry';
 import { CDPConnectionPool } from './cdp-connection-pool';
@@ -670,7 +675,7 @@ export class BrowserHelper {
         : isLinux
           ? {
               chrome: '/usr/bin/google-chrome',
-              chromium: '/ms-playwright/chromium-1187/chrome-linux/chrome', // Playwright container path
+              chromium: chromium.executablePath(), // Use Playwright's actual path
               brave: '/usr/bin/brave-browser',
               edge: '/usr/bin/microsoft-edge'
             }
