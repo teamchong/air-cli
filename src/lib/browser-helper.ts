@@ -715,6 +715,13 @@ export class BrowserHelper {
       args.push('--headless=new');
     }
 
+    // Add container-friendly flags when in CI or headless mode
+    if (process.env.CI === 'true' || process.env.AIR_CLI_HEADLESS === 'true') {
+      args.push('--no-sandbox');
+      args.push('--disable-setuid-sandbox');
+      args.push('--disable-dev-shm-usage'); // Overcome limited shared memory in containers
+    }
+
     if (url) {
       args.push(url);
     }
