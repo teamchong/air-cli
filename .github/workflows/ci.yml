@@ -7,32 +7,13 @@ on:
     branches: [ main, master, develop ]
 
 jobs:
-  test:
-    name: Test and Code Quality
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
-    # IMPORTANT: Keep Playwright version in sync with package.json
-    # Current: 1.55.0 - Update both when upgrading Playwright
-    container:
-      image: mcr.microsoft.com/playwright:v1.55.0-jammy
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Verify Playwright version sync
-      run: |
-        PACKAGE_VERSION=$(node -p "require('./package.json').dependencies.playwright")
-        echo "📦 Package.json Playwright version: $PACKAGE_VERSION"
-        echo "🔧 CI container using Playwright v1.55.0"
-        if [ "$PACKAGE_VERSION" != "1.55.0" ]; then
-          echo "⚠️  Warning: Playwright version mismatch detected!"
-          echo "Update .github/workflows/ci.yml container image to match"
-        fi
-
-    - name: Install unzip (required by setup-bun)
-      run: |
-        apt-get update
-        apt-get install -y unzip
 
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
@@ -46,8 +27,7 @@ jobs:
       run: bun run typecheck
 
     - name: Run ESLint
-      run: |
-        bun x eslint src --ext .ts --format json --output-file eslint-report.json || echo '[]' > eslint-report.json
+      run: bun x eslint src --ext .ts
 
     - name: Run Prettier check
       run: bun run format:check
@@ -55,90 +35,34 @@ jobs:
     - name: Build project
       run: bun run build:ts
 
-    - name: Run tests (sharded to prevent timeouts)
-      run: bun run test:ci
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
+  test:
+    name: Tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    needs: quality
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.0-jammy
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [capture, interaction, lib]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
       with:
-        file: ./coverage/coverage-final.json
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-    
-    # Coverage thresholds check disabled temporarily - will be re-enabled after fixing test reporter
-    # - name: Check coverage thresholds
-    #   run: |
-    #     pnpm run test:coverage:ci -- --reporter=json > coverage.json
-    #     node -e "
-    #       const coverage = require('./coverage.json');
-    #       const thresholds = { branches: 80, functions: 80, lines: 80, statements: 80 };
-    #       let failed = false;
-    #       Object.keys(thresholds).forEach(key => {
-    #         const actual = coverage.total[key]?.pct || 0;
-    #         if (actual < thresholds[key]) {
-    #           console.error(\`❌ Coverage threshold not met for \${key}: \${actual}% < \${thresholds[key]}%\`);
-    #           failed = true;
-    #         } else {
-    #           console.log(\`✅ Coverage threshold met for \${key}: \${actual}% >= \${thresholds[key]}%\`);
-    #         }
-    #       });
-    #       if (failed) process.exit(1);
-    #     "
-    
-    - name: Upload ESLint report
-      uses: actions/upload-artifact@v4
-      if: always() && hashFiles('eslint-report.json') != ''
-      with:
-        name: eslint-report
-        path: eslint-report.json
-    
-    - name: Comment PR with results
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          
-          // Read ESLint report if it exists
-          let eslintReport = '';
-          try {
-            const eslintData = JSON.parse(fs.readFileSync('eslint-report.json', 'utf8'));
-            const errorCount = eslintData.reduce((sum, file) => sum + file.errorCount, 0);
-            const warningCount = eslintData.reduce((sum, file) => sum + file.warningCount, 0);
-            eslintReport = `ESLint: ${errorCount} errors, ${warningCount} warnings`;
-          } catch (e) {
-            eslintReport = 'ESLint: Report not generated';
-          }
-          
-          // Read coverage if it exists
-          let coverageReport = '';
-          try {
-            const coverageData = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
-            const lines = coverageData.total?.lines?.pct || 0;
-            const functions = coverageData.total?.functions?.pct || 0;
-            const branches = coverageData.total?.branches?.pct || 0;
-            const statements = coverageData.total?.statements?.pct || 0;
-            coverageReport = `Coverage: ${lines}% lines, ${functions}% functions, ${branches}% branches, ${statements}% statements`;
-          } catch (e) {
-            coverageReport = 'Coverage: Report not generated';
-          }
-          
-          const comment = `## 🤖 CI Results
-          
-          ${eslintReport}
-          ${coverageReport}
-          
-          Build: ${{ job.status }}
-          
-          *Generated by GitHub Actions*`;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install
+
+    - name: Build project
+      run: bun run build:ts
+
+    - name: Run test shard
+      run: bun run test:shard:${{ matrix.shard }}
 
   build-artifacts:
     name: Build Artifacts
