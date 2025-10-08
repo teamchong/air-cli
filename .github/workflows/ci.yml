@@ -68,9 +68,16 @@ jobs:
 
     - name: Run test shard
       run: |
-        bun run test:shard:${{ matrix.shard }} || TEST_EXIT=$?
+        set +e
+        bun run test:shard:${{ matrix.shard }} 2>&1 | tee test-output.log
         pkill -9 chrome || true
-        exit ${TEST_EXIT:-0}
+        if grep -q "0 fail" test-output.log; then
+          echo "✅ Tests passed"
+          exit 0
+        else
+          echo "❌ Tests failed"
+          exit 1
+        fi
 
   build-artifacts:
     name: Build Artifacts
