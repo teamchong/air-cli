@@ -1,0 +1,77 @@
+--- lib/utilsBundle.js.backup	2025-10-11 08:36:29
++++ lib/utilsBundle.js	2025-10-11 08:36:31
+@@ -59,7 +59,73 @@
+ const progress = require("./utilsBundleImpl").progress;
+ const SocksProxyAgent = require("./utilsBundleImpl").SocksProxyAgent;
+ const yaml = require("./utilsBundleImpl").yaml;
+-const ws = require("./utilsBundleImpl").ws;
++
++// Bun WebSocket compatibility wrapper
++const ws = (typeof globalThis.Bun !== "undefined") ? (function() {
++  // Create a wrapper class that adds EventEmitter-style methods to Bun's WebSocket
++  return class BunWebSocketWrapper extends globalThis.WebSocket {
++    constructor(url, protocols, options) {
++      super(url, protocols);
++      this._eventListeners = new Map();
++      
++      // Forward native WebSocket events to EventEmitter-style handlers
++      const eventMap = {
++        'open': 'open',
++        'close': 'close', 
++        'error': 'error',
++        'message': 'message'
++      };
++      
++      Object.keys(eventMap).forEach(event => {
++        this.addEventListener(event, (e) => {
++          const handlers = this._eventListeners.get(event) || [];
++          handlers.forEach(handler => handler(e));
++        });
++      });
++    }
++    
++    // EventEmitter-style methods
++    on(event, handler) {
++      if (!this._eventListeners.has(event)) {
++        this._eventListeners.set(event, []);
++      }
++      this._eventListeners.get(event).push(handler);
++      return this;
++    }
++    
++    once(event, handler) {
++      const wrappedHandler = (e) => {
++        handler(e);
++        this.off(event, wrappedHandler);
++      };
++      return this.on(event, wrappedHandler);
++    }
++    
++    off(event, handler) {
++      const handlers = this._eventListeners.get(event);
++      if (handlers) {
++        const index = handlers.indexOf(handler);
++        if (index !== -1) {
++          handlers.splice(index, 1);
++        }
++      }
++      return this;
++    }
++    
++    emit(event, ...args) {
++      const handlers = this._eventListeners.get(event) || [];
++      handlers.forEach(handler => handler(...args));
++      return this;
++    }
++    
++    // ws library constants
++    static get CONNECTING() { return 0; }
++    static get OPEN() { return 1; }
++    static get CLOSING() { return 2; }
++    static get CLOSED() { return 3; }
++  };
++})() : require("./utilsBundleImpl").ws;
++
+ const wsServer = require("./utilsBundleImpl").wsServer;
+ const wsReceiver = require("./utilsBundleImpl").wsReceiver;
+ const wsSender = require("./utilsBundleImpl").wsSender;
