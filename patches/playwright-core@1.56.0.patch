@@ -1,6 +1,9 @@
---- lib/utilsBundle.js.backup	2025-10-11 08:36:29
-+++ lib/utilsBundle.js	2025-10-11 08:36:31
-@@ -59,7 +59,73 @@
+warning: unable to access 'lib/.gitattributes': Permission denied
+diff --git a/lib/utilsBundle.js.backup b/lib/utilsBundle.js
+index 6833ed2..28be346 100644
+--- a/lib/utilsBundle.js.backup
++++ b/lib/utilsBundle.js
+@@ -59,7 +59,73 @@ const ProgramOption = require("./utilsBundleImpl").ProgramOption;
  const progress = require("./utilsBundleImpl").progress;
  const SocksProxyAgent = require("./utilsBundleImpl").SocksProxyAgent;
  const yaml = require("./utilsBundleImpl").yaml;

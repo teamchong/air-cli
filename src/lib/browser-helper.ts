@@ -723,7 +723,11 @@ export class BrowserHelper {
       '--disk-cache-size=1', // Minimal disk cache (1 byte effectively disables it)
       '--media-cache-size=1', // Minimal media cache
       '--aggressive-cache-discard', // More aggressive memory cleanup
-      '--disable-gpu-shader-disk-cache' // Don't cache GPU shaders
+      '--disable-gpu-shader-disk-cache', // Don't cache GPU shaders
+      // Stealth mode flags to bypass bot detection (e.g., Google)
+      '--disable-blink-features=AutomationControlled', // Remove "navigator.webdriver"
+      '--disable-features=IsolateOrigins,site-per-process', // Reduce fingerprinting
+      '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ];
 
     // Add headless mode for tests
