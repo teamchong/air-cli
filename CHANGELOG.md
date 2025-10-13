@@ -1,3 +1,9 @@
+# [2.1.0](https://github.com/teamchong/air-cli/compare/v2.0.0...v2.1.0) (2025-10-13)
+
+### Features
+
+- add stealth mode flags to bypass bot detection ([c7c362a](https://github.com/teamchong/air-cli/commit/c7c362a65dffbb4b8f33165667117c5718ec993d))
+
 # [2.0.0](https://github.com/teamchong/air-cli/compare/v1.0.1...v2.0.0) (2025-10-08)
 
 ### Bug Fixes
