@@ -1,3 +1,9 @@
+## [2.1.1](https://github.com/teamchong/air-cli/compare/v2.1.0...v2.1.1) (2025-10-14)
+
+### Bug Fixes
+
+- remove duplicate checkmarks from console and network commands ([a1fcb18](https://github.com/teamchong/air-cli/commit/a1fcb187afa2126fe2afdd2cedfacac2aa2be6cd))
+
 # [2.1.0](https://github.com/teamchong/air-cli/compare/v2.0.0...v2.1.0) (2025-10-13)
 
 ### Features
