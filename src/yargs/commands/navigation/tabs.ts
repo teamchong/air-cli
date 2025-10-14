@@ -47,25 +47,34 @@ export const tabsCommand = createCommand<TabOptions>({
         type: 'string',
         alias: 'u'
       })
+      .option('all', {
+        describe: 'Close all tabs (only for close action)',
+        type: 'boolean',
+        alias: 'a'
+      })
       .example('$0 tabs list', 'List all open tabs')
       .example(
         '$0 tabs new --url https://example.com',
         'Create new tab with URL'
       )
       .example('$0 tabs close --index 2', 'Close tab at index 2')
+      .example('$0 tabs close --all', 'Close all tabs')
       .example('$0 tabs select --index 1', 'Select tab at index 1');
   },
 
   validateArgs: argv => {
-    const { action, index, url } = argv;
+    const { action, index, url, all } = argv;
     const tabId = argv['tab-id'] as string | undefined;
 
-    if (
-      (action === 'close' || action === 'select') &&
-      typeof index !== 'number' &&
-      !tabId
-    ) {
-      return `${action} action requires either --index or --tab-id parameter`;
+    if (action === 'close') {
+      // For close, require either --index, --tab-id, or --all
+      if (typeof index !== 'number' && !tabId && !all) {
+        return 'close action requires either --index, --tab-id, or --all parameter';
+      }
+    }
+
+    if (action === 'select' && typeof index !== 'number' && !tabId) {
+      return 'select action requires either --index or --tab-id parameter';
     }
 
     if (action === 'new' && url) {
@@ -78,7 +87,7 @@ export const tabsCommand = createCommand<TabOptions>({
   },
 
   handler: async ({ argv, logger, spinner }) => {
-    const { action, index, url } = argv;
+    const { action, index, url, all } = argv;
     const tabId = argv['tab-id'] as string | undefined;
 
     if (spinner) {
@@ -196,59 +205,103 @@ export const tabsCommand = createCommand<TabOptions>({
 
       case 'close': {
         const pages = await BrowserHelper.getPages(argv.port);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let targetPage: any;
-        let targetIndex: number = -1;
 
-        if (tabId) {
-          // Find page by tab ID
-          for (let i = 0; i < pages.length; i++) {
-            const page = pages[i];
+        if (all) {
+          // Close all tabs
+          if (pages.length === 0) {
+            logger.info('No tabs to close');
+            if (argv.json) {
+              logger.json({
+                success: true,
+                action: 'close',
+                closed: 0
+              });
+            }
+            return;
+          }
+
+          const closedCount = pages.length;
+          for (const page of pages) {
             try {
-              const pageId = await BrowserHelper.getPageId(page);
-              if (pageId === tabId) {
-                targetPage = page;
-                targetIndex = i;
-                break;
-              }
+              await page.close();
             } catch {
-              // Continue searching
+              // Continue closing other tabs even if one fails
             }
           }
 
-          if (!targetPage) {
-            throw new Error(`Tab with ID ${tabId} not found`);
+          if (spinner) {
+            spinner.succeed(`Closed ${closedCount} tab(s)`);
+          }
+
+          logger.success(`Closed ${closedCount} tab(s)`);
+
+          if (argv.json) {
+            logger.json({
+              success: true,
+              action: 'close',
+              closed: closedCount
+            });
           }
         } else {
-          // Use index
-          if (typeof index !== 'number' || index < 0 || index >= pages.length) {
-            throw new Error(
-              `Invalid tab index: ${index}. Available: 0-${pages.length - 1}`
+          // Close single tab by ID or index
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let targetPage: any;
+          let targetIndex: number = -1;
+
+          if (tabId) {
+            // Find page by tab ID
+            for (let i = 0; i < pages.length; i++) {
+              const page = pages[i];
+              try {
+                const pageId = await BrowserHelper.getPageId(page);
+                if (pageId === tabId) {
+                  targetPage = page;
+                  targetIndex = i;
+                  break;
+                }
+              } catch {
+                // Continue searching
+              }
+            }
+
+            if (!targetPage) {
+              throw new Error(`Tab with ID ${tabId} not found`);
+            }
+          } else {
+            // Use index
+            if (
+              typeof index !== 'number' ||
+              index < 0 ||
+              index >= pages.length
+            ) {
+              throw new Error(
+                `Invalid tab index: ${index}. Available: 0-${pages.length - 1}`
+              );
+            }
+            targetPage = pages[index];
+            targetIndex = index;
+          }
+
+          await targetPage.close();
+
+          if (spinner) {
+            spinner.succeed(
+              `Closed tab ${tabId ? `with ID ${tabId.slice(0, 8)}...` : targetIndex}`
             );
           }
-          targetPage = pages[index];
-          targetIndex = index;
-        }
 
-        await targetPage.close();
-
-        if (spinner) {
-          spinner.succeed(
+          logger.success(
             `Closed tab ${tabId ? `with ID ${tabId.slice(0, 8)}...` : targetIndex}`
           );
-        }
 
-        console.log(
-          `Closed tab ${tabId ? `with ID ${tabId.slice(0, 8)}...` : targetIndex}`
-        );
-
-        if (argv.json) {
-          logger.json({
-            success: true,
-            action: 'close',
-            index: targetIndex,
-            tabId: tabId
-          });
+          if (argv.json) {
+            logger.json({
+              success: true,
+              action: 'close',
+              index: targetIndex,
+              tabId: tabId
+            });
+          }
         }
         break;
       }
