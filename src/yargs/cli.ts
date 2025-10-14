@@ -48,8 +48,10 @@ import { tabsCommand } from './commands/navigation/tabs';
 import { waitCommand } from './commands/navigation/wait';
 import { claudeCommand } from './commands/utility/claude';
 import { codegenCommand } from './commands/utility/codegen';
+import { configCommand } from './commands/utility/config';
 import { contextCommand } from './commands/utility/context';
 import { installCommand } from './commands/utility/install';
+import { protocolCommand } from './commands/utility/protocol';
 import { sessionCommand } from './commands/utility/session';
 import { testCommand } from './commands/utility/test';
 
@@ -155,6 +157,8 @@ export function createCli(argv?: string[]): ReturnType<typeof yargs> {
     .command(installCommand)
     .command(claudeCommand)
     .command(contextCommand)
+    .command(protocolCommand)
+    .command(configCommand)
 
     // Native app commands (macOS only)
     .command(appCommand)

@@ -50,6 +50,37 @@ cp "$SCRIPT_DIR/bin/air" "$INSTALL_DIR/air"
 chmod +x "$INSTALL_DIR/air"
 echo "✅ Installed standalone binary"
 
+# Install protocol handler (macOS only)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo ""
+    echo "📡 Installing protocol handler for air:// URLs..."
+
+    # Copy .app bundle to Applications
+    PROTOCOL_HANDLER_APP="$SCRIPT_DIR/protocol-handler/air-protocol-handler.app"
+    DEST_APP="/Applications/air-protocol-handler.app"
+
+    if [ -d "$PROTOCOL_HANDLER_APP" ]; then
+        # Remove existing installation
+        if [ -d "$DEST_APP" ]; then
+            rm -rf "$DEST_APP"
+        fi
+
+        # Copy new version
+        cp -R "$PROTOCOL_HANDLER_APP" "$DEST_APP"
+        chmod +x "$DEST_APP/Contents/MacOS/air-protocol"
+
+        # Register protocol handler with Launch Services
+        # This makes macOS aware of the air:// protocol
+        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$DEST_APP"
+
+        echo "✅ Protocol handler installed to /Applications"
+        echo "   You can now open air:// and air+command:// URLs"
+    else
+        echo "⚠️  Protocol handler not found at $PROTOCOL_HANDLER_APP"
+        echo "   Skipping protocol registration"
+    fi
+fi
+
 # Update CLAUDE.md with air-cli instructions
 echo ""
 echo "📝 Updating CLAUDE.md with air-cli instructions..."

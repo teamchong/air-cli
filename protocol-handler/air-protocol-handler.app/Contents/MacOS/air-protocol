@@ -1,0 +1,42 @@
+#!/bin/bash
+# air Protocol Handler - macOS .app bundle executable
+#
+# This script is invoked when a user clicks an air:// or air+command:// URL.
+# It forwards the protocol URL to the air CLI for execution.
+
+set -e
+
+# Get the protocol URL from the first argument
+PROTOCOL_URL="$1"
+
+# Find air executable
+AIR_PATH=""
+
+# Check common installation locations
+if command -v air &> /dev/null; then
+  AIR_PATH=$(command -v air)
+elif [ -f "$HOME/.local/bin/air" ]; then
+  AIR_PATH="$HOME/.local/bin/air"
+elif [ -f "/usr/local/bin/air" ]; then
+  AIR_PATH="/usr/local/bin/air"
+fi
+
+# If air not found, show error
+if [ -z "$AIR_PATH" ]; then
+  osascript -e 'display notification "air CLI not found. Please install air-cli first." with title "air Protocol Handler"'
+  exit 1
+fi
+
+# If no URL provided, exit silently
+if [ -z "$PROTOCOL_URL" ]; then
+  exit 0
+fi
+
+# Execute air protocol command in a new Terminal window (visible)
+# This allows users to see what's happening
+osascript <<EOF
+tell application "Terminal"
+  activate
+  do script "$AIR_PATH protocol '$PROTOCOL_URL'"
+end tell
+EOF

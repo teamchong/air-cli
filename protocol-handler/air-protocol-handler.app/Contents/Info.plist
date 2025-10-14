@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>air-protocol</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.aircli.protocol-handler</string>
+	<key>CFBundleName</key>
+	<string>air Protocol Handler</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.15</string>
+	<key>LSBackgroundOnly</key>
+	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<!-- air:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air URL</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air</string>
+			</array>
+		</dict>
+		<!-- air+screenshot:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Screenshot Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+screenshot</string>
+			</array>
+		</dict>
+		<!-- air+console:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Console Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+console</string>
+			</array>
+		</dict>
+		<!-- air+snapshot:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Snapshot Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+snapshot</string>
+			</array>
+		</dict>
+		<!-- air+tabs:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Tabs Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+tabs</string>
+			</array>
+		</dict>
+		<!-- air+navigate:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Navigate Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+navigate</string>
+			</array>
+		</dict>
+		<!-- air+network:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Network Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+network</string>
+			</array>
+		</dict>
+		<!-- air+pdf:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air PDF Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+pdf</string>
+			</array>
+		</dict>
+		<!-- air+click:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Click Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+click</string>
+			</array>
+		</dict>
+		<!-- air+type:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Type Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+type</string>
+			</array>
+		</dict>
+		<!-- air+fill:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Fill Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+fill</string>
+			</array>
+		</dict>
+		<!-- air+eval:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Eval Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+eval</string>
+			</array>
+		</dict>
+		<!-- air+exec:// protocol -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>air Exec Protocol</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>air+exec</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
