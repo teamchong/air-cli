@@ -30,13 +30,13 @@ echo "📦 Installing dependencies..."
 bun install
 echo "✅ Dependencies installed"
 
-echo "🔨 Building TypeScript..."
-bun run build:ts
-echo "✅ TypeScript build complete"
+echo "🔨 Building standalone binary..."
+bun run build
+echo "✅ Build complete"
 
-# Check if compiled JS was built successfully
-if [ ! -f "$SCRIPT_DIR/dist/src/index.js" ]; then
-    echo "❌ Build failed - compiled JS not found at dist/src/index.js"
+# Check if binary was built successfully
+if [ ! -f "$SCRIPT_DIR/bin/air" ]; then
+    echo "❌ Build failed - binary not found at bin/air"
     exit 1
 fi
 
@@ -44,14 +44,11 @@ fi
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$CLAUDE_DIR"
 
-# Create wrapper script that references project directory
+# Copy standalone binary directly (no wrapper needed)
 echo "📦 Installing to $INSTALL_DIR..."
-cat > "$INSTALL_DIR/air" << EOF
-#!/usr/bin/env bash
-exec node "$SCRIPT_DIR/dist/src/index.js" "\$@"
-EOF
+cp "$SCRIPT_DIR/bin/air" "$INSTALL_DIR/air"
 chmod +x "$INSTALL_DIR/air"
-echo "✅ Installed air wrapper script"
+echo "✅ Installed standalone binary"
 
 # Update CLAUDE.md with air-cli instructions
 echo ""
