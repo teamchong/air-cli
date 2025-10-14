@@ -30,13 +30,13 @@ echo "📦 Installing dependencies..."
 bun install
 echo "✅ Dependencies installed"
 
-echo "🔨 Building binary..."
-bun run build
-echo "✅ Build complete"
+echo "🔨 Building TypeScript..."
+bun run build:ts
+echo "✅ TypeScript build complete"
 
-# Check if binary was built successfully
-if [ ! -f "$SCRIPT_DIR/bin/air" ]; then
-    echo "❌ Build failed - binary not found at bin/air"
+# Check if compiled JS was built successfully
+if [ ! -f "$SCRIPT_DIR/dist/src/index.js" ]; then
+    echo "❌ Build failed - compiled JS not found at dist/src/index.js"
     exit 1
 fi
 
