@@ -179,7 +179,7 @@ export const consoleCommand = createCommand<ConsoleOptions>({
                 timestamp: new Date().toISOString()
               });
             } else {
-              logger.success(`✅ Console snapshot for tab: ${pageTabId}`);
+              logger.success(`Console snapshot for tab: ${pageTabId}`);
               if (filteredMessages.length === 0) {
                 logger.info('📋 No console messages');
               } else {

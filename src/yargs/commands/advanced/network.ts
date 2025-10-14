@@ -200,7 +200,7 @@ export const networkCommand = createCommand<NetworkOptions>({
             timestamp: new Date().toISOString()
           });
         } else {
-          logger.success(`✅ Network snapshot for tab: ${tabId}`);
+          logger.success(`Network snapshot for tab: ${tabId}`);
           if (requests.length === 0) {
             logger.info('📡 No active network requests');
           } else {
