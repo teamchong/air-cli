@@ -1,3 +1,9 @@
+## [2.1.4](https://github.com/teamchong/air-cli/compare/v2.1.3...v2.1.4) (2025-10-14)
+
+### Bug Fixes
+
+- **release:** only trigger on [release] tag in commit message ([b1257aa](https://github.com/teamchong/air-cli/commit/b1257aa3987f954babc71b631b32d04be9fba39b))
+
 ## [2.1.3](https://github.com/teamchong/air-cli/compare/v2.1.2...v2.1.3) (2025-10-14)
 
 ### Bug Fixes
