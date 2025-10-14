@@ -1,3 +1,9 @@
+## [2.1.3](https://github.com/teamchong/air-cli/compare/v2.1.2...v2.1.3) (2025-10-14)
+
+### Bug Fixes
+
+- use standalone binary instead of Node.js wrapper ([d3900ed](https://github.com/teamchong/air-cli/commit/d3900eddd945fae0ced54e6a3e92b38f86d455f6))
+
 ## [2.1.2](https://github.com/teamchong/air-cli/compare/v2.1.1...v2.1.2) (2025-10-14)
 
 ### Bug Fixes
