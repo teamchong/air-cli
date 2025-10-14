@@ -1,3 +1,9 @@
+## [2.1.2](https://github.com/teamchong/air-cli/compare/v2.1.1...v2.1.2) (2025-10-14)
+
+### Bug Fixes
+
+- install.sh should run build:ts not build:bun ([2f817e7](https://github.com/teamchong/air-cli/commit/2f817e79ba9aa97f9714b6a8f389f15192d2e8a3))
+
 ## [2.1.1](https://github.com/teamchong/air-cli/compare/v2.1.0...v2.1.1) (2025-10-14)
 
 ### Bug Fixes
