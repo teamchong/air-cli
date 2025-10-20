@@ -367,7 +367,7 @@ export class ValidationSchemaBuilder {
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function WithValidation<T extends new (..._args: any[]) => {}>(Base: T) {
   return class extends Base {
-    protected validateParams(
+    public validateParams(
       params: Record<string, any>,
       options: ValidationHelperOptions = { throwOnError: true }
     ): {
@@ -378,7 +378,7 @@ export function WithValidation<T extends new (..._args: any[]) => {}>(Base: T) {
       return ValidationHelper.validateCommandParams(params, options);
     }
 
-    protected validateWithRules(
+    public validateWithRules(
       params: Record<string, any>,
       rules: ParameterValidationRule[],
       options: ValidationHelperOptions = { throwOnError: true }
