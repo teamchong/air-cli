@@ -84,6 +84,9 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 ## Quick Start
 
 ```bash
+# Check system requirements
+air doctor
+
 # Open browser and navigate
 air open https://facebook.com
 
@@ -365,6 +368,7 @@ air session save facebook-session
 - `air dialog <accept|dismiss>` - Handle dialogs
 
 ### Utility
+- `air doctor` - Check system requirements and installation health
 - `air context` - View page context and action history
 - `air session` - Manage browser sessions (save, load, list)
 - `air codegen [url]` - Generate Playwright test code
@@ -416,6 +420,9 @@ All commands support:
 ```bash
 # Install dependencies
 bun install
+
+# Check system requirements
+bun run dev doctor
 
 # Run in development mode
 bun run dev

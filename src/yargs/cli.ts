@@ -50,6 +50,7 @@ import { claudeCommand } from './commands/utility/claude';
 import { codegenCommand } from './commands/utility/codegen';
 import { configCommand } from './commands/utility/config';
 import { contextCommand } from './commands/utility/context';
+import { doctorCommand } from './commands/utility/doctor';
 import { installCommand } from './commands/utility/install';
 import { protocolCommand } from './commands/utility/protocol';
 import { sessionCommand } from './commands/utility/session';
@@ -159,6 +160,7 @@ export function createCli(argv?: string[]): ReturnType<typeof yargs> {
     .command(contextCommand)
     .command(protocolCommand)
     .command(configCommand)
+    .command(doctorCommand)
 
     // Native app commands (macOS only)
     .command(appCommand)

@@ -10,6 +10,7 @@ The Playwright CLI provides direct browser control through Chrome DevTools Proto
 
 ### Installation & Setup
 ```bash
+air doctor            # Check system requirements and installation health
 air install           # Install Playwright browsers (chromium, firefox, webkit)
 air install chromium  # Install only Chromium browser
 air close             # Close browser connection
