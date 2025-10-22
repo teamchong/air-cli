@@ -1,7 +1,6 @@
-warning: unable to access 'lib/.gitattributes': Permission denied
-diff --git a/lib/utilsBundle.js.backup b/lib/utilsBundle.js
-index 6833ed2..28be346 100644
---- a/lib/utilsBundle.js.backup
+diff --git a/lib/utilsBundle.js b/lib/utilsBundle.js
+index 6833ed2edb6e23c0bb3603591adc5839c7e73846..391bd51ed8a20dc39603eab88c45f248d0f52c83 100644
+--- a/lib/utilsBundle.js
 +++ b/lib/utilsBundle.js
 @@ -59,7 +59,73 @@ const ProgramOption = require("./utilsBundleImpl").ProgramOption;
  const progress = require("./utilsBundleImpl").progress;
@@ -16,15 +15,15 @@ index 6833ed2..28be346 100644
 +    constructor(url, protocols, options) {
 +      super(url, protocols);
 +      this._eventListeners = new Map();
-+      
++
 +      // Forward native WebSocket events to EventEmitter-style handlers
 +      const eventMap = {
 +        'open': 'open',
-+        'close': 'close', 
++        'close': 'close',
 +        'error': 'error',
 +        'message': 'message'
 +      };
-+      
++
 +      Object.keys(eventMap).forEach(event => {
 +        this.addEventListener(event, (e) => {
 +          const handlers = this._eventListeners.get(event) || [];
@@ -32,7 +31,7 @@ index 6833ed2..28be346 100644
 +        });
 +      });
 +    }
-+    
++
 +    // EventEmitter-style methods
 +    on(event, handler) {
 +      if (!this._eventListeners.has(event)) {
@@ -41,7 +40,7 @@ index 6833ed2..28be346 100644
 +      this._eventListeners.get(event).push(handler);
 +      return this;
 +    }
-+    
++
 +    once(event, handler) {
 +      const wrappedHandler = (e) => {
 +        handler(e);
@@ -49,7 +48,7 @@ index 6833ed2..28be346 100644
 +      };
 +      return this.on(event, wrappedHandler);
 +    }
-+    
++
 +    off(event, handler) {
 +      const handlers = this._eventListeners.get(event);
 +      if (handlers) {
@@ -60,13 +59,13 @@ index 6833ed2..28be346 100644
 +      }
 +      return this;
 +    }
-+    
++
 +    emit(event, ...args) {
 +      const handlers = this._eventListeners.get(event) || [];
 +      handlers.forEach(handler => handler(...args));
 +      return this;
 +    }
-+    
++
 +    // ws library constants
 +    static get CONNECTING() { return 0; }
 +    static get OPEN() { return 1; }

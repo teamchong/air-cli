@@ -27,7 +27,8 @@
     "build:windows": "mkdir -p bin && bun run build:ts && pkg dist/src/index.js --targets node18-win-x64 --output bin/air.exe",
     "build:linux": "mkdir -p bin && bun run build:ts && pkg dist/src/index.js --targets node18-linux-x64 --output bin/air",
     "build:all": "mkdir -p bin && bun run build:ts && pkg dist/src/index.js --targets node18-macos-arm64,node18-win-x64,node18-linux-x64 --output bin/air",
-    "install:local": "bun run build && mkdir -p ~/.local/bin && cp bin/air ~/.local/bin/",
+    "install": "bun run build && mkdir -p ~/.claude/skills/air-cli && cp bin/air ~/.claude/skills/air-cli/air && cp SKILL.md ~/.claude/skills/air-cli/SKILL.md && chmod +x ~/.claude/skills/air-cli/air",
+    "uninstall": "rm -rf ~/.claude/skills/air-cli",
     "test": "AIR_CLI_HEADLESS=true PORT=19222 bun test --preload ./src/test-utils/global-setup.ts --max-concurrency=1 --bail=3 --timeout 30000",
     "test:ci": "AIR_CLI_HEADLESS=true PORT=19222 bun run test:shard:capture && sleep 2 && bun run test:shard:interaction && sleep 2 && bun run test:shard:lib",
     "test:shard:capture": "AIR_CLI_HEADLESS=true PORT=19222 bun test --preload ./src/test-utils/global-setup.ts --max-concurrency=1 --bail=5 --timeout 30000 src/yargs/commands/capture",
@@ -61,7 +62,7 @@
     "chalk": "^4.1.2",
     "node-mac-permissions": "^2.5.0",
     "ora": "^5.4.1",
-    "playwright": "1.56.0",
+    "playwright": "1.56.1",
     "ws": "^8.18.3",
     "yargs": "^17.7.2"
   },
@@ -75,18 +76,18 @@
     ]
   },
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
+    "@eslint/js": "^9.38.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/bun": "latest",
     "@types/minimist": "^1.2.5",
-    "@types/node": "^24.7.1",
+    "@types/node": "^24.9.1",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.0",
-    "@typescript-eslint/parser": "^8.46.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.4",
+    "lint-staged": "^16.2.5",
     "pkg": "^5.8.1",
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.9",
@@ -94,6 +95,6 @@
     "winston": "^3.18.3"
   },
   "patchedDependencies": {
-    "playwright-core@1.56.0": "patches/playwright-core@1.56.0.patch"
+    "playwright-core@1.56.1": "patches/playwright-core@1.56.1.patch"
   }
 }

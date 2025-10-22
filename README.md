@@ -10,6 +10,7 @@ Traditional information retrieval systems filter existing content using opaque a
 ## The Problem
 
 Big tech controls what information you see:
+
 - Which friend updates appear in your feed
 - What news stories get promoted
 - Which ads disguise themselves as content
@@ -20,6 +21,7 @@ Their systems optimize for **engagement metrics**, not your actual goals.
 ## The Solution
 
 `air-cli` gives you back control by combining:
+
 - **Playwright** - Access the browsers/platforms you use daily (Facebook, Twitter, news sites)
 - **AI Agents** - Understand YOUR stated preferences, not what Meta's algorithm guesses
 - **Agentic IR** - Proactive curation (triggers before you ask questions)
@@ -38,47 +40,23 @@ Your AI agent. Your rules. Not Meta's.
 
 ## Installation
 
-### Quick Install (Recommended)
+### Install as Claude Code Skill (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/air-cli
 cd air-cli
 
-# Interactive installation
-./install.sh
+# Install as Claude Code skill (builds + installs to ~/.claude/skills/air-cli/)
+bun run install
 
-# The installer will:
-# - Build the CLI
-# - Install to ~/.local/bin or /usr/local/bin
-# - Update your ~/.claude/CLAUDE.md (if using Claude Code)
+# Claude Code will automatically discover and use this skill
 ```
 
-### Manual Installation
+### Uninstall
 
 ```bash
-# Install dependencies
-bun install
-
-# Build the project
-bun run build
-
-# Install Playwright browsers
-bunx playwright install chromium
-
-# Install the binary
-cp air ~/.local/bin/  # or any directory in your PATH
-```
-
-### Windows
-
-```powershell
-# Run PowerShell as Administrator
-git clone https://github.com/yourusername/air-cli
-cd air-cli
-
-# Run installer
-powershell -ExecutionPolicy Bypass -File install.ps1
+bun run uninstall
 ```
 
 ## Quick Start
@@ -334,6 +312,7 @@ air session save facebook-session
 ## Command Reference
 
 ### Navigation
+
 - `air open [url]` - Launch browser and optionally navigate
 - `air navigate <url>` - Navigate to URL
 - `air back` - Go back in history
@@ -341,6 +320,7 @@ air session save facebook-session
 - `air close` - Close browser
 
 ### Interaction
+
 - `air click <selector>` - Click element
 - `air type <selector> <text>` - Type into input
 - `air fill <field=value>...` - Fill multiple form fields
@@ -351,12 +331,14 @@ air session save facebook-session
 - `air wait [selector]` - Wait for element or timeout
 
 ### Capture
+
 - `air snapshot` - Capture accessibility tree
 - `air screenshot [path]` - Take screenshot
 - `air pdf [path]` - Generate PDF
 - `air resize <width> <height>` - Resize viewport
 
 ### Advanced
+
 - `air eval <code>` - Execute JavaScript
 - `air exec <file>` - Execute JavaScript file
 - `air console` - Monitor console output
@@ -365,6 +347,7 @@ air session save facebook-session
 - `air dialog <accept|dismiss>` - Handle dialogs
 
 ### Utility
+
 - `air context` - View page context and action history
 - `air session` - Manage browser sessions (save, load, list)
 - `air codegen [url]` - Generate Playwright test code
@@ -374,6 +357,7 @@ air session save facebook-session
 ## Global Options
 
 All commands support:
+
 - `--port <number>` - Chrome debugging port (default: 9222)
 - `--timeout <ms>` - Command timeout (default: 5000)
 - `--tab-id <id>` - Target specific tab by ID
@@ -444,6 +428,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 Big Tech's algorithms have turned the internet into an engagement-optimization machine. Your attention is the product, and their goal is to maximize time-on-site, not help you achieve your goals.
 
 **Agentic IR flips this**:
+
 1. **You state your goals** - "I want tech news, not political rage bait"
 2. **Your agent accesses platforms** - Using Playwright to control your browsers
 3. **LLM understands context** - Analyzes content against YOUR preferences
